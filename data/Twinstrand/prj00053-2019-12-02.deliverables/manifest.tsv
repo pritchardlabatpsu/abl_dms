@@ -1,0 +1,19 @@
+CustomerName	TwinstrandId	Annotation
+BCR-Abl Wt	dna00762	Wild type BCR-Abl Ba/F3- no spike in
+M3D0	dna00763	1:1 Spike in at 1:1000 D0
+M6D0	dna00764	1:1 Spike in at 1:5000 D0
+M3D3	dna00765	1:1 Spike in at 1:1000, Imatinib treated, D3, Replicate 1
+M5D3	dna00766	1:1 Spike in at 1:1000, Imatinib treated, D3, Replicate 2
+M7D3	dna00767	1:1 Spike in at 1:1000, Imatinib treated, D3, Replicate 3
+M4D3	dna00768	1:1 Spike in at 1:5000, Imatinib treated, D3, Replicate 1
+M6D3	dna00769	1:1 Spike in at 1:5000, Imatinib treated, D3, Replicate 2
+M3D6	dna00770	1:1 Spike in at 1:1000, Imatinib treated, D6, Replicate 1
+M5D6	dna00771	1:1 Spike in at 1:1000, Imatinib treated, D6, Replicate 2
+M7D6	dna00772	1:1 Spike in at 1:1000, Imatinib treated, D6, Replicate 3
+M4D6	dna00773	1:1 Spike in at 1:5000, Imatinib treated, D6, Replicate 1
+M6D6	dna00774	1:1 Spike in at 1:5000, Imatinib treated, D6, Replicate 2
+Enu4_D0	dna00775	Enu Mixture D0
+Enu3_D3	dna00776	Enu Mixture, Imatinib treated, D3, Replicate 1
+Enu4_D3	dna00777	Enu Mixture, Imatinib treated, D3, Replicate 2
+Enu3_D6	dna00778	Enu Mixture, Imatinib treated, D6, Replicate 1
+Enu4_D6	dna00779	Enu Mixture, Imatinib treated, D6, Replicate 2

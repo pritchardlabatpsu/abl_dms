@@ -1,0 +1,406 @@
+---
+title: "enrichment_simulations"
+author: "Haider Inam"
+date: "6/22/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+# knitr::opts_knit$set(root.dir=rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+# rm(list=ls())
+library(knitr)
+library(tictoc)
+library(workflowr)
+library(VennDiagram)
+library(dplyr)
+library(foreach)
+library(doParallel)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(devtools)
+library(ggsignif)
+library(plotly)
+library(BiocManager)
+library(drc)
+library("lmtest")
+library("ggplot2")
+library("MASS")
+library("fitdistrplus")
+library("lme4")
+library("boot")
+library("dplyr")
+library("plotly")
+library(drc)
+library(devtools)
+library(deSolve)
+library(RColorBrewer)
+library(reshape2)
+######################Cleanup for GGPlot2#########################################
+
+
+
+net_gr_wodrug=1.4
+# ic50data_long=read.csv("../output/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+ic50data_long=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
+
+
+# twinstrand_simple_melt_merge=read.csv("../output/twinstrand_simple_melt_merge.csv",header = T,stringsAsFactors = F)
+twinstrand_simple_melt_merge=read.csv("data/Twinstrand/twinstrand_simple_melt_merge.csv",header = T,stringsAsFactors = F)
+
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+
+
+1:1000 mixture in a total of 20M cells
+```{r}
+ic50data_long=ic50data_long%>%filter(conc%in%c(.3,.6,1.2,2.4))
+#In the next step, I'm ordering mutants by decreasing resposne to the 625nM dose. Then I use this to change the levels of the species factor from more to less resistant. This helps with ggplot because now I can color the mutants with decreasing resistance
+ic50data_long_625=ic50data_long%>%filter(conc==.6)
+ic50data_long$mutant=factor(ic50data_long$mutant,levels = as.character(ic50data_long_625$mutant[order((ic50data_long_625$y),decreasing = T)]))
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,levels = as.character(ic50data_long_625$mutant[order((ic50data_long_625$y),decreasing = T)]))
+
+# rm(list=ls())
+# growthrate_nodrug=1.1 ##1.1 means a 15 hour doubling time
+growthrate_nodrug=1.4 ##1.4 means a 12 hour doubling time
+t=0:6
+
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,ordered = T)
+# ic50data=dcast(data = ic50data_long,conc~mutant)
+#Ideally, we would fit a 4 parameter logistic to this and then get the predicted 625 values
+# x0=c(15000000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,56*15000,15000)
+# trying out 1:10,000
+x0=c(15000,15000/2.5,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,15000,100*15000,15000,56*15000)
+sum(x0)
+sol_comb_doses=data.frame()
+# for(j in 1:length(ic50data[,1])){
+for(dose in sort(unique(ic50data_long$conc))){
+  # dose=.8
+  #Grabbing net growth rate at desired concentration
+  ic50data_specificdose=ic50data_long%>%filter(conc==dose)
+  # ic50data_specificdose$mutant
+  ic50data_specificdose$drugeffect=-log(ic50data_specificdose$y_model)/3
+  ic50data_specificdose$growthrate_net=growthrate_nodrug-ic50data_specificdose$drugeffect
+  
+##Differential equation function
+cgrowth=function(times,y,params){
+  dN.dt=ic50data_specificdose$growthrate_net[i]*y[1]
+  return(list(dN.dt))
+}
+sol_comb=data.frame()
+for(i in 1:length(ic50data_specificdose[,1])){
+sol=ode(y=x0[i],times=t,func=cgrowth,parms=growthrate_net[i])
+sol_df=data.frame(sol)
+sol_df$mutant=ic50data_specificdose$mutant[i]
+# ic50data_specificdose$mutant[2]
+  # colnames(growthrate_net[i])
+sol_comb=rbind(sol_comb,data.frame(sol_df))
+}
+colnames(sol_comb)[colnames(sol_comb)=="X1"]="count"
+# sol_comb$dose=ic50data$conc[j]
+sol_comb$dose=dose
+sol_comb_doses=rbind(sol_comb_doses,sol_comb)
+}
+
+#Plotting total # of cells
+getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
+
+#Wt grows unless the drug concentration is like 625nM
+# ggplot(data=sol_comb_doses,aes(y=count,x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+# 
+# ggplot(data=sol_comb_doses,aes(time,count))+
+#   geom_col(aes(fill=mutant))+
+#   facet_wrap(~dose)+
+#   cleanup+
+#   scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+# 
+# #Log scale shows that other mutants are actually growing too
+# ggplot(data=sol_comb_doses,aes(y=log(count),x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+
+sol_comb_doses=sol_comb_doses%>%group_by(dose,time)%>%mutate(total=sum(count))%>%group_by(dose,time,mutant)%>%mutate(proportion=count/total)
+
+###Looking at the proportion of mutants given various starting doses
+ggplot(data=sol_comb_doses,aes(time,proportion))+geom_col(aes(fill=mutant))+geom_line(aes(y=total/max(sol_comb_doses$total)))+scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = "Total Count"))+facet_wrap(~dose)+cleanup+scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+
+##Looking closely at just one plot
+  x=ggplot(data=sol_comb_doses%>%filter(dose==0.6),aes(time,proportion))+
+    geom_col(aes(fill=mutant))+
+    geom_line(aes(y=total/max(sol_comb_doses$total)))+
+    scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = "Total Count"))+facet_wrap(~dose)+
+    cleanup+
+    scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+  ggplotly(x)
+  #Can also use this for coloring (doesn't require counting the 22 mutants)
+  # palette_Dark2 <- colorRampPalette(brewer.pal(14, "Set2"))
+  # +discrete_scale("fill", "manual", palette_Dark2)
+
+# a=sol_comb_doses%>%filter(!mutant%in%c("F359Lmini","M244V","F359Lmaxi","V299L_L","V299L_H","V299L_H","D276G"))%>%group_by(dose,time)%>%summarize(min_coverage=100/min(proportion),min_coverage_sp=mutant[proportion==min(proportion)][1])
+#Check that D275G is resistant
+a=sol_comb_doses%>%filter(time%in%c(0,3,6),dose==.6)
+# write.csv(sol_comb_doses,"10kmutants_wt_1_1.csv")
+b=ic50data_specificdose$mutant
+aa=sol_comb_doses%>%filter(mutant%in%"E255K")%>%mutate(percent=proportion*100)
+aa=sol_comb_doses%>%filter(time%in%4)%>%mutate(percent=proportion*100)
+
+e255kdiagnostics=twinstrand_simple_melt_merge%>%filter(mutant%in%"E255K",experiment%in%"M6")
+e255kdiagnostics=twinstrand_simple_melt_merge%>%filter(mutant%in%"E255K",experiment%in%"M5")
+```
+
+```{r}
+# ic50data_long2=ic50data_long
+ic50data_long=ic50data_long%>%filter(mutant%in%c("T315I","L248V","E355A"))
+# rm(list=ls())
+# growthrate_nodrug=1.1 ##1.1 means a 15 hour doubling time
+growthrate_nodrug=1.4 ##1.4 means a 12 hour doubling time
+t=0:8
+
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,ordered = T)
+# ic50data=dcast(data = ic50data_long,conc~mutant)
+#Ideally, we would fit a 4 parameter logistic to this and then get the predicted 625 values
+# x0=c(15000000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,56*15000,15000)
+# trying out 1:10,000
+x0=c(10000000,10000000,10000000)
+
+sol_comb_doses=data.frame()
+# for(j in 1:length(ic50data[,1])){
+for(dose in sort(unique(ic50data_long$conc))){
+  # dose=.8
+  #Grabbing net growth rate at desired concentration
+  ic50data_specificdose=ic50data_long%>%filter(conc==dose)
+  ic50data_specificdose$drugeffect=-log(ic50data_specificdose$y_model)/3
+  ic50data_specificdose$growthrate_net=growthrate_nodrug-ic50data_specificdose$drugeffect
+  
+##Differential equation function
+cgrowth=function(times,y,params){
+  dN.dt=ic50data_specificdose$growthrate_net[i]*y[1]
+  return(list(dN.dt))
+}
+sol_comb=data.frame()
+for(i in 1:length(ic50data_specificdose[,1])){
+sol=ode(y=x0[i],times=t,func=cgrowth,parms=growthrate_net[i])
+sol_df=data.frame(sol)
+sol_df$mutant=ic50data_specificdose$mutant[i]
+  # colnames(growthrate_net[i])
+sol_comb=rbind(sol_comb,data.frame(sol_df))
+}
+colnames(sol_comb)[colnames(sol_comb)=="X1"]="count"
+# sol_comb$dose=ic50data$conc[j]
+sol_comb$dose=dose
+sol_comb_doses=rbind(sol_comb_doses,sol_comb)
+}
+
+#Plotting total # of cells
+getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
+
+ggplot(data=sol_comb_doses,aes(time,count))+
+  geom_col(aes(fill=mutant))+
+  facet_wrap(~dose)+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+#Log scale shows that other mutants are actually growing too
+ggplot(data=sol_comb_doses,aes(y=log(count),x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+
+sol_comb_doses=sol_comb_doses%>%group_by(dose,time)%>%mutate(total=sum(count))%>%group_by(dose,time,mutant)%>%mutate(proportion=count/total)
+
+
+###Looking at the proportion of mutants given various starting doses
+ggplot(data=sol_comb_doses,aes(time,proportion))+geom_col(aes(fill=mutant))+geom_line(aes(y=total/max(sol_comb_doses$total)))+scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = "Total Count"))+facet_wrap(~dose)+cleanup+scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+#Can also use this for coloring (doesn't require counting the 22 mutants)
+  palette_Dark2 <- colorRampPalette(brewer.pal(14, "Set2"))
+  # +discrete_scale("fill", "manual", palette_Dark2)
+  
+##Looking closely at just one plot
+  sol_comb_doses$mutant=factor(sol_comb_doses$mutant,levels=c("E355A","L248V","T315I"))
+  x=ggplot(data=sol_comb_doses%>%filter(dose==1.2),aes(time,proportion))+
+    geom_col(aes(fill=mutant))+
+    # geom_line(aes(y=total/max(sol_comb_doses$total)))+
+    # scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = "Total Count"))+
+    # facet_wrap(~dose)+
+    cleanup+
+    discrete_scale("fill", "manual", palette_Dark2)+
+    scale_x_continuous(expand = c(0,0),name = "Time (Days)")+
+    scale_y_continuous(expand = c(0,0),name = "Mutant Allele Fraction")+
+    theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            axis.line = element_line(colour = "black"))
+    # theme(plot.title = element_text(hjust=.5),text = element_text(size=30,face="bold"),axis.title = element_text(face="bold",size="26"),axis.text=element_text(face="bold",color="black",size="26"))
+    # scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+ggplotly(x)
+# ggsave("enrichment_simulations_3mutants.pdf",width = 4,height = 3,units = "in",useDingbats=F)  
+
+########Analysis trying to show that there is a real depletion effecf:
+sol_comb_doses$mutant=factor(sol_comb_doses$mutant,levels=c("T315I","L248V","E355A"))
+ggplot(sol_comb_doses%>%filter(time<=6,dose%in%1.2),aes(x=time,y=proportion,group=mutant))+
+  geom_line()+
+  geom_point(color="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  cleanup+
+  scale_fill_manual(values = getPalette(3))+
+  # discrete_scale("fill", "manual", palette_Dark2)+
+  # discrete_scale("color", "manual", palette_Dark2)+
+  scale_y_continuous(name="Mutant Allele Fraction")+
+  scale_x_continuous(name="Time (Days)")+
+  theme(legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+ggsave("output/Enrichmentsimulations/enrichment_simulations_3mutant_MAF.pdf",width=2,height=2,units="in",useDingbats=F)
+
+ggplot(sol_comb_doses%>%filter(time<=6,dose%in%1.2),aes(x=time,y=count,group=mutant))+
+  geom_line()+
+  geom_point(color="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  cleanup+
+  # discrete_scale("fill", "manual", palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  # discrete_scale("color", "manual", palette_Dark2)+
+  scale_y_continuous(name="Mutant Count",trans="log10",breaks=c(1e7,1e8,1e9,1e10),labels=parse(text=c("10^7","10^8","10^9","10^10")))+
+  # scale_y_continuous(name="Mutant Count",breaks=c(0,1e10,2e10),labels=parse(text=c("0","10^10","2*10^10")))+
+  scale_x_continuous(name="Time (Days)")+
+  theme(legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+ggsave("output/Enrichmentsimulations/enrichment_simulations_3mutant_count.pdf",width=2,height=2,units="in",useDingbats=F)
+
+
+
+
+
+ggplot(sol_comb_doses%>%filter(dose%in%1.2)%>%filter(time%in%c(0,3,6)),aes(x=(factor(time)),y=proportion,fill=factor(mutant)))+
+  geom_col(color="black")+
+  facet_wrap(~mutant)+
+  cleanup+
+  # discrete_scale("fill", "manual", palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  scale_y_continuous(name="Mutant Allele Fraction",expand = c(0.01,0))+
+  scale_x_discrete(name="Time (Days)")+
+  theme(strip.text = element_blank(),
+        legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+ggsave("output/Enrichmentsimulations/allele_freq_enrichment_sim.pdf",width=2.5,height=2,units="in",useDingbats=F)
+
+
+
+ggplot(sol_comb_doses%>%filter(dose%in%1.2)%>%filter(time%in%c(0,3,6)),aes(x=(factor(time)),y=count,fill=factor(mutant)))+geom_col(color="black")+
+  facet_wrap(~mutant)+
+  cleanup+
+  # discrete_scale("fill", "manual", palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  scale_y_continuous(name="Estimated Counts",
+                     expand = c(0.4,1),
+                     trans="log10",
+                     # limits=c(10^5,10^11),
+                     breaks=c(1e6,1e7,1e8,1e9,1e10),
+                     labels=parse(text=c("10^6","10^7","10^8","10^9","10^10")))+
+  scale_x_discrete(name="Time (Days)")+
+  theme(strip.text = element_blank(),
+        legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())+
+  coord_cartesian(ylim = c(10^7, 10^9))
+ggsave("output/Enrichmentsimulations/count_enrichment_sim.pdf",width=2.5,height=2,units="in",useDingbats=F)
+
+
+
+
+data=sol_comb_doses%>%filter(dose%in%1.2,time%in%c(3,6))
+data=data%>%
+  mutate(lfc=log(proportion/0.333,2),
+         netgr=log(count/1e7)/(time*24))
+data$mutant=factor(data$mutant,levels=c("T315I","L248V","E355A"))
+
+
+ggplot(data,aes(x=time,y=lfc,fill=mutant))+
+  # geom_col(position=position_dodge(1))+
+  geom_col(color="black",position=position_dodge(1))+
+  scale_fill_manual(values = getPalette(3))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous("Expected log2 fold-change",
+                     expand = c(0.01,0))+
+  scale_x_continuous("Treatment duration (days)",
+                     breaks = c(3,6))+
+  theme(strip.text = element_blank(),
+        legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x=element_blank(),
+        axis.title.y = element_blank())
+ggsave("output/Enrichmentsimulations/lfc_enrichment_sim.pdf",width=2.5,height=2,units="in",useDingbats=F)
+
+getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
+
+ggplot(data,aes(x=time,y=netgr,fill=mutant))+
+  geom_col(color="black",position=position_dodge(1))+
+  scale_fill_manual(values = getPalette(3))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous("Expected net growth rate (Hrs-1)",
+                     expand = c(0.01,0))+
+  scale_x_continuous("Treatment duration (days)",
+                     breaks=c(3,6))+
+  theme(strip.text = element_blank(),
+        legend.position = "none",
+        axis.title = element_text(face="bold",size=10),
+        axis.text = element_text(face="plain",size=9),
+        axis.title.x=element_blank(),
+        axis.title.y = element_blank())
+ggsave("output/Enrichmentsimulations/netgr_enrichment_sim.pdf",width=2.5,height=2,units="in",useDingbats=F)
+
+```
+
+
+```{r}
+
+
+# facet_wrap(~mutant)+
+#   cleanup+
+#   # discrete_scale("fill", "manual", palette_Dark2)+
+#   scale_fill_manual(values = getPalette(3))+
+#   scale_y_continuous(name="Estimated Counts",
+#                      expand = c(0.4,1),
+#                      trans="log10",
+#                      # limits=c(10^5,10^11),
+#                      breaks=c(1e6,1e7,1e8,1e9,1e10),
+#                      labels=parse(text=c("10^6","10^7","10^8","10^9","10^10")))+
+#   scale_x_discrete(name="Time (Days)")+
+#   theme(strip.text = element_blank(),
+#         legend.position = "none",
+#         axis.title = element_text(face="bold",size=10),
+#         axis.text = element_text(face="plain",size=9),
+#         axis.title.x=element_blank(),
+#         axis.title.y=element_blank())+
+#   coord_cartesian(ylim = c(10^7, 10^9))
+
+```
+

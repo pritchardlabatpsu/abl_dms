@@ -1,0 +1,227 @@
+---
+title: "spikeins_data_parser"
+author: "Haider Inam"
+date: "06/22/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r,include=F}
+# rm(list=ls())
+library(knitr)
+library(tictoc)
+library(workflowr)
+library(VennDiagram)
+library(dplyr)
+library(foreach)
+library(doParallel)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(devtools)
+library(ggsignif)
+library(plotly)
+library(BiocManager)
+library(drc)
+# library(ensembldb) #Loading this with Dplyr commands seems to throw an error in Rmd
+# library(EnsDb.Hsapiens.v86) #Loading this with Dplyr commands seems to throw an error in Rmd
+
+######################Cleanup for GGPlot2#########################################
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+
+####Please change required directories this chunk if compiling in R rather than RmD
+```{r}
+#Inputs:
+conc_for_predictions=0.8
+net_gr_wodrug=0.055
+#Reading required tables
+ic50data_all_conc=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F,row.names=1)
+# ic50data_all_conc=read.csv("../output/ic50data_all_conc.csv",header = T,stringsAsFactors = F,row.names=1)
+ic50data_long=ic50data_all_conc%>%filter(conc==conc_for_predictions)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
+
+twinstrand_maf=read.table("data/Twinstrand/prj00053-2019-12-02.deliverables/all.mut",sep="\t",header = T,stringsAsFactors = F)
+# twinstrand_maf=read.table("../data/Twinstrand/prj00053-2019-12-02.deliverables/all.mut",sep="\t",header = T,stringsAsFactors = F)
+
+names=read.table("data/Twinstrand/prj00053-2019-12-02.deliverables/manifest.tsv",sep="\t",header = T,stringsAsFactors = F)
+# names=read.table("../data/Twinstrand/prj00053-2019-12-02.deliverables/manifest.tsv",sep="\t",header = T,stringsAsFactors = F)
+
+```
+
+##Data Parsing-- Duplex Sequencing Data
+###Importing Twinstrand Mutation calls dataframe
+####The twinstrand dataframe has sampleIDs. I'm merging this dataframe with a 'names' df that has details on what those sample IDs mean
+#####Here I also converted genomic coordinates and nucleotide changes to residue changes. I did all of our 20 spike-in mutants and others that I could find.   
+#####Other mutants included unique mutants found in the ENU data. i.e. A397P, F311L, F359C, H214R, H396P, K285N, L324R.   
+Ideally, in the future I will use Biomart or a similar package that can do this automatically.
+Ideally, I'll convert the fasta/bamh files into maf files myself
+Got residues and positions from here: #https://www.rcsb.org/pdb/chromosome.do?v=hg38&chromosome=chr9&pos=130862947
+One thing that was tripping me up is that I was searching the database based on start position and not end-position
+This NCBI tool is also a good resource: https://www.ncbi.nlm.nih.gov/genome/gdv/browser/genome/?id=GCF_000001405.39
+However, *this* is probably the best tool to go straight from genomic coordinate to protein change: https://www.ebi.ac.uk/thornton-srv/databases/cgi-bin/DisaStr/GetPage.pl?varmap=TRUE
+```{r}
+
+
+twinstrand_maf_merge=merge(twinstrand_maf,names,by.x = "Sample",by.y = "TwinstrandId")
+
+#Of the 20 mutants, I don't see F486, F359C
+twinstrand_maf_merge$mutant=0
+twinstrand_maf_merge=twinstrand_maf_merge%>%
+  mutate(mutant=case_when(End==130872896 & ALT=="T" ~ "T315I",
+                          End==130862970 & ALT=="C" ~ "Y253H",
+                          End==130862977 & ALT=="T" ~ "E255V",
+                          End==130873004 & ALT=="C" ~ "M351T",
+                          End==130862962 & ALT=="A" ~ "G250E",
+                          End==130874969 & ALT=="C" ~ "H396P",
+                          End==130862955 & ALT=="G" ~ "L248V",
+                          End==130874969 & ALT=="G" ~ "H396R",
+                          End==130862971 & ALT=="T" ~ "Y253F",
+                          End==130862969 & ALT=="T" ~ "Q252H",
+                          End==130862976 & ALT=="A" ~ "E255K",
+                          End==130872901 & ALT=="C" ~ "F317L",
+                          End==130873027 & ALT=="C" ~ "F359L",
+                          End==130873027 & ALT=="G" ~ "F359V",
+                          End==130873027 & ALT=="A" ~ "F359I",
+                          End==130873016 & ALT=="G" ~ "E355G",
+                          End==130873016 & ALT=="C" ~ "E355A",
+                          End==130878519 & ALT=="A" ~ "E459K",
+                          End==130872911 & ALT=="G" ~ "Y320C",
+                          End==130872133 & ALT=="G" ~ "D276G",
+                          End==130862969 & ALT=="C" ~ "Q252Hsyn", ###The mutants below were found only in the ENU mutagenized pools
+                          End==130872885 & ALT=="G" ~ "F311L",
+                          End==130873028 & ALT=="G" ~ "F359C",
+                          End==130874971 & ALT=="C" ~ "A397P",
+                          End==130862854 & ALT=="G" ~ "H214R",
+                          End==130872146 & ALT=="C" ~ "V280syn",
+                          End==130872161 & ALT=="T" ~ "K285N",
+                          End==130872923 & ALT=="G" ~ "L324R",
+                          End==130872983 & ALT=="T" ~ "A344D")) #Not observed on D6. Dropped out! Note that D276G looked like it was contaminant DNA because it was barely at detection threshold at D0
+
+#Ordering mutants by level of drug resistance. Note that since we don't know the level of DR for the unique ENU mutants, I have left them out here.
+twinstrand_maf_merge$mutant=factor(twinstrand_maf_merge$mutant,levels = c("T315I","Y253H","E255V","M351T","G250E","H396P","L248V","H396R","Y253F","Q252H","E255K","F317L","F359L","F359V","F359I","E355G","E355A","E459K","Y320C","D276G","F311L","F359C","A397P","H214R","K285N","L324R","A344D"))
+
+# twinstrand_maf_merge=twinstrand_maf_merge%>%
+#   mutate(mutant=case_when(End==130872896 & ALT=="T" ~ "T315I",
+#                           End==130862970 & ALT=="C" ~ "Y253H",
+#                           End==130862977 & ALT=="T" ~ "E255V",
+#                           End==130873004 & ALT=="C" ~ "M351T",
+#                           End==130862962 & ALT=="A" ~ "G250E",
+#                           End==130874969 & ALT=="C" ~ "H396P",
+#                           End==130862955 & ALT=="G" ~ "L248V",
+#                           End==130874969 & ALT=="G" ~ "H396R",
+#                           End==130862971 & ALT=="T" ~ "Y253F",
+#                           End==130862969 & ALT=="T" ~ "Q252H",
+#                           End==130862976 & ALT=="A" ~ "E255K",
+#                           End==130872901 & ALT=="C" ~ "F317L",
+#                           End==130873027 & ALT=="C" ~ "F359L",
+#                           End==130873027 & ALT=="G" ~ "F359V",
+#                           End==130873027 & ALT=="A" ~ "F359I",
+#                           End==130873016 & ALT=="G" ~ "E355G",
+#                           End==130873016 & ALT=="C" ~ "E355A",
+#                           End==130878519 & ALT=="A" ~ "E459K",
+#                           End==130872911 & ALT=="G" ~ "Y320C",
+#                           End==130872133 & ALT=="G" ~ "D276G")) 
+
+
+#Adding columns for experiment names, experiment frequencies, and time
+##############Experiment Name#################
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("M3D0","M3D3","M3D6")]="M3"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("M4D0","M4D3","M4D6")]="M4"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("M5D0","M5D3","M5D6")]="M5"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("M6D0","M6D3","M6D6")]="M6"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("M7D0","M7D3","M7D6")]="M7"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("Enu3_D3","Enu3_D6")]="Enu_3"
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c("Enu4_D0","Enu4_D3","Enu4_D6")]="Enu_4"
+##############Spike in frequency#################
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("M3D0","M3D3","M3D6")]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("M4D0","M4D3","M4D6")]=5000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("M5D0","M5D3","M5D6")]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("M6D0","M6D3","M6D6")]=5000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("M7D0","M7D3","M7D6")]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("Enu3_D3","Enu3_D6")]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c("Enu4_D0","Enu4_D3","Enu4_D6")]=1000
+##############Time point#################
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c("M3D0","M6D0","Enu4_D0")]="D0"
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c("M3D3","M4D3","M5D3","M6D3","M7D3","Enu3_D3","Enu4_D3")]="D3"
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c("M3D6","M4D6","M5D6","M6D6","M7D6","Enu3_D6","Enu4_D6")]="D6"
+```
+####Converting MAFs of all mutants to counts by using the flow cytometry count data for each experiment.  
+```{r}
+#To start off converting MAFs into 'Total number of mutant cell' numbers, we will use only mixing experiment 3 as an example.
+##########M3##########
+twinstrand_maf_merge$totalcells=0
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M3"&twinstrand_maf_merge$time_point=="D0"]=493000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M3"&twinstrand_maf_merge$time_point=="D3"]=1295000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M3"&twinstrand_maf_merge$time_point=="D6"]=13600000
+##########M5##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M5"&twinstrand_maf_merge$time_point=="D0"]=588000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M5"&twinstrand_maf_merge$time_point=="D3"]=1299000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M5"&twinstrand_maf_merge$time_point=="D6"]=11294000
+##########M7##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M7"&twinstrand_maf_merge$time_point=="D0"]=611000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M7"&twinstrand_maf_merge$time_point=="D3"]=857000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M7"&twinstrand_maf_merge$time_point=="D6"]=14568000
+##########M4##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M4"&twinstrand_maf_merge$time_point=="D0"]=405000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M4"&twinstrand_maf_merge$time_point=="D3"]=980000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M4"&twinstrand_maf_merge$time_point=="D6"]=1959000
+##########M6##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M6"&twinstrand_maf_merge$time_point=="D0"]=510000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M6"&twinstrand_maf_merge$time_point=="D3"]=798000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="M6"&twinstrand_maf_merge$time_point=="D6"]=5457000
+##########ENU3##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_3"&twinstrand_maf_merge$time_point=="D0"]=166000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_3"&twinstrand_maf_merge$time_point=="D3"]=1282000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_3"&twinstrand_maf_merge$time_point=="D6"]=97200000
+##########ENU4##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_4"&twinstrand_maf_merge$time_point=="D0"]=316000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_4"&twinstrand_maf_merge$time_point=="D3"]=1264000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment=="Enu_4"&twinstrand_maf_merge$time_point=="D6"]=40000000
+
+########Converting MAF to Total Count##########
+twinstrand_maf_merge=twinstrand_maf_merge%>%mutate(totalmutant=AltDepth/Depth*totalcells)
+```
+
+
+####Deriving growthrates from twinstrand_maf_merge
+```{r}
+detach("package:dplyr", character.only = TRUE)
+library("dplyr", character.only = TRUE)
+twinstrand_simple=twinstrand_maf_merge%>%filter(tki_resistant_mutation=="True",!is.na(mutant),!is.na(experiment))
+twinstrand_simple=twinstrand_simple%>%dplyr::select("mutant","experiment","Spike_in_freq","time_point","totalmutant")
+twinstrand_simple_cast=dcast(twinstrand_simple,mutant+experiment+Spike_in_freq~time_point,value.var="totalmutant")
+
+twinstrand_simple_cast$d0d3=log(twinstrand_simple_cast$D3/twinstrand_simple_cast$D0)/72
+twinstrand_simple_cast$d3d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D3)/72
+twinstrand_simple_cast$d0d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D0)/144
+#Check if ln(final/initial)/time is the correct formula. Also notice how I'm using days not hours
+twinstrand_simple_melt=melt(twinstrand_simple_cast[,-c(4:6)],id.vars=c("mutant","experiment","Spike_in_freq"),variable.name = "duration",value.name = "netgr_obs") #!!!!!!!!!!!value name should be drug effect. And drug effect should be drug_effect_obs i think. NO. I think this should be drug_effect_obs. Fixed 4/2/20
+twinstrand_simple_melt$drug_effect_obs=net_gr_wodrug-twinstrand_simple_melt$netgr_obs
+
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_formerge,"mutant")
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long,"mutant")
+twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long%>%filter(conc==conc_for_predictions),all.x = T)
+```
+
+
+####Saving Dataframes
+```{r}
+head(twinstrand_maf_merge)
+head(twinstrand_simple_melt_merge)
+write.csv(twinstrand_maf_merge,"output/twinstrand_maf_merge.csv")
+write.csv(twinstrand_simple_melt_merge,"output/twinstrand_simple_melt_merge.csv")
+```
+

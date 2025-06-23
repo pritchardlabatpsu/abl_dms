@@ -1,0 +1,29 @@
+---
+title: "Homepage Spike In Mutants"
+author: "Haider Inam"
+date: '2025-06-22'
+output: html_document
+---
+
+<img src="assets/drc_fits.png" width="300" height="300"  alt="">  
+* Click [here](dose_response_curve_fitting_with_errorbars.html) for the script that fits four-parameter logistics to concentration-response curve data. These fits help us calculate the "predicted trajectory" of mutants under imatinib selection.
+
+
+<img src="assets/spikeins_predictedvsmeasured.png" width="300" height="300"  alt="">  
+* Click [here](spikeins_depthofcoverages.html) for analysis looking at whether we achieved our desired depth of coverages
+
+
+* Click [here](spikeins_data_parser.html) for the data parsing script that parses duplex sequencing spike-in data. This code also calculates inferred mutant counts. The resulting data is used in scripts later.   
+
+
+<img src="assets/spikeins_growthrates.png" width="600" height="300"  alt="">  
+* Click [here](spikeins_growthrates.html) for plots showing how depletion artifacts are corrected when using inferred mutant counts. Also shows the percent error decrease when using mutant count instead of allele fraction  
+
+
+<img src="assets/spikeins_growthrates_e255kgfp.png" width="300" height="260"  alt="">  
+* Click [here](E255K_alphas_figure.html) for analyses showing our GFP-tagged mutant standard (E255K-GFP). Specifically, we're looking at the agreement in growth rates of E255K measured via FACs, sequencing, and as they are predicted by IC50 studies.    
+
+
+<img src="assets/enrichment_simulations.png" width="400" height="280"  alt="">  
+* Click [here](enrichment_simulations.html) for simulations of resistance in a 3 mutant pool. These simulations show how quikcly a fit (more resistant) mutant dominates the population. This allele frequency domination of the most fit mutant causes depletion artifacts that are visible in our spikein data. A simulation with 20 mutants, not 3, is also present.    
+

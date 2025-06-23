@@ -1,0 +1,576 @@
+---
+title: "spikeins_growthrates"
+author: "Haider Inam"
+date: "6/22/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+
+# rm(list=ls())
+library(scales)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library(ggpubr)
+library(pROC)
+library(reshape2)
+library(dr4pl)
+
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+This RMD file should serve to generate processed versions of all the data that goes into Figure 2 of the paper.
+The aim here is to take in predicted growth rate confidence intervals, and  generate expected count data from them. The other aim is to take dose-normalized data (for microvariations) and add columns for normal vs normalized. The final aim is to include count-types of log-fold enrichment, enrich2, and our counts. One subaim is to also add Day 0 MAF counts of M3 as the ones for M5 and M7. And of M6 for M4 and of Sp_Enu_4 for Sp_Enu_3
+
+```{r,include=F}
+# rm(list=ls())
+library(knitr)
+library(tictoc)
+library(workflowr)
+library(VennDiagram)
+library(dplyr)
+library(foreach)
+library(doParallel)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(devtools)
+library(ggsignif)
+library(plotly)
+library(BiocManager)
+library(drc)
+# library(ensembldb) #Loading this with Dplyr commands seems to throw an error in Rmd
+# library(EnsDb.Hsapiens.v86) #Loading this with Dplyr commands seems to throw an error in Rmd
+
+######################Cleanup for GGPlot2#########################################
+net_gr_wodrug=.055
+conc_for_predictions=.8
+```
+
+```{r}
+# rm(list=ls())
+twinstrand_maf_merge=read.csv("data/Twinstrand/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F)
+# twinstrand_maf_merge=read.csv("../output/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F,row.names = 1)
+
+# ic50data_all_sum=read.csv("../output/ic50data_all_confidence_intervals_raw_data.csv",row.names = 1)
+ic50data_all_sum=read.csv("data/ic50data/ic50data_all_confidence_intervals_raw_data.csv",row.names = 1)
+
+
+#First, creating day 0 values for M4,M5,M7, and sp_enu_3. So M5's and M7's D0 counts are M3's. And M4's D0 counts are M6's. Sp_Enu_3's D0 counts are Sp_Enu_4's D0 counts.
+M3D0=twinstrand_maf_merge%>%filter(experiment=="M3",time_point=="D0")
+M3D0_v2=M3D0%>%filter(!mutant%in%NA)
+M3D0_v2=M3D0_v2%>%dplyr::select(mutant,AltDepth)
+# M3D6=twinstrand_maf_merge%>%filter(experiment=="M3",time_point=="D3")
+M5D0=M3D0%>%mutate(experiment="M5")
+M7D0=M3D0%>%mutate(experiment="M7")
+M6D0=twinstrand_maf_merge%>%filter(experiment=="M6",time_point=="D0")
+M6D0_v2=M6D0%>%filter(!mutant%in%NA)
+M6D0_v2=M6D0_v2%>%dplyr::select(mutant,AltDepth)
+M4D0=M6D0%>%mutate(experiment="M4")
+
+Enu4_D0=twinstrand_maf_merge%>%filter(experiment=="Enu_4",time_point=="D0")
+Enu3_D0=Enu4_D0%>%mutate(experiment="Enu_3")
+twinstrand_maf_merge=rbind(twinstrand_maf_merge,M5D0,M7D0,M4D0,Enu3_D0)
+########################Adding Confidence Intervals in Drug Effect to the Counts########################
+############Adding Enrich2 Adjustments to MAF################
+twinstrand_maf_merge2=twinstrand_maf_merge%>%filter(!VariationType%in%"indel",tki_resistant_mutation%in%"True",!mutant%in%NA)%>%dplyr::select(!c(X,Sample,Chromosome))
+wt_count=twinstrand_maf_merge2%>%group_by(experiment,time_point)%>%summarize(wt_count=mean(Depth)-sum(AltDepth))
+twinstrand_maf_merge2=merge(twinstrand_maf_merge2,wt_count,by = c("experiment","time_point"))
+twinstrand_maf_merge2=twinstrand_maf_merge2%>%mutate(MAF_enrich2=(AltDepth/wt_count))
+twinstrand_maf_merge=twinstrand_maf_merge2
+############################Addding Log-Fold Enrichment#################
+
+twinstrand_maf_merge=twinstrand_maf_merge%>%filter(experiment%in%c("M3","M5","M7"))%>%mutate(MAF=AltDepth/Depth)
+# twinstrand_maf_merge=twinstrand_maf_merge%>%filter(experiment%in%c("Enu_3","Enu_4"))%>%mutate(MAF=AltDepth/Depth)
+########################
+
+twinstrand_maf_merge=merge(twinstrand_maf_merge%>%
+                      filter(tki_resistant_mutation=="True",!mutant%in%c("D276G",NA)),ic50data_all_sum%>%
+                                 dplyr::select(species,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll,netgr_pred_model,netgr_pred_model_sd_ul,netgr_pred_model_sd_ll),by.x="mutant",by.y="species")
+
+twinstrand_simple=twinstrand_maf_merge%>%dplyr::select(AltDepth,Depth,tki_resistant_mutation,mutant,experiment,Spike_in_freq,time_point,totalcells,totalmutant,MAF,MAF_enrich2,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll,netgr_pred_model,netgr_pred_model_sd_ul,netgr_pred_model_sd_ll)
+
+
+
+twinstrand_merge_forplot=melt(twinstrand_simple,id.vars = c("AltDepth","Depth","tki_resistant_mutation","mutant","experiment","Spike_in_freq","time_point","totalcells","netgr_pred_mean","netgr_pred_ci_ul","netgr_pred_ci_ll","netgr_pred_sd_ul","netgr_pred_sd_ll","netgr_pred_model","netgr_pred_model_sd_ul","netgr_pred_model_sd_ll"),variable.name = "count_type",value.name = "count")
+# twinstrand_merge_forplot=merge(twinstrand_maf_merge%>%filter(experiment=="M3",tki_resistant_mutation=="True",!mutant%in%c("D276G",NA)),ic50data_all_sum%>%dplyr::select(species,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll),by.x="mutant",by.y="species")
+
+#Basically making an extra column with the D0 total mutant counts for each mutant
+# a=twinstrand_maf_merge%>%filter(time_point=="D0")
+twinstrand_merge_forplot=merge(twinstrand_merge_forplot,twinstrand_merge_forplot%>%filter(time_point=="D0")%>%dplyr::select(mutant,count_type,experiment,count_D0=count),by=c("mutant","count_type","experiment"))
+    #########Here, figure out why twinstrand_merge_forplot is having two rows for each mutant after being merged with a D0 version of itself. This is leading to weird plotting artifacts
+    
+    # a=twinstrand_merge_forplot%>%filter(count_type=="totalmutant",mutant=="E255K",time_point=="D0")
+    ############
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%>%mutate(time=case_when(time_point=="D0"~0,
+                            time_point=="D3"~72,
+                            time_point=="D6"~144),
+                           ci_mean=count_D0*exp(netgr_pred_mean*time),
+                           ci_ul=count_D0*exp(netgr_pred_ci_ul*time),
+                           ci_ll=count_D0*exp(netgr_pred_ci_ll*time),
+                           sd_ul=count_D0*exp(netgr_pred_sd_ul*time),
+                           sd_ll=count_D0*exp(netgr_pred_sd_ll*time))
+
+####Should probably not use sd_ul, sd_ul etc for predictions because they're added to the means of the actual dose responses rather than the means of the dose responses off of the 4 parameter model. Use sd_ul_pred, sd_ll_pred instead
+twinstrand_merge_forplot=twinstrand_merge_forplot%>%mutate(ci_ll=case_when(ci_ll=="NaN"~0,
+                                           TRUE~ci_ll))
+
+####Since the more sensitive mutants were appearing to grow fast if I take the raw IC50 predicted growth rates, I am going to instead take the predicted growth rates from the IC50s that were fit on a 4-parameter logistic. To get standard deviations, I will just add/subtract the standard deviations from the regular plots.
+# twinstrand_merge_forplot=merge(twinstrand_merge_forplot,ic50data_long%>%filter(conc==conc_for_predictions)%>%dplyr::select(mutant,netgr_pred_model=netgr_pred),by = "mutant")
+# twinstrand_merge_forplot=twinstrand_merge_forplot%>%mutate(netgr_pred_model_sd_ul=netgr_pred_model+(netgr_pred_mean-netgr_pred_sd_ll),netgr_pred_model_sd_ll=netgr_pred_model-(netgr_pred_mean-netgr_pred_sd_ll))
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%>%
+  mutate(sd_mean_pred=count_D0*exp(netgr_pred_model*time),
+         sd_ul_pred=count_D0*exp(netgr_pred_model_sd_ul*time),
+         sd_ll_pred=count_D0*exp(netgr_pred_model_sd_ll*time))
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%>%mutate(ci_ll=case_when(ci_ll=="NaN"~0,
+                                           TRUE~ci_ll))
+###########
+
+#Factoring the mutants from more to less resistant
+twinstrand_merge_forplot$mutant=factor(twinstrand_merge_forplot$mutant,levels = as.character(unique(twinstrand_merge_forplot$mutant[order((twinstrand_merge_forplot$netgr_pred_mean),decreasing = T)])))
+
+
+netgr_corrected_compiled=read.csv("data/Twinstrand/twinstrand_microvariations_normalized.csv")
+# netgr_corrected_compiled=read.csv("../output/twinstrand_microvariations_normalized.csv")
+
+twinstrand_simple=twinstrand_merge_forplot%>%dplyr::select(count_type,mutant,experiment,Spike_in_freq,time_point,count,count_D0,time,sd_mean_pred,sd_ll_pred,sd_ul_pred)
+
+twinstrand_simple_merge=merge(twinstrand_simple,netgr_corrected_compiled,by = c("mutant","experiment"))
+
+# twinstrand_simple_merge=twinstrand_simple_merge%>%mutate(count_inferred=round(count_D0*exp(netgr_obs*time),0))
+twinstrand_simple_merge=twinstrand_simple_merge%>%mutate(count_inferred=count_D0*exp(netgr_obs*time))
+
+twinstrand_simple_merge_rearranged=twinstrand_simple_merge%>%dplyr::select(count_type,mutant,experiment,Spike_in_freq,time_point,time,count,correction_status,netgr_obs,count_inferred,sd_mean_pred,sd_ul_pred,sd_ll_pred)
+
+# write.csv(twinstrand_simple_merge_rearranged,"output/twinstrand_simple_merge_rearranged.csv")
+
+# ggplot(twinstrand_simple_merge%>%filter(experiment%in%c("M3","M5","M7"),count_type%in%"MAF"),aes(x=time/24,y=count_inferred,color=mutant))+facet_wrap(~mutant)+geom_point()+geom_line()+scale_y_continuous(trans="log10")
+
+###
+twinstrand_simple_errorbars=twinstrand_simple_merge%>%
+  group_by(count_type,mutant,correction_status,time_point,time)%>%
+  summarize(count_mean=mean(count),
+            count_sd=sd(count),
+            count_inferred_mean=mean(count_inferred),
+            count_inferred_sd=sd(count_inferred),
+            sd_mean_pred=mean(sd_mean_pred),
+            sd_ul_pred=mean(sd_ul_pred),
+            sd_ll_pred=mean(sd_ll_pred),
+            n=n())%>%
+  mutate(count_se=count_sd/sqrt(n),
+         count_ci=abs(qt(1-(.05/2),n-1)*count_se),
+         count_ci=case_when(count_mean-count_ci<=0~count_mean,
+                   TRUE~count_ci))
+# a=twinstrand_simple_errorbars%>%filter(mutant%in%"T315I")
+# a=twinstrand_merge_forplot%>%filter(mutant%in%"T315I")
+
+```
+
+
+
+
+Making growthrates dataframe for all experiment types
+```{r}
+
+twinstrand_maf_merge=twinstrand_simple_merge_rearranged%>%filter(count_type%in%"MAF_enrich2",correction_status%in%"netgr_obs")
+twinstrand_simple=twinstrand_maf_merge%>%filter(!is.na(mutant),!is.na(experiment))
+twinstrand_simple=twinstrand_simple%>%dplyr::select("mutant","experiment","Spike_in_freq","time_point","count")
+twinstrand_simple_cast=dcast(twinstrand_simple,mutant+experiment+Spike_in_freq~time_point,value.var="count")
+
+twinstrand_simple_cast$d0d3=log(twinstrand_simple_cast$D3/twinstrand_simple_cast$D0)/72
+twinstrand_simple_cast$d3d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D3)/72
+twinstrand_simple_cast$d0d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D0)/144
+#Check if ln(final/initial)/time is the correct formula. Also notice how I'm using days not hours
+twinstrand_simple_melt=melt(twinstrand_simple_cast[,-c(4:6)],id.vars=c("mutant","experiment","Spike_in_freq"),variable.name = "duration",value.name = "netgr_obs") #!!!!!!!!!!!value name should be drug effect. And drug effect should be drug_effect_obs i think. NO. I think this should be drug_effect_obs. Fixed 4/2/20
+twinstrand_simple_melt$drug_effect_obs=net_gr_wodrug-twinstrand_simple_melt$netgr_obs
+
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_formerge,"mutant")
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long,"mutant")
+
+ic50data_all_conc=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+ic50data_long=ic50data_all_conc%>%mutate(conc==conc_for_predictions)
+
+twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long%>%dplyr::filter(conc==conc_for_predictions),all.x = T)
+```
+
+
+
+```{r}
+getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
+####In the plots below, the dashed line is the mean prediction form the IC50s. Points are what we see in the spike-in experiment
+####MAF Raw
+label_positions <- twinstrand_simple_errorbars%>%filter(count_type%in%"MAF",correction_status%in%"netgr_obs") %>%
+  group_by(mutant) %>%
+  summarise(
+    x = 0,             # consistent left edge on log10 scale
+    y = 1,           # high enough for all panels
+    label = unique(mutant)
+  )
+
+ggplot(twinstrand_simple_errorbars%>%filter(count_type%in%"MAF",correction_status%in%"netgr_obs"),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype="dashed")+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  geom_text(data = label_positions, aes(x = x, y = y, label = label),
+            inherit.aes = FALSE, hjust = 0, vjust = 1, fontface = "bold", size = 3.5) +
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,nrow=3)+
+  scale_y_continuous(trans="log10",name="Mutant allele fraction",label = trans_format("log10", math_format(10^.x)))+
+  scale_x_continuous(name="Time (Days)",breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )
+
+# ggsave("output/spikeins_figures/maf_fig_raw_081525.pdf",width=6,height=3,units="in",useDingbats=F)
+# ggsave("pooled_maf_fig_raw_081520.pdf",width=4,height=4,units="in",useDingbats=F)
+
+####Total Mutant Raw
+ggplot(twinstrand_simple_errorbars%>%filter(count_type%in%"totalmutant",correction_status%in%"netgr_obs",!mutant%in%c("E355A")),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype="dashed")+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans="log10",name="Count")+
+  scale_x_continuous(name="Time (Days)",breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )
+
+# ggsave("pooled_growth_fig_raw_081520.pdf",width=4,height=4,units="in",useDingbats=F)
+
+
+####Total Mutant Corrected
+ggplot(twinstrand_simple_errorbars%>%filter(count_type%in%"totalmutant",correction_status%in%"netgr_obs_corrected",!mutant%in%c("E355A")),aes(x=time/24,y=count_inferred_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype="dashed")+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_inferred_mean-count_inferred_sd,ymax=count_inferred_mean+count_inferred_sd,alpha=.3))+
+  geom_point(colour="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans="log10",name="Count")+
+  scale_x_continuous(name="Time (Days)",breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )
+
+# ggsave("pooled_growth_fig_corrected_081520.pdf",width=4,height=4,units="in",useDingbats=F)
+
+####MAF WT Raw
+ggplot(twinstrand_simple_errorbars%>%filter(count_type%in%"MAF_enrich2",correction_status%in%"netgr_obs",!mutant%in%c("E355A")),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype="dashed")+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans="log10",name="Count",label = trans_format("log10", math_format(10^.x)))+
+  scale_x_continuous(name="Time (Days)",breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )
+# ggsave("pooled_maf_wt_fig_raw_081520.pdf",width=4,height=4,units="in",useDingbats=F)
+
+```
+
+```{r}
+
+####Total Mutant Raw
+label_positions <- twinstrand_simple_errorbars%>%filter(count_type%in%"totalmutant",correction_status%in%"netgr_obs") %>%
+  group_by(mutant) %>%
+  summarise(
+    x = 2.5,             # consistent left edge on log10 scale
+    y = 1000,           # high enough for all panels
+    label = unique(mutant)
+  )
+
+ggplot(twinstrand_simple_errorbars%>%filter(count_type%in%"totalmutant",correction_status%in%"netgr_obs"),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype="dashed")+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour="black",shape=21,size=2,aes(fill=factor(mutant)))+
+  geom_text(data = label_positions, aes(x = x, y = y, label = label),
+            inherit.aes = FALSE, hjust = 0, vjust = 1, fontface = "bold", size = 3.5) +
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,nrow=3)+
+  scale_y_continuous(trans="log10",name="Total mutant count",
+                     label = trans_format("log10", math_format(10^.x)))+
+  scale_x_continuous(name="Time (Days)",breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = "none",
+        axis.text.y = element_text(face = "bold",size=11),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )
+
+# ggsave("output/spikeins_figures/pooled_growth_fig_raw_061725.pdf",width=6,height=3,units="in",useDingbats=F)
+
+```
+
+
+
+```{r}
+###Grabbing growth rates of Enrich2 data
+twinstrand_simple_melt_merge$correction_status="enrich2"
+####################Just showing the improvement in error correction between the two replicates####################
+#How much do the standard deviations across replicates change in all replicates
+
+# a=netgr_corrected_compiled%>%filter(mutant%in%"F359I",correction_status%in%"netgr_obs_corrected")
+netgr_corrected_compiled=read.csv("data/Twinstrand/twinstrand_microvariations_normalized.csv")
+###Merging Enrich2 netgr and our netgrs with and without correction
+netgr_corrected_compiled=rbind(netgr_corrected_compiled%>%dplyr::select(-netgr_model_m3),twinstrand_simple_melt_merge%>%dplyr::select(mutant,experiment,correction_status,netgr_obs))
+
+netgr_corrected_errorbars=netgr_corrected_compiled%>%group_by(mutant,correction_status)%>%summarize(netgr_obs_mean=mean(netgr_obs),netgr_obs_sd=sd(netgr_obs))
+# netgr_corrected_errorbars=netgr_corrected_compiled%>%group_by(mutant)%>%summarize(netgr_obs_mean=mean(netgr_obs),netgr_obs_sd=sd(netgr_obs),netgr_obs_corrected_mean=mean(netgr_obs_corrected),netgr_obs_corrected_sd=sd(netgr_obs_corrected))
+#Factoring the mutants from more to less resistant
+netgr_corrected_errorbars$mutant=factor(netgr_corrected_errorbars$mutant,levels = as.character(unique(netgr_corrected_errorbars$mutant[order((netgr_corrected_errorbars$netgr_obs_mean),decreasing = T)])))
+netgr_corrected_compiled$mutant=factor(netgr_corrected_compiled$mutant,levels = as.character(unique(netgr_corrected_compiled$mutant[order((netgr_corrected_compiled$netgr_obs),decreasing = T)])))
+
+# netgr_corrected_errorbars_melt=melt(netgr_corrected_errorbars,id.vars = "mutant",measure.vars = c("netgr_obs_sd","netgr_obs_corrected_sd"),variable.name = "correction_status",value.name = "sd")
+
+netgr_corrected_errorbars=netgr_corrected_errorbars%>%
+  mutate(correction_status_name=case_when(correction_status%in%"netgr_obs"~"Raw",
+                                          correction_status%in%"netgr_obs_corrected"~"Corrected",
+                                          correction_status%in%"enrich2"~"WT Corrected"))
+netgr_corrected_errorbars$correction_status_name=factor(netgr_corrected_errorbars$correction_status_name,levels=c("WT Corrected","Raw","Corrected"))
+
+ggplot(netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA),aes(x=factor(correction_status_name),y=netgr_obs_sd))+
+  geom_col(color="black",aes(fill=mutant))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(name="Standard Deviations in growth rates",breaks=c(0,.005,.01),labels=c("0","0.005","0.01"))+
+  scale_fill_manual(values = getPalette(length(unique(netgr_corrected_errorbars$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y=element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(angle=20,hjust=.5,vjust=.5),
+        strip.text=element_blank())
+
+ggplot(netgr_corrected_errorbars%>%filter(!correction_status%in%"enrich2",!netgr_obs_sd%in%NA),aes(x=factor(correction_status_name),y=netgr_obs_sd))+
+  geom_col(color="black",aes(fill=mutant))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(name="Standard Deviations in growth rates",breaks=c(0,.005,.01),labels=c("0","0.005","0.01"))+
+  scale_fill_manual(values = getPalette(length(unique(netgr_corrected_errorbars$mutant))))+
+  theme(legend.position = "none",
+        # axis.text.y=element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(angle=20,hjust=.5,vjust=.5),
+        strip.text=element_blank())
+# ggsave("dosing_normalization_standard_deviations.pdf",width=4,height=4,units="in",useDingbats=F)
+
+ggplot(netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K"),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color="black",size=3,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = "none",
+        axis.text.y=element_blank(),
+        # axis.text.y=element_text(size=9),
+        axis.ticks.y=element_blank())+
+  scale_fill_manual(values=c("black","gray","black"))+scale_x_discrete(name=element_blank())+scale_y_continuous(name="Standard deviation in growth rates")
+# ggsave("dosing_normalization_stdevs_paired.pdf",width=3,height=3,units="in",useDingbats=F)
+
+ggplot(netgr_corrected_errorbars%>%filter(!correction_status%in%"enrich2",!netgr_obs_sd%in%NA,!mutant%in%"E255K"),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = "none",
+        # axis.text.y=element_text(size=9),
+        axis.text.y=element_blank())+
+  scale_fill_manual(values=c("black","gray"))+scale_x_discrete(name=element_blank())+scale_y_continuous(name="Standard deviation in growth rates")
+
+# ggsave("dosing_normalization_stdevs_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+#Conducting paired t test with the standard 2-sided alternative hypothesis
+raw=netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K",correction_status_name%in%"Raw")%>%ungroup()%>%dplyr::select(netgr_obs_sd)
+corrected=netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K",correction_status_name%in%"Corrected")%>%ungroup()%>%dplyr::select(netgr_obs_sd)
+
+t.test(x=raw[[1]],y=corrected[[1]],mu = 0,paired = T,conf.level = 0.95)
+
+
+
+ggplot(netgr_corrected_errorbars%>%filter(!correction_status%in%"netgr_obs",!netgr_obs_sd%in%NA,!mutant%in%"E255K"),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = "none",
+        # axis.text.y=element_text(size=9),
+        axis.text.y=element_blank())+
+  scale_fill_manual(values=c("black","gray"))+scale_x_discrete(name=element_blank())+scale_y_continuous(name="Standard deviation in growth rates")
+
+# ggsave("dosing_normalization_stdevs_paired_wt.pdf",width=2,height=2,units="in",useDingbats=F)
+
+#Conducting paired t test with the standard 2-sided alternative hypothesis
+raw=netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K",correction_status_name%in%"WT Corrected")%>%ungroup()%>%dplyr::select(netgr_obs_sd)
+
+corrected=netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K",correction_status_name%in%"Corrected")%>%ungroup()%>%dplyr::select(netgr_obs_sd)
+
+t.test(x=raw[[1]],y=corrected[[1]],mu = 0,paired = T,conf.level = 0.95)
+```
+
+
+Looking at accuracy of our method vs shendure
+```{r}
+#Calculating errors in observed datapoints.
+twinstrand_merge_forplot_means=twinstrand_merge_forplot%>%group_by(mutant,count_type,time_point)%>%summarize(time=mean(time),count_mean_obs=mean(count),count_sd_obs=sd(count),sd_mean_model=mean(sd_mean_pred),sd_ll_model=mean(sd_ll_pred),sd_ul_model=mean(sd_ul_pred))
+
+twinstrand_merge_forplot_means=twinstrand_merge_forplot_means%>%mutate(percent_error=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs))
+
+twinstrand_merge_forplot_means=twinstrand_merge_forplot_means%>%
+  mutate(count_type_name=case_when(count_type%in%"totalmutant"~"Total Count",
+                                   count_type%in%"MAF"~"Allele Frequency",
+                                   count_type%in%"MAF_enrich2"~"Allele Frequency WT Corrected"))
+twinstrand_merge_forplot_means$count_type_name=factor(twinstrand_merge_forplot_means$count_type_name,levels=c("Allele Frequency","Allele Frequency WT Corrected","Total Count"))
+
+ggplot(twinstrand_merge_forplot_means%>%filter(!count_type%in%"MAF_enrich2",time_point=="D6"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray"))+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+# ggsave("output/spikeins_figures/percenterror_d6.pdf",width=2,height=2,units="in",useDingbats=F)
+
+# ggsave("allelefrequencies_counts_D6_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%>%filter(!count_type%in%"MAF_enrich2",time_point=="D3"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray"))+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+# ggsave("output/spikeins_figures/percenterror_d3.pdf",width=2,height=2,units="in",useDingbats=F)
+
+# ggsave("allelefrequencies_counts_D3_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%>%filter(!count_type%in%"MAF",time_point=="D3"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray"))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none")
+# ggsave("allelefrequencies_wt_counts_D3_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%>%filter(!count_type%in%"MAF",time_point=="D6"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray"))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none")
+
+
+ggplot(twinstrand_merge_forplot_means%>%filter(time_point=="D3"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray","black"))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none")
+# ggsave("allelefrequencies_all_counts_D3_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+ggplot(twinstrand_merge_forplot_means%>%filter(time_point=="D6"),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color="black",size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name="Percent Error")+
+  cleanup+
+  scale_fill_manual(values=c("black","gray","black"))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none")
+# ggsave("allelefrequencies_all_counts_D6_paired.pdf",width=2,height=2,units="in",useDingbats=F)
+
+
+######Conducting paired t test with the standard 2-sided alternative hypothesis
+# MAF vs Total Mutant D3
+maf_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"MAF",time_point%in%"D3")%>%ungroup()%>%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"totalmutant",time_point%in%"D3")%>%ungroup()%>%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)
+
+# MAF vs Total Mutant D6
+maf_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"MAF",time_point%in%"D6")%>%ungroup()%>%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"totalmutant",time_point%in%"D6")%>%ungroup()%>%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)
+
+# MAF_wt_corrected vs Total Mutant D3
+maf_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"MAF_enrich2",time_point%in%"D3")%>%ungroup()%>%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"totalmutant",time_point%in%"D3")%>%ungroup()%>%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)
+
+# MAF_wt_corrected vs Total Mutant D6
+maf_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"MAF_enrich2",time_point%in%"D6")%>%ungroup()%>%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%>%filter(count_type%in%"totalmutant",time_point%in%"D6")%>%ungroup()%>%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)
+```
+

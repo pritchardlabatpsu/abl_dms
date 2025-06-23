@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Haider Inam" />
+
+<meta name="date" content="2025-06-22" />
+
+<title>twinstrand_spikeins_data_generation</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">abl_dms</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">twinstrand_spikeins_data_generation</h1>
+<h4 class="author">Haider Inam</h4>
+<h4 class="date">06/22/2025</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-06-22
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>abl_dms/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+1.6.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250621code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250621)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250621code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250621)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong253724b">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong> 253724b
+</a>
+</p>
+</div>
+<div id="strongRepositoryversionstrong253724b"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version 253724b.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.Rhistory
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+
+Untracked files:
+    Untracked:  analysis/Adding_Confidence_Intervals.Rmd
+    Untracked:  analysis/Homepage_Spike_In_Mutants.Rmd
+    Untracked:  analysis/dose_response_curve_fitting_with_errorbars.Rmd
+    Untracked:  analysis/spikeins_depthofcoverages.Rmd
+    Untracked:  analysis/twinstrand_spikeins_data_generation.Rmd
+    Untracked:  assets/
+    Untracked:  data/Twinstrand/
+    Untracked:  data/ic50data/
+    Untracked:  data/spikeins_maf_merge_formanuscript.csv
+    Untracked:  dosing_normalization_stdevs_paired.pdf
+    Untracked:  output/spikeins_figures/
+    Untracked:  output/twinstrand_maf_merge.csv
+    Untracked:  output/twinstrand_simple_melt_merge.csv
+
+Unstaged changes:
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<p>####Please change required directories this chunk if compiling in R
+rather than RmD</p>
+<pre class="r"><code>#Inputs:
+conc_for_predictions=0.8
+net_gr_wodrug=0.055
+#Reading required tables
+ic50data_all_conc=read.csv(&quot;data/ic50data/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F,row.names=1)
+# ic50data_all_conc=read.csv(&quot;../output/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F,row.names=1)
+ic50data_long=ic50data_all_conc%&gt;%filter(conc==conc_for_predictions)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
+
+twinstrand_maf=read.table(&quot;data/Twinstrand/prj00053-2019-12-02.deliverables/all.mut&quot;,sep=&quot;\t&quot;,header = T,stringsAsFactors = F)
+# twinstrand_maf=read.table(&quot;../data/Twinstrand/prj00053-2019-12-02.deliverables/all.mut&quot;,sep=&quot;\t&quot;,header = T,stringsAsFactors = F)
+
+names=read.table(&quot;data/Twinstrand/prj00053-2019-12-02.deliverables/manifest.tsv&quot;,sep=&quot;\t&quot;,header = T,stringsAsFactors = F)
+# names=read.table(&quot;../data/Twinstrand/prj00053-2019-12-02.deliverables/manifest.tsv&quot;,sep=&quot;\t&quot;,header = T,stringsAsFactors = F)</code></pre>
+<p>##Data Parsing– Duplex Sequencing Data ###Importing Twinstrand
+Mutation calls dataframe ####The twinstrand dataframe has sampleIDs. I’m
+merging this dataframe with a ‘names’ df that has details on what those
+sample IDs mean #####Here I also converted genomic coordinates and
+nucleotide changes to residue changes. I did all of our 20 spike-in
+mutants and others that I could find.<br />
+#####Other mutants included unique mutants found in the ENU data.
+i.e. A397P, F311L, F359C, H214R, H396P, K285N, L324R.<br />
+Ideally, in the future I will use Biomart or a similar package that can
+do this automatically. Ideally, I’ll convert the fasta/bamh files into
+maf files myself Got residues and positions from here: #<a
+href="https://www.rcsb.org/pdb/chromosome.do?v=hg38&amp;chromosome=chr9&amp;pos=130862947"
+class="uri">https://www.rcsb.org/pdb/chromosome.do?v=hg38&amp;chromosome=chr9&amp;pos=130862947</a>
+One thing that was tripping me up is that I was searching the database
+based on start position and not end-position This NCBI tool is also a
+good resource: <a
+href="https://www.ncbi.nlm.nih.gov/genome/gdv/browser/genome/?id=GCF_000001405.39"
+class="uri">https://www.ncbi.nlm.nih.gov/genome/gdv/browser/genome/?id=GCF_000001405.39</a>
+However, <em>this</em> is probably the best tool to go straight from
+genomic coordinate to protein change: <a
+href="https://www.ebi.ac.uk/thornton-srv/databases/cgi-bin/DisaStr/GetPage.pl?varmap=TRUE"
+class="uri">https://www.ebi.ac.uk/thornton-srv/databases/cgi-bin/DisaStr/GetPage.pl?varmap=TRUE</a></p>
+<pre class="r"><code>twinstrand_maf_merge=merge(twinstrand_maf,names,by.x = &quot;Sample&quot;,by.y = &quot;TwinstrandId&quot;)
+
+#Of the 20 mutants, I don&#39;t see F486, F359C
+twinstrand_maf_merge$mutant=0
+twinstrand_maf_merge=twinstrand_maf_merge%&gt;%
+  mutate(mutant=case_when(End==130872896 &amp; ALT==&quot;T&quot; ~ &quot;T315I&quot;,
+                          End==130862970 &amp; ALT==&quot;C&quot; ~ &quot;Y253H&quot;,
+                          End==130862977 &amp; ALT==&quot;T&quot; ~ &quot;E255V&quot;,
+                          End==130873004 &amp; ALT==&quot;C&quot; ~ &quot;M351T&quot;,
+                          End==130862962 &amp; ALT==&quot;A&quot; ~ &quot;G250E&quot;,
+                          End==130874969 &amp; ALT==&quot;C&quot; ~ &quot;H396P&quot;,
+                          End==130862955 &amp; ALT==&quot;G&quot; ~ &quot;L248V&quot;,
+                          End==130874969 &amp; ALT==&quot;G&quot; ~ &quot;H396R&quot;,
+                          End==130862971 &amp; ALT==&quot;T&quot; ~ &quot;Y253F&quot;,
+                          End==130862969 &amp; ALT==&quot;T&quot; ~ &quot;Q252H&quot;,
+                          End==130862976 &amp; ALT==&quot;A&quot; ~ &quot;E255K&quot;,
+                          End==130872901 &amp; ALT==&quot;C&quot; ~ &quot;F317L&quot;,
+                          End==130873027 &amp; ALT==&quot;C&quot; ~ &quot;F359L&quot;,
+                          End==130873027 &amp; ALT==&quot;G&quot; ~ &quot;F359V&quot;,
+                          End==130873027 &amp; ALT==&quot;A&quot; ~ &quot;F359I&quot;,
+                          End==130873016 &amp; ALT==&quot;G&quot; ~ &quot;E355G&quot;,
+                          End==130873016 &amp; ALT==&quot;C&quot; ~ &quot;E355A&quot;,
+                          End==130878519 &amp; ALT==&quot;A&quot; ~ &quot;E459K&quot;,
+                          End==130872911 &amp; ALT==&quot;G&quot; ~ &quot;Y320C&quot;,
+                          End==130872133 &amp; ALT==&quot;G&quot; ~ &quot;D276G&quot;,
+                          End==130862969 &amp; ALT==&quot;C&quot; ~ &quot;Q252Hsyn&quot;, ###The mutants below were found only in the ENU mutagenized pools
+                          End==130872885 &amp; ALT==&quot;G&quot; ~ &quot;F311L&quot;,
+                          End==130873028 &amp; ALT==&quot;G&quot; ~ &quot;F359C&quot;,
+                          End==130874971 &amp; ALT==&quot;C&quot; ~ &quot;A397P&quot;,
+                          End==130862854 &amp; ALT==&quot;G&quot; ~ &quot;H214R&quot;,
+                          End==130872146 &amp; ALT==&quot;C&quot; ~ &quot;V280syn&quot;,
+                          End==130872161 &amp; ALT==&quot;T&quot; ~ &quot;K285N&quot;,
+                          End==130872923 &amp; ALT==&quot;G&quot; ~ &quot;L324R&quot;,
+                          End==130872983 &amp; ALT==&quot;T&quot; ~ &quot;A344D&quot;)) #Not observed on D6. Dropped out! Note that D276G looked like it was contaminant DNA because it was barely at detection threshold at D0
+
+#Ordering mutants by level of drug resistance. Note that since we don&#39;t know the level of DR for the unique ENU mutants, I have left them out here.
+twinstrand_maf_merge$mutant=factor(twinstrand_maf_merge$mutant,levels = c(&quot;T315I&quot;,&quot;Y253H&quot;,&quot;E255V&quot;,&quot;M351T&quot;,&quot;G250E&quot;,&quot;H396P&quot;,&quot;L248V&quot;,&quot;H396R&quot;,&quot;Y253F&quot;,&quot;Q252H&quot;,&quot;E255K&quot;,&quot;F317L&quot;,&quot;F359L&quot;,&quot;F359V&quot;,&quot;F359I&quot;,&quot;E355G&quot;,&quot;E355A&quot;,&quot;E459K&quot;,&quot;Y320C&quot;,&quot;D276G&quot;,&quot;F311L&quot;,&quot;F359C&quot;,&quot;A397P&quot;,&quot;H214R&quot;,&quot;K285N&quot;,&quot;L324R&quot;,&quot;A344D&quot;))
+
+# twinstrand_maf_merge=twinstrand_maf_merge%&gt;%
+#   mutate(mutant=case_when(End==130872896 &amp; ALT==&quot;T&quot; ~ &quot;T315I&quot;,
+#                           End==130862970 &amp; ALT==&quot;C&quot; ~ &quot;Y253H&quot;,
+#                           End==130862977 &amp; ALT==&quot;T&quot; ~ &quot;E255V&quot;,
+#                           End==130873004 &amp; ALT==&quot;C&quot; ~ &quot;M351T&quot;,
+#                           End==130862962 &amp; ALT==&quot;A&quot; ~ &quot;G250E&quot;,
+#                           End==130874969 &amp; ALT==&quot;C&quot; ~ &quot;H396P&quot;,
+#                           End==130862955 &amp; ALT==&quot;G&quot; ~ &quot;L248V&quot;,
+#                           End==130874969 &amp; ALT==&quot;G&quot; ~ &quot;H396R&quot;,
+#                           End==130862971 &amp; ALT==&quot;T&quot; ~ &quot;Y253F&quot;,
+#                           End==130862969 &amp; ALT==&quot;T&quot; ~ &quot;Q252H&quot;,
+#                           End==130862976 &amp; ALT==&quot;A&quot; ~ &quot;E255K&quot;,
+#                           End==130872901 &amp; ALT==&quot;C&quot; ~ &quot;F317L&quot;,
+#                           End==130873027 &amp; ALT==&quot;C&quot; ~ &quot;F359L&quot;,
+#                           End==130873027 &amp; ALT==&quot;G&quot; ~ &quot;F359V&quot;,
+#                           End==130873027 &amp; ALT==&quot;A&quot; ~ &quot;F359I&quot;,
+#                           End==130873016 &amp; ALT==&quot;G&quot; ~ &quot;E355G&quot;,
+#                           End==130873016 &amp; ALT==&quot;C&quot; ~ &quot;E355A&quot;,
+#                           End==130878519 &amp; ALT==&quot;A&quot; ~ &quot;E459K&quot;,
+#                           End==130872911 &amp; ALT==&quot;G&quot; ~ &quot;Y320C&quot;,
+#                           End==130872133 &amp; ALT==&quot;G&quot; ~ &quot;D276G&quot;)) 
+
+
+#Adding columns for experiment names, experiment frequencies, and time
+##############Experiment Name#################
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;M3D0&quot;,&quot;M3D3&quot;,&quot;M3D6&quot;)]=&quot;M3&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;M4D0&quot;,&quot;M4D3&quot;,&quot;M4D6&quot;)]=&quot;M4&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;M5D0&quot;,&quot;M5D3&quot;,&quot;M5D6&quot;)]=&quot;M5&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;M6D0&quot;,&quot;M6D3&quot;,&quot;M6D6&quot;)]=&quot;M6&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;M7D0&quot;,&quot;M7D3&quot;,&quot;M7D6&quot;)]=&quot;M7&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;Enu3_D3&quot;,&quot;Enu3_D6&quot;)]=&quot;Enu_3&quot;
+twinstrand_maf_merge$experiment[twinstrand_maf_merge$CustomerName%in%c(&quot;Enu4_D0&quot;,&quot;Enu4_D3&quot;,&quot;Enu4_D6&quot;)]=&quot;Enu_4&quot;
+##############Spike in frequency#################
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;M3D0&quot;,&quot;M3D3&quot;,&quot;M3D6&quot;)]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;M4D0&quot;,&quot;M4D3&quot;,&quot;M4D6&quot;)]=5000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;M5D0&quot;,&quot;M5D3&quot;,&quot;M5D6&quot;)]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;M6D0&quot;,&quot;M6D3&quot;,&quot;M6D6&quot;)]=5000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;M7D0&quot;,&quot;M7D3&quot;,&quot;M7D6&quot;)]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;Enu3_D3&quot;,&quot;Enu3_D6&quot;)]=1000
+twinstrand_maf_merge$Spike_in_freq[twinstrand_maf_merge$CustomerName%in%c(&quot;Enu4_D0&quot;,&quot;Enu4_D3&quot;,&quot;Enu4_D6&quot;)]=1000
+##############Time point#################
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c(&quot;M3D0&quot;,&quot;M6D0&quot;,&quot;Enu4_D0&quot;)]=&quot;D0&quot;
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c(&quot;M3D3&quot;,&quot;M4D3&quot;,&quot;M5D3&quot;,&quot;M6D3&quot;,&quot;M7D3&quot;,&quot;Enu3_D3&quot;,&quot;Enu4_D3&quot;)]=&quot;D3&quot;
+twinstrand_maf_merge$time_point[twinstrand_maf_merge$CustomerName%in%c(&quot;M3D6&quot;,&quot;M4D6&quot;,&quot;M5D6&quot;,&quot;M6D6&quot;,&quot;M7D6&quot;,&quot;Enu3_D6&quot;,&quot;Enu4_D6&quot;)]=&quot;D6&quot;</code></pre>
+<p>####Converting MAFs of all mutants to counts by using the flow
+cytometry count data for each experiment.</p>
+<pre class="r"><code>#To start off converting MAFs into &#39;Total number of mutant cell&#39; numbers, we will use only mixing experiment 3 as an example.
+##########M3##########
+twinstrand_maf_merge$totalcells=0
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=493000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=1295000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=13600000
+##########M5##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M5&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=588000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M5&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=1299000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M5&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=11294000
+##########M7##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M7&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=611000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M7&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=857000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M7&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=14568000
+##########M4##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=405000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=980000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=1959000
+##########M6##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M6&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=510000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M6&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=798000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;M6&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=5457000
+##########ENU3##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=166000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=1282000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_3&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=97200000
+##########ENU4##########
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D0&quot;]=316000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D3&quot;]=1264000
+twinstrand_maf_merge$totalcells[twinstrand_maf_merge$experiment==&quot;Enu_4&quot;&amp;twinstrand_maf_merge$time_point==&quot;D6&quot;]=40000000
+
+########Converting MAF to Total Count##########
+twinstrand_maf_merge=twinstrand_maf_merge%&gt;%mutate(totalmutant=AltDepth/Depth*totalcells)</code></pre>
+<p>####Deriving growthrates from twinstrand_maf_merge</p>
+<pre class="r"><code>detach(&quot;package:dplyr&quot;, character.only = TRUE)
+library(&quot;dplyr&quot;, character.only = TRUE)</code></pre>
+<pre><code>Warning: package &#39;dplyr&#39; was built under R version 4.0.2</code></pre>
+<pre><code>
+Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:MASS&#39;:
+
+    select</code></pre>
+<pre><code>The following objects are masked from &#39;package:stats&#39;:
+
+    filter, lag</code></pre>
+<pre><code>The following objects are masked from &#39;package:base&#39;:
+
+    intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>twinstrand_simple=twinstrand_maf_merge%&gt;%filter(tki_resistant_mutation==&quot;True&quot;,!is.na(mutant),!is.na(experiment))
+twinstrand_simple=twinstrand_simple%&gt;%dplyr::select(&quot;mutant&quot;,&quot;experiment&quot;,&quot;Spike_in_freq&quot;,&quot;time_point&quot;,&quot;totalmutant&quot;)
+twinstrand_simple_cast=dcast(twinstrand_simple,mutant+experiment+Spike_in_freq~time_point,value.var=&quot;totalmutant&quot;)
+
+twinstrand_simple_cast$d0d3=log(twinstrand_simple_cast$D3/twinstrand_simple_cast$D0)/72
+twinstrand_simple_cast$d3d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D3)/72
+twinstrand_simple_cast$d0d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D0)/144
+#Check if ln(final/initial)/time is the correct formula. Also notice how I&#39;m using days not hours
+twinstrand_simple_melt=melt(twinstrand_simple_cast[,-c(4:6)],id.vars=c(&quot;mutant&quot;,&quot;experiment&quot;,&quot;Spike_in_freq&quot;),variable.name = &quot;duration&quot;,value.name = &quot;netgr_obs&quot;) #!!!!!!!!!!!value name should be drug effect. And drug effect should be drug_effect_obs i think. NO. I think this should be drug_effect_obs. Fixed 4/2/20
+twinstrand_simple_melt$drug_effect_obs=net_gr_wodrug-twinstrand_simple_melt$netgr_obs
+
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_formerge,&quot;mutant&quot;)
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long,&quot;mutant&quot;)
+twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long%&gt;%filter(conc==conc_for_predictions),all.x = T)</code></pre>
+<p>####Saving Dataframes</p>
+<pre class="r"><code>head(twinstrand_maf_merge)</code></pre>
+<pre><code>    Sample Chromosome     Start       End VariationType   REF ALT AltDepth
+1 dna00762       chr9 130862900 130862905         indel CCCAA   C        2
+2 dna00762       chr9 130872157 130872159         indel    GA   G        1
+3 dna00762       chr9 130872199 130872200       snv/snp     G   A    20665
+4 dna00762       chr9 130872205 130872206       snv/snp     G   A        1
+5 dna00762       chr9 130872205 130872206       snv/snp     G   T        1
+6 dna00762       chr9 130872938 130872939       snv/snp     G   C        2
+  Depth tki_resistant_mutation tki_resistant_mutation_evidence CustomerName
+1 27896                  False                                   BCR-Abl Wt
+2 23301                  False                                   BCR-Abl Wt
+3 20665                  False                                   BCR-Abl Wt
+4 20982                  False                                   BCR-Abl Wt
+5 20982                  False                                   BCR-Abl Wt
+6 34493                  False                                   BCR-Abl Wt
+                            Annotation mutant experiment Spike_in_freq
+1 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+2 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+3 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+4 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+5 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+6 Wild type BCR-Abl Ba/F3- no spike in   &lt;NA&gt;       &lt;NA&gt;            NA
+  time_point totalcells totalmutant
+1       &lt;NA&gt;          0           0
+2       &lt;NA&gt;          0           0
+3       &lt;NA&gt;          0           0
+4       &lt;NA&gt;          0           0
+5       &lt;NA&gt;          0           0
+6       &lt;NA&gt;          0           0</code></pre>
+<pre class="r"><code>head(twinstrand_simple_melt_merge)</code></pre>
+<pre><code>  mutant experiment Spike_in_freq duration  netgr_obs drug_effect_obs conc
+1  T315I         M4          5000     d0d3         NA              NA  0.8
+2  T315I         M5          1000     d0d3         NA              NA  0.8
+3  T315I         M3          1000     d0d3 0.06165569   -0.0066556918  0.8
+4  T315I      Enu_4          1000     d3d6 0.05375515    0.0012448498  0.8
+5  T315I         M3          1000     d3d6 0.05565321   -0.0006532113  0.8
+6  T315I         M4          5000     d3d6 0.05776078   -0.0027607817  0.8
+    y_model drug_effect netgr_pred
+1 0.8162648 0.002819673 0.05218033
+2 0.8162648 0.002819673 0.05218033
+3 0.8162648 0.002819673 0.05218033
+4 0.8162648 0.002819673 0.05218033
+5 0.8162648 0.002819673 0.05218033
+6 0.8162648 0.002819673 0.05218033</code></pre>
+<pre class="r"><code>write.csv(twinstrand_maf_merge,&quot;output/twinstrand_maf_merge.csv&quot;)
+write.csv(twinstrand_simple_melt_merge,&quot;output/twinstrand_simple_melt_merge.csv&quot;)</code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.0.0 (2020-04-24)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS  10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] parallel  grid      stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+ [1] dplyr_1.0.6         drc_3.0-1           MASS_7.3-55        
+ [4] BiocManager_1.30.10 plotly_4.9.2.1      ggsignif_0.6.0     
+ [7] devtools_2.3.0      usethis_1.6.1       RColorBrewer_1.1-2 
+[10] reshape2_1.4.4      ggplot2_3.3.3       doParallel_1.0.15  
+[13] iterators_1.0.12    foreach_1.5.0       VennDiagram_1.6.20 
+[16] futile.logger_1.4.3 workflowr_1.6.2     tictoc_1.0         
+[19] knitr_1.28         
+
+loaded via a namespace (and not attached):
+ [1] fs_1.4.1             httr_1.4.2           rprojroot_1.3-2     
+ [4] tools_4.0.0          backports_1.1.7      bslib_0.3.1         
+ [7] utf8_1.1.4           R6_2.4.1             DBI_1.1.0           
+[10] lazyeval_0.2.2       colorspace_1.4-1     withr_2.4.2         
+[13] tidyselect_1.1.0     prettyunits_1.1.1    processx_3.5.2      
+[16] curl_4.3             compiler_4.0.0       git2r_0.27.1        
+[19] cli_2.5.0            formatR_1.7          sandwich_2.5-1      
+[22] desc_1.2.0           sass_0.4.1           scales_1.1.1        
+[25] mvtnorm_1.1-0        callr_3.7.0          stringr_1.4.0       
+[28] digest_0.6.25        foreign_0.8-78       rmarkdown_2.14      
+[31] rio_0.5.16           pkgconfig_2.0.3      htmltools_0.5.2     
+[34] sessioninfo_1.1.1    plotrix_3.8-1        fastmap_1.1.0       
+[37] readxl_1.3.1         htmlwidgets_1.5.1    rlang_0.4.11        
+[40] jquerylib_0.1.4      generics_0.0.2       zoo_1.8-8           
+[43] jsonlite_1.7.2       gtools_3.8.2         zip_2.0.4           
+[46] car_3.0-7            magrittr_2.0.1       Matrix_1.2-18       
+[49] Rcpp_1.0.4.6         munsell_0.5.0        fansi_0.4.1         
+[52] abind_1.4-5          lifecycle_1.0.0      multcomp_1.4-13     
+[55] stringi_1.7.5        yaml_2.2.1           carData_3.0-3       
+[58] pkgbuild_1.0.8       plyr_1.8.6           promises_1.1.0      
+[61] forcats_0.5.1        crayon_1.4.1         lattice_0.20-41     
+[64] splines_4.0.0        haven_2.4.1          hms_1.1.0           
+[67] ps_1.3.3             pillar_1.6.1         codetools_0.2-16    
+[70] pkgload_1.0.2        futile.options_1.0.1 glue_1.4.1          
+[73] evaluate_0.14        lambda.r_1.2.4       data.table_1.14.8   
+[76] remotes_2.1.1        vctrs_0.3.8          httpuv_1.5.2        
+[79] cellranger_1.1.0     testthat_2.3.2       gtable_0.3.0        
+[82] purrr_0.3.4          tidyr_1.1.3          assertthat_0.2.1    
+[85] xfun_0.31            openxlsx_4.1.5       later_1.0.0         
+[88] survival_3.1-12      viridisLite_0.3.0    tibble_3.1.2        
+[91] memoise_1.1.0        TH.data_1.0-10       ellipsis_0.3.2      </code></pre>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

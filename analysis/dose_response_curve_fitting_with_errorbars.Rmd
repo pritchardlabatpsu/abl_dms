@@ -1,0 +1,214 @@
+---
+title: "dose_response_curve_fitting_with_errorbars"
+author: "Haider Inam"
+date: "6/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+Two ways of calculating errorbars for IC50 dose response data:  
+Method 1. Directly calculate the mean, SD, and 95% CI of the 8 or so replicates for each mutant at each of the 10 doses for BCRABL Imatinib IC50s. One Caveat here: You can calculate the errorbars this way but the data still fits better if the confidence intervals are around a mean that is not the average of the replicates but the fit from the 4 parameter logistic. Sounds confusing, yes.
+```{r}
+library(knitr)
+library(tictoc)
+library(workflowr)
+library(VennDiagram)
+library(dplyr)
+library(foreach)
+library(doParallel)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(devtools)
+library(ggsignif)
+library(plotly)
+library(BiocManager)
+library(drc)
+#rm(list=ls())
+net_gr_wodrug=0.055
+conc_for_predictions=0.8
+
+ic50data_all=read.csv("data/ic50data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+# ic50data_all=read.csv("../data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+
+ic50data_all=ic50data_all%>%filter(species%in%c("WT","V299L_H","E355A","D276G_maxi","H396R","F317L","F359I","E459K","G250E","F359C","F359V","M351T","L248V","E355G_maxi","Q252H_maxi","Y253F","F486S_maxi","H396P_maxi","E255K","Y253H","T315I","E255V"))
+
+
+ic50data_all=ic50data_all%>%
+  mutate(species=case_when(species=="F486S_maxi"~"F486S",
+                          species=="H396P_maxi"~"H396P",
+                          species=="Q252H_maxi"~"Q252H",
+                          species=="E355G_maxi"~"E355G",
+                          species=="D276G_maxi"~"D276G",
+                          species=="V299L_H" ~ "V299L",
+                          TRUE ~as.character(species)))
+
+ic50data_long=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+# ic50data_long=read.csv("../output/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
+
+
+########################Getting Confidence Intervals########################
+#will just start of with one dose at 1.25uM
+ic50data_all2=data.frame(cbind(ic50data_all$species,ic50data_all$X1.25))
+# ic50data_all2=data.frame(cbind(ic50data_all$species,ic50data_all$X0.625))
+colnames(ic50data_all2)=c("species","dose_response")
+ic50data_all2$dose_response=as.numeric(as.character(ic50data_all2$dose_response))
+
+
+#Calculating confidence limit and standard deviations
+ic50data_all_sum=ic50data_all2%>%group_by(species)%>%summarise(dr_mean=mean(dose_response),dr_ci_ul=dr_mean+1.96*sd(dose_response)*sqrt(n()),dr_ci_ll=dr_mean-1.96*sd(dose_response)*sqrt(n()),dr_sd_ul=dr_mean+sd(dose_response),dr_sd_ll=dr_mean-sd(dose_response))
+
+#Since some mutants have 0% alive at the lower limit of the confidence interval, I'm converting those to 0
+ic50data_all_sum=ic50data_all_sum%>%mutate(dr_ci_ll=case_when(dr_ci_ll<=0~0,
+                                                              TRUE~dr_ci_ll),
+                                           dr_sd_ll=case_when(dr_sd_ll<=0~0,
+                                                              TRUE~dr_sd_ll))
+
+ic50data_all_sum=merge(ic50data_all_sum,ic50data_long%>%filter(conc==conc_for_predictions)%>%dplyr::select(mutant,netgr_pred_model=netgr_pred),by.x="species",by.y="mutant")
+#Dose response here is essentially y. aka %alive
+#Converting y to drug effect on growth rate aka alpha value
+ic50data_all_sum=ic50data_all_sum%>%
+  mutate(netgr_pred_ci_ul=net_gr_wodrug-(-log(dr_ci_ul)/72),
+         netgr_pred_mean=net_gr_wodrug-(-log(dr_mean)/72), #removing this because we want netgr_mean to be derived from the logistic fit
+         netgr_pred_ci_ll=net_gr_wodrug-(-log(dr_ci_ll)/72),
+         netgr_pred_sd_ul=net_gr_wodrug-(-log(dr_sd_ul)/72),
+         netgr_pred_sd_ll=net_gr_wodrug-(-log(dr_sd_ll)/72),
+         netgr_pred_model_sd_ul=netgr_pred_model+(netgr_pred_mean-netgr_pred_sd_ll),
+         netgr_pred_model_sd_ll=netgr_pred_model-(netgr_pred_mean-netgr_pred_sd_ll))
+
+####Since the more sensitive mutants were appearing to grow fast if I take the raw IC50 predicted growth rates, I am going to instead take the predicted growth rates from the IC50s that were fit on a 4-parameter logistic. To get standard deviations, I will just add/subtract the standard deviations from the regular plots.
+
+# write.csv(ic50data_all_sum,"data/ic50data_all_confidence_intervals_raw_data.csv")
+
+####Need to look into why method 1 gives growth rates with CIs that are evenly spread from the mean. I think this is because of this peculiar calculation netgr_pred_model_sd_ul=netgr_pred_model+(netgr_pred_mean-netgr_pred_sd_ll)
+```
+
+
+
+
+Method 2. Do a 4 parameter logistic fit on all the replicates individually. Then calculate the mean, standard deviations, and CIs off of the multiple logistic fits for each of the ~8ish replicates for each mutant.
+```{r}
+# rm(list=ls())
+twinstrand_maf_merge=read.csv("output/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F)
+# twinstrand_maf_merge=read.csv("../output/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F)
+ic50data_all=read.csv("data/ic50data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+# ic50data_all=read.csv("../data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+net_gr_wodrug=0.055
+conc_for_predictions=0.8
+
+ic50data_all=ic50data_all%>%filter(species%in%c("WT","V299L_H","E355A","D276G_maxi","H396R","F317L","F359I","E459K","G250E","F359C","F359V","M351T","L248V","E355G_maxi","Q252H_maxi","Y253F","F486S_maxi","H396P_maxi","E255K","Y253H","T315I","E255V"))
+
+
+ic50data_all=ic50data_all%>%
+  mutate(species=case_when(species=="F486S_maxi"~"F486S",
+                          species=="H396P_maxi"~"H396P",
+                          species=="Q252H_maxi"~"Q252H",
+                          species=="E355G_maxi"~"E355G",
+                          species=="D276G_maxi"~"D276G",
+                          species=="V299L_H" ~ "V299L",
+                          TRUE ~as.character(species)))
+
+#Looking at how many replicates are there for each mutant in the data
+nreplicates=ic50data_all%>%group_by(species)%>%arrange(species)%>%summarize(replicates=n())
+
+#basically adding an identifier for replicate number.
+ic50data_all=ic50data_all%>%arrange(species)%>%mutate(replicate=c(1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:8,1:20,1:6,1:6))
+
+ic50data_all_melt=melt(ic50data_all,id.vars = c("species","replicate"),measure.vars =c("X10","X5","X2.5","X1.25","X0.625","X0.3125","X0.15625","X0.078125","X0.0390625","X0.01953125") ,variable.name = "concentration",value.name = "y")
+ic50data_all_melt$concentration=as.character(ic50data_all_melt$concentration)
+
+ic50data_all_melt=ic50data_all_melt%>%rowwise()%>%mutate(concentration=as.numeric(strsplit(concentration,"X")[[1]][2]))
+
+# a=ic50data_all_melt%>%filter(species=="T315I",replicate==1)
+# ic50.ll4=drm(y~concentration,data=a,fct=LL.3(fixed=c(NA,1,NA)))
+# b=coef(ic50.ll4)[1]
+#   c=0
+#   d=1
+#   e=coef(ic50.ll4)[2]
+
+
+########################Getting Confidence Intervals########################
+###Calculating 4 parameter fits for all datapoints for a given mutant
+#Changing 'species' column to 'mutant' column
+ic50data_all_melt=ic50data_all_melt%>%mutate(mutant=species)%>%dplyr::select(!species)
+
+ic50data_long=ic50data_all_melt%>%mutate(conc=concentration)
+conc.list=c(10,5,2.5,1.25,.625,.3125,.15625,.078125,.0390625,.01953125)
+ic50.model.pred=data.frame(matrix(NA,nrow=length(conc.list)*length(ic50data_all$species),ncol=0))
+
+for(species_curr in sort(unique(ic50data_long$mutant))){
+  # species_curr="T315I"
+  ic50data_species_specific=ic50data_long%>%filter(mutant==species_curr)
+  ic50.model.pred.species.specific=data.frame(matrix(NA,nrow=length(conc.list)*length(unique(ic50data_long$mutant)),ncol=0))
+  for(rep_curr in sort(unique(ic50data_species_specific$replicate))){
+  # rep_curr="1"
+  ic50data_species_rep_specific=ic50data_species_specific%>%filter(mutant==species_curr,replicate==rep_curr)
+  #Next: Appproximating Response from dose (inverse of the prediction)
+  ic50.ll4=drm(y~conc,data=ic50data_species_rep_specific,fct=LL.3(fixed=c(NA,1,NA)))
+  #Extracting coefficients
+  b=coef(ic50.ll4)[1]
+  c=0
+  d=1
+  e=coef(ic50.ll4)[2]
+  # rm(ic50.model.pred.species.rep.specific)
+  ic50.model.pred.species.rep.specific=data.frame(matrix(NA,nrow=length(conc.list),ncol=0))
+  i=1
+  ic50.model.pred.species.rep.specific$mutant=species_curr
+  ic50.model.pred.species.rep.specific$replicate=rep_curr
+  #For loop for the unique concentrations
+  for(conc.curr in conc.list){
+    ic50.model.pred.species.rep.specific$conc[i]=conc.curr
+    ic50.model.pred.species.rep.specific$y_model[i]=c+((d-c)/(1+exp(b*(log(conc.curr)-log(e)))))
+    i=i+1
+  }
+  ic50.model.pred.species.specific=rbind(ic50.model.pred.species.specific,ic50.model.pred.species.rep.specific)
+}
+  ic50.model.pred=rbind(ic50.model.pred,ic50.model.pred.species.specific)
+}
+
+###Plotting modeled and raw dose responses for T315I and Y253H 
+plotly=ggplot(ic50.model.pred,aes(x=conc,y=y_model,color=factor(replicate)))+geom_point()+geom_line()+scale_x_continuous(trans="log10")+facet_wrap(~mutant)
+ggplotly(plotly)
+
+plotly=ggplot(ic50.model.pred%>%filter(mutant=="T315I"),aes(x=conc,y=y_model,color=factor(replicate)))+geom_point()+geom_line()+scale_x_continuous(trans="log10")
+ggplotly(plotly)
+
+plotly=ggplot(ic50data_long%>%filter(mutant=="T315I"),aes(x=conc,y=y,color=factor(replicate)))+geom_point()+geom_line()+scale_x_continuous(trans="log10")
+ggplotly(plotly)
+
+plotly=ggplot(ic50.model.pred%>%filter(mutant=="Y253H"),aes(x=conc,y=y_model,color=factor(replicate)))+geom_point()+geom_line()+scale_x_continuous(trans="log10")
+ggplotly(plotly)
+
+plotly=ggplot(ic50data_long%>%filter(mutant=="Y253H"),aes(x=conc,y=y,color=factor(replicate)))+geom_point()+geom_line()+scale_x_continuous(trans="log10")
+ggplotly(plotly)
+
+ic50data_all2=ic50.model.pred%>%filter(conc==1.25)%>%dplyr::select(species=mutant,y_model)
+    #will just start of with one dose at 1.25uM
+    # ic50data_all2=data.frame(cbind(ic50data_all$species,ic50data_all$X1.25))
+    # ic50data_all2=data.frame(cbind(ic50data_all$species,ic50data_all$X0.625))
+    colnames(ic50data_all2)=c("species","dose_response")
+    ic50data_all2$dose_response=as.numeric(as.character(ic50data_all2$dose_response))
+
+
+    #Calculating confidence limit and standard deviations
+    ic50data_all_sum=ic50data_all2%>%group_by(species)%>%summarise(dr_mean=mean(dose_response),dr_ci_ul=dr_mean+1.96*sd(dose_response)*sqrt(n()),dr_ci_ll=dr_mean-1.96*sd(dose_response)*sqrt(n()),dr_sd_ul=dr_mean+sd(dose_response),dr_sd_ll=dr_mean-sd(dose_response))
+  
+
+#Since some mutants have 0% alive at the lower limit of the confidence interval, I'm converting those to 0
+ic50data_all_sum=ic50data_all_sum%>%mutate(dr_ci_ll=case_when(dr_ci_ll<=0~0,
+                                                              TRUE~dr_ci_ll),
+                                           dr_sd_ll=case_when(dr_sd_ll<=0~0,
+                                                              TRUE~dr_sd_ll))
+
+#Dose response here is essentially y. aka %alive
+#Converting y to drug effect on growth rate aka alpha value
+ic50data_all_sum=ic50data_all_sum%>%mutate(netgr_pred_mean=net_gr_wodrug-(-log(dr_mean)/72),netgr_pred_ci_ul=net_gr_wodrug-(-log(dr_ci_ul)/72),netgr_pred_ci_ll=net_gr_wodrug-(-log(dr_ci_ll)/72),netgr_pred_sd_ul=net_gr_wodrug-(-log(dr_sd_ul)/72),netgr_pred_sd_ll=net_gr_wodrug-(-log(dr_sd_ll)/72))
+
+
+# write.csv(ic50data_all_sum,"data/ic50data_all_confidence_intervals_individual_logistic_fits.csv")
+
+```

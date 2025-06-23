@@ -8,4 +8,166 @@ editor_options:
   chunk_output_type: console
 ---
 
-Welcome to my research website.
+# **BCR ABL Deep Mutational Scan**  
+
+* Click [here](homepage_Spike_In_Mutants.html) to view our spike-in experiments. These are analyses of the growth of 17 mutant standards under imatinib at low allele frequencies.  
+<a href="Homepage_Spike_In_Mutants.html">
+    <img src="assets/spikeins_figure.png" width="300" height="378" alt="Click to go to spike-in mutant analyses" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+    
+        /* Styling for centered buttons */
+        .centered-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Hover effect for buttons */
+        .centered-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Centering container for text and buttons */
+        .center-container {
+            text-align: center; /* Center everything inside */
+        }
+</style>
+
+
+
+
+
+* Click [here](Homepage_Modeling.html) to view various computational improvements including: logistic regressions of dose-response curves, predicting the effect on fitness of dosing errors.  
+<a href="Homepage_Modeling.html">
+    <img src="assets/enrichment_simulations_3mutants.png" width="300" height="232" alt="Click to go to spike-in mutant analyses" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+</style>
+
+
+
+
+
+* Click [here](homepage_dms_screens.html) to view DMS analyses.  
+<a href="homepage_dms_screens.html">
+    <img src="assets/imatinib_heatmap.png" width="600" height="221" alt="Click to go to dms analyses" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+</style>
+
+
+* Click [here](Homepage_variant_interpretation.html) view analyses interpreting variants of uncertain drug resistance in ABL.  
+<a href="Homepage_variant_interpretation.html">
+    <img src="assets/vudrs.png" width="300" height="227" alt="Click to go to variant interpretation analyses" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+</style>
+
+
+* Click [here](homepage_base_editing.html) to view base editing analyses.  
+<a href="homepage_base_editing.html">
+    <img src="assets/abl_baseeditor-analysis-v2.png" width="300" height="320" alt="Click to select base editing analysis" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+</style>
+
+
+* Click [here](dose_escalation_verification.html) to view our validation IC50s with hits from the DMS screens.  
+  
+* Click [here](ErrorRates_Tileseq_NGS_Duplex_SSCS.html) to view our analyses on error rates in Tileseq vs NGS vs Duplex sequencing.  
+<img src="assets/tileseq_errorrates.png" width="300" height="300"  alt="">  
+  
+* Click [here](Adding_Confidence_Intervals.html) to view our analyses on the error rates in spike-in data when using LFCs vs Net growth rates.  
+<img src="assets/percent_error.png" width="400" height="209"  alt="">  
+
+
+
+
+#### Click [here](https://github.com/haiderinam/duplex_sequencing_screen) to be redirected to the github page that contains all the data and analysis rmd files.  
+
+
+What is in each directory:  
+  
+* __Data__: contains data downloaded prior to analyses.  
+* __Output__: contains data that the code makes  
+* __Analysis__: contains your Rmarkdown files with the code.  
+* __Docs__: contain the html output from the Rmd files in the analysis directory.  
+* __Code__: contains .R files that are functions that the Rmd files in the analysis folder use. 

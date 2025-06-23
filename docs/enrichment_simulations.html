@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Haider Inam" />
+
+
+<title>enrichment_simulations</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.9.2.1/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="site_libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">abl_dms</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">enrichment_simulations</h1>
+<h4 class="author">Haider Inam</h4>
+<h4 class="date">6/22/2025</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-06-22
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>abl_dms/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+1.6.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250621code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250621)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250621code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250621)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong253724b">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong> 253724b
+</a>
+</p>
+</div>
+<div id="strongRepositoryversionstrong253724b"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version 253724b.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.Rhistory
+    Ignored:    analysis/figure/
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+    Ignored:    output/Enrichmentsimulations/
+
+Untracked files:
+    Untracked:  analysis/Homepage_Spike_In_Mutants.Rmd
+    Untracked:  analysis/dose_response_curve_fitting_with_errorbars.Rmd
+    Untracked:  analysis/enrichment_simulations.Rmd
+    Untracked:  analysis/spikeins_data_parser.Rmd
+    Untracked:  analysis/spikeins_depthofcoverages.Rmd
+    Untracked:  analysis/spikeins_growthrates.Rmd
+    Untracked:  data/Twinstrand/
+    Untracked:  data/ic50data/
+    Untracked:  dosing_normalization_stdevs_paired.pdf
+    Untracked:  output/spikeins_figures/
+    Untracked:  output/twinstrand_maf_merge.csv
+    Untracked:  output/twinstrand_simple_melt_merge.csv
+
+Unstaged changes:
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<pre class="r"><code># rm(list=ls())
+library(knitr)
+library(tictoc)
+library(workflowr)</code></pre>
+<pre><code>This is workflowr version 1.6.2
+Run ?workflowr for help getting started</code></pre>
+<pre class="r"><code>library(VennDiagram)</code></pre>
+<pre><code>Loading required package: grid</code></pre>
+<pre><code>Loading required package: futile.logger</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>Warning: package &#39;dplyr&#39; was built under R version 4.0.2</code></pre>
+<pre><code>
+Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>The following objects are masked from &#39;package:stats&#39;:
+
+    filter, lag</code></pre>
+<pre><code>The following objects are masked from &#39;package:base&#39;:
+
+    intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(foreach)
+library(doParallel)</code></pre>
+<pre><code>Loading required package: iterators</code></pre>
+<pre><code>Loading required package: parallel</code></pre>
+<pre class="r"><code>library(ggplot2)</code></pre>
+<pre><code>Warning: package &#39;ggplot2&#39; was built under R version 4.0.2</code></pre>
+<pre class="r"><code>library(reshape2)
+library(RColorBrewer)
+library(devtools)</code></pre>
+<pre><code>Loading required package: usethis</code></pre>
+<pre><code>Error in get(genname, envir = envir) : object &#39;testthat_print&#39; not found</code></pre>
+<pre class="r"><code>library(ggsignif)
+library(plotly)</code></pre>
+<pre><code>
+Attaching package: &#39;plotly&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:ggplot2&#39;:
+
+    last_plot</code></pre>
+<pre><code>The following object is masked from &#39;package:stats&#39;:
+
+    filter</code></pre>
+<pre><code>The following object is masked from &#39;package:graphics&#39;:
+
+    layout</code></pre>
+<pre class="r"><code>library(BiocManager)</code></pre>
+<pre><code>Bioconductor version 3.12 (BiocManager 1.30.10), ?BiocManager::install for help</code></pre>
+<pre><code>Bioconductor version &#39;3.12&#39; is out-of-date; the current release version &#39;3.21&#39;
+  is available with R version &#39;4.5&#39;; see https://bioconductor.org/install</code></pre>
+<pre><code>
+Attaching package: &#39;BiocManager&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:devtools&#39;:
+
+    install</code></pre>
+<pre class="r"><code>library(drc)</code></pre>
+<pre><code>Loading required package: MASS</code></pre>
+<pre><code>Warning: package &#39;MASS&#39; was built under R version 4.0.5</code></pre>
+<pre><code>
+Attaching package: &#39;MASS&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:plotly&#39;:
+
+    select</code></pre>
+<pre><code>The following object is masked from &#39;package:dplyr&#39;:
+
+    select</code></pre>
+<pre><code>
+&#39;drc&#39; has been loaded.</code></pre>
+<pre><code>Please cite R and &#39;drc&#39; if used for a publication,</code></pre>
+<pre><code>for references type &#39;citation()&#39; and &#39;citation(&#39;drc&#39;)&#39;.</code></pre>
+<pre><code>
+Attaching package: &#39;drc&#39;</code></pre>
+<pre><code>The following objects are masked from &#39;package:stats&#39;:
+
+    gaussian, getInitial</code></pre>
+<pre class="r"><code>library(&quot;lmtest&quot;)</code></pre>
+<pre><code>Loading required package: zoo</code></pre>
+<pre><code>
+Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>The following objects are masked from &#39;package:base&#39;:
+
+    as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>library(&quot;ggplot2&quot;)
+library(&quot;MASS&quot;)
+library(&quot;fitdistrplus&quot;)</code></pre>
+<pre><code>Loading required package: survival</code></pre>
+<pre><code>Loading required package: npsurv</code></pre>
+<pre><code>Loading required package: lsei</code></pre>
+<pre class="r"><code>library(&quot;lme4&quot;)</code></pre>
+<pre><code>Loading required package: Matrix</code></pre>
+<pre><code>Registered S3 methods overwritten by &#39;lme4&#39;:
+  method                          from
+  cooks.distance.influence.merMod car 
+  influence.merMod                car 
+  dfbeta.influence.merMod         car 
+  dfbetas.influence.merMod        car </code></pre>
+<pre class="r"><code>library(&quot;boot&quot;)</code></pre>
+<pre><code>
+Attaching package: &#39;boot&#39;</code></pre>
+<pre><code>The following object is masked from &#39;package:survival&#39;:
+
+    aml</code></pre>
+<pre class="r"><code>library(&quot;dplyr&quot;)
+library(&quot;plotly&quot;)
+library(drc)
+library(devtools)
+library(deSolve)
+library(RColorBrewer)
+library(reshape2)
+######################Cleanup for GGPlot2#########################################
+
+
+
+net_gr_wodrug=1.4
+# ic50data_long=read.csv(&quot;../output/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F)
+ic50data_long=read.csv(&quot;data/ic50data/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
+
+
+# twinstrand_simple_melt_merge=read.csv(&quot;../output/twinstrand_simple_melt_merge.csv&quot;,header = T,stringsAsFactors = F)
+twinstrand_simple_melt_merge=read.csv(&quot;data/Twinstrand/twinstrand_simple_melt_merge.csv&quot;,header = T,stringsAsFactors = F)
+
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = &quot;black&quot;),
+        axis.text = element_text(face=&quot;bold&quot;,color=&quot;black&quot;,size=&quot;11&quot;),
+        text=element_text(size=11,face=&quot;bold&quot;),
+        axis.title=element_text(face=&quot;bold&quot;,size=&quot;11&quot;))</code></pre>
+<p>1:1000 mixture in a total of 20M cells</p>
+<pre class="r"><code>ic50data_long=ic50data_long%&gt;%filter(conc%in%c(.3,.6,1.2,2.4))
+#In the next step, I&#39;m ordering mutants by decreasing resposne to the 625nM dose. Then I use this to change the levels of the species factor from more to less resistant. This helps with ggplot because now I can color the mutants with decreasing resistance
+ic50data_long_625=ic50data_long%&gt;%filter(conc==.6)
+ic50data_long$mutant=factor(ic50data_long$mutant,levels = as.character(ic50data_long_625$mutant[order((ic50data_long_625$y),decreasing = T)]))
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,levels = as.character(ic50data_long_625$mutant[order((ic50data_long_625$y),decreasing = T)]))
+
+# rm(list=ls())
+# growthrate_nodrug=1.1 ##1.1 means a 15 hour doubling time
+growthrate_nodrug=1.4 ##1.4 means a 12 hour doubling time
+t=0:6
+
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,ordered = T)
+# ic50data=dcast(data = ic50data_long,conc~mutant)
+#Ideally, we would fit a 4 parameter logistic to this and then get the predicted 625 values
+# x0=c(15000000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,56*15000,15000)
+# trying out 1:10,000
+x0=c(15000,15000/2.5,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,15000,100*15000,15000,56*15000)
+sum(x0)</code></pre>
+<pre><code>[1] 3201000</code></pre>
+<pre class="r"><code>sol_comb_doses=data.frame()
+# for(j in 1:length(ic50data[,1])){
+for(dose in sort(unique(ic50data_long$conc))){
+  # dose=.8
+  #Grabbing net growth rate at desired concentration
+  ic50data_specificdose=ic50data_long%&gt;%filter(conc==dose)
+  # ic50data_specificdose$mutant
+  ic50data_specificdose$drugeffect=-log(ic50data_specificdose$y_model)/3
+  ic50data_specificdose$growthrate_net=growthrate_nodrug-ic50data_specificdose$drugeffect
+  
+##Differential equation function
+cgrowth=function(times,y,params){
+  dN.dt=ic50data_specificdose$growthrate_net[i]*y[1]
+  return(list(dN.dt))
+}
+sol_comb=data.frame()
+for(i in 1:length(ic50data_specificdose[,1])){
+sol=ode(y=x0[i],times=t,func=cgrowth,parms=growthrate_net[i])
+sol_df=data.frame(sol)
+sol_df$mutant=ic50data_specificdose$mutant[i]
+# ic50data_specificdose$mutant[2]
+  # colnames(growthrate_net[i])
+sol_comb=rbind(sol_comb,data.frame(sol_df))
+}
+colnames(sol_comb)[colnames(sol_comb)==&quot;X1&quot;]=&quot;count&quot;
+# sol_comb$dose=ic50data$conc[j]
+sol_comb$dose=dose
+sol_comb_doses=rbind(sol_comb_doses,sol_comb)
+}
+
+#Plotting total # of cells
+getPalette = colorRampPalette(brewer.pal(9, &quot;Spectral&quot;))
+
+#Wt grows unless the drug concentration is like 625nM
+# ggplot(data=sol_comb_doses,aes(y=count,x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+# 
+# ggplot(data=sol_comb_doses,aes(time,count))+
+#   geom_col(aes(fill=mutant))+
+#   facet_wrap(~dose)+
+#   cleanup+
+#   scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+# 
+# #Log scale shows that other mutants are actually growing too
+# ggplot(data=sol_comb_doses,aes(y=log(count),x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+
+
+sol_comb_doses=sol_comb_doses%&gt;%group_by(dose,time)%&gt;%mutate(total=sum(count))%&gt;%group_by(dose,time,mutant)%&gt;%mutate(proportion=count/total)
+
+###Looking at the proportion of mutants given various starting doses
+ggplot(data=sol_comb_doses,aes(time,proportion))+geom_col(aes(fill=mutant))+geom_line(aes(y=total/max(sol_comb_doses$total)))+scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = &quot;Total Count&quot;))+facet_wrap(~dose)+cleanup+scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>##Looking closely at just one plot
+  x=ggplot(data=sol_comb_doses%&gt;%filter(dose==0.6),aes(time,proportion))+
+    geom_col(aes(fill=mutant))+
+    geom_line(aes(y=total/max(sol_comb_doses$total)))+
+    scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = &quot;Total Count&quot;))+facet_wrap(~dose)+
+    cleanup+
+    scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+  ggplotly(x)</code></pre>
+<pre><code>Warning: `group_by_()` was deprecated in dplyr 0.7.0.
+Please use `group_by()` instead.
+See vignette(&#39;programming&#39;) for more help</code></pre>
+<div id="htmlwidget-0450937840dd11870dbd" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0450937840dd11870dbd">{"x":{"data":[{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.995313964386129,0.993523231284978,0.991984638224155,0.990843127536086,0.990047854003146,0.989486572377405,0.989065255928984],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00647676871502167,0.00801536177584516,0.00915687246391406,0.00995214599685401,0.010513427622595,0.0109347440710157],"text":["mutant: E255V<br />time: 0<br />proportion: 4.686036e-03","mutant: E255V<br />time: 1<br />proportion: 6.476769e-03","mutant: E255V<br />time: 2<br />proportion: 8.015362e-03","mutant: E255V<br />time: 3<br />proportion: 9.156872e-03","mutant: E255V<br />time: 4<br />proportion: 9.952146e-03","mutant: E255V<br />time: 5<br />proportion: 1.051343e-02","mutant: E255V<br />time: 6<br />proportion: 1.093474e-02"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(213,62,79,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E255V","legendgroup":"E255V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.732895970009372,0.63159897480674,0.545040028793101,0.48133746109016,0.437474596990215,0.406996235193961,0.384526285001555],"x":[0,1,2,3,4,5,6],"y":[0.262417994376757,0.361924256478238,0.446944609431054,0.509505666445925,0.552573257012931,0.582490337183444,0.604538970927429],"text":["mutant: Y253H<br />time: 0<br />proportion: 2.624180e-01","mutant: Y253H<br />time: 1<br />proportion: 3.619243e-01","mutant: Y253H<br />time: 2<br />proportion: 4.469446e-01","mutant: Y253H<br />time: 3<br />proportion: 5.095057e-01","mutant: Y253H<br />time: 4<br />proportion: 5.525733e-01","mutant: Y253H<br />time: 5<br />proportion: 5.824903e-01","mutant: Y253H<br />time: 6<br />proportion: 6.045390e-01"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(224,79,74,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"Y253H","legendgroup":"Y253H","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.728209934395501,0.625222913931893,0.537271992451383,0.472601124227678,0.428127150124284,0.397275152542406,0.374572849353647],"x":[0,1,2,3,4,5,6],"y":[0.0046860356138706,0.00637606087484766,0.00776803634171763,0.00873633686248221,0.00934744686593048,0.00972108265155569,0.00995343564790779],"text":["mutant: F486S<br />time: 0<br />proportion: 4.686036e-03","mutant: F486S<br />time: 1<br />proportion: 6.376061e-03","mutant: F486S<br />time: 2<br />proportion: 7.768036e-03","mutant: F486S<br />time: 3<br />proportion: 8.736337e-03","mutant: F486S<br />time: 4<br />proportion: 9.347447e-03","mutant: F486S<br />time: 5<br />proportion: 9.721083e-03","mutant: F486S<br />time: 6<br />proportion: 9.953436e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(236,97,69,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"F486S","legendgroup":"F486S","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.723523898781631,0.61890856441368,0.529653596016066,0.464116006874093,0.419136363919941,0.388015483729063,0.36518361937825],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00631434951821241,0.00761839643531725,0.00848511735358476,0.00899078620434335,0.00925966881334278,0.0093892299753971],"text":["mutant: H396P<br />time: 0<br />proportion: 4.686036e-03","mutant: H396P<br />time: 1<br />proportion: 6.314350e-03","mutant: H396P<br />time: 2<br />proportion: 7.618396e-03","mutant: H396P<br />time: 3<br />proportion: 8.485117e-03","mutant: H396P<br />time: 4<br />proportion: 8.990786e-03","mutant: H396P<br />time: 5<br />proportion: 9.259669e-03","mutant: H396P<br />time: 6<br />proportion: 9.389230e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(245,118,71,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"H396P","legendgroup":"H396P","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.721649484536082,0.616428121206809,0.526714559944609,0.460901311149032,0.415791177116587,0.384632040713138,0.361814362832275],"x":[0,1,2,3,4,5,6],"y":[0.00187441424554824,0.00248044320687091,0.00293903607145629,0.00321469572506194,0.00334518680335333,0.00338344301592519,0.00336925654597564],"text":["mutant: E255K<br />time: 0<br />proportion: 1.874414e-03","mutant: E255K<br />time: 1<br />proportion: 2.480443e-03","mutant: E255K<br />time: 2<br />proportion: 2.939036e-03","mutant: E255K<br />time: 3<br />proportion: 3.214696e-03","mutant: E255K<br />time: 4<br />proportion: 3.345187e-03","mutant: E255K<br />time: 5<br />proportion: 3.383443e-03","mutant: E255K<br />time: 6<br />proportion: 3.369257e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(248,143,82,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E255K","legendgroup":"E255K","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.538894095595127,0.377044834016344,0.245958341820757,0.156935834122625,0.10270443079419,0.0711857779837614,0.0528572222169617],"x":[0,1,2,3,4,5,6],"y":[0.182755388940956,0.239383287190465,0.280756218123852,0.303965477026406,0.313086746322398,0.313446262729376,0.308957140615313],"text":["mutant: T315I<br />time: 0<br />proportion: 1.827554e-01","mutant: T315I<br />time: 1<br />proportion: 2.393833e-01","mutant: T315I<br />time: 2<br />proportion: 2.807562e-01","mutant: T315I<br />time: 3<br />proportion: 3.039655e-01","mutant: T315I<br />time: 4<br />proportion: 3.130867e-01","mutant: T315I<br />time: 5<br />proportion: 3.134463e-01","mutant: T315I<br />time: 6<br />proportion: 3.089571e-01"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(252,167,94,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"T315I","legendgroup":"T315I","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.534208059981256,0.37099514688535,0.238965202479292,0.149473567561898,0.0951288684314216,0.0637106783509922,0.0455952293092316],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00604968713099391,0.00699313934146548,0.00746226656072782,0.0075755623627681,0.00747509963276916,0.00726199290773014],"text":["mutant: Q252H<br />time: 0<br />proportion: 4.686036e-03","mutant: Q252H<br />time: 1<br />proportion: 6.049687e-03","mutant: Q252H<br />time: 2<br />proportion: 6.993139e-03","mutant: Q252H<br />time: 3<br />proportion: 7.462267e-03","mutant: Q252H<br />time: 4<br />proportion: 7.575562e-03","mutant: Q252H<br />time: 5<br />proportion: 7.475100e-03","mutant: Q252H<br />time: 6<br />proportion: 7.261993e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(253,188,108,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"Q252H","legendgroup":"Q252H","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.529522024367385,0.365041226381673,0.232191713391094,0.142360103579348,0.0880217201061128,0.0568087951034597,0.0389962530880782],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00595392050367693,0.00677348908819816,0.00711346398254933,0.00710714832530883,0.00690188324753252,0.00659897622115337],"text":["mutant: G250E<br />time: 0<br />proportion: 4.686036e-03","mutant: G250E<br />time: 1<br />proportion: 5.953921e-03","mutant: G250E<br />time: 2<br />proportion: 6.773489e-03","mutant: G250E<br />time: 3<br />proportion: 7.113464e-03","mutant: G250E<br />time: 4<br />proportion: 7.107148e-03","mutant: G250E<br />time: 5<br />proportion: 6.901883e-03","mutant: G250E<br />time: 6<br />proportion: 6.598976e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(253,207,124,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"G250E","legendgroup":"G250E","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.524835988753515,0.359166324611982,0.225596822743876,0.135526120920706,0.0812844231882716,0.0503529144790681,0.0329056257979111],"x":[0,1,2,3,4,5,6],"y":[0.0046860356138706,0.00587490176969169,0.00659489064721813,0.00683398265864205,0.00673729691784115,0.00645588062439154,0.00609062729016717],"text":["mutant: Y253F<br />time: 0<br />proportion: 4.686036e-03","mutant: Y253F<br />time: 1<br />proportion: 5.874902e-03","mutant: Y253F<br />time: 2<br />proportion: 6.594891e-03","mutant: Y253F<br />time: 3<br />proportion: 6.833983e-03","mutant: Y253F<br />time: 4<br />proportion: 6.737297e-03","mutant: Y253F<br />time: 5<br />proportion: 6.455881e-03","mutant: Y253F<br />time: 6<br />proportion: 6.090627e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(254,225,141,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"Y253F","legendgroup":"Y253F","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.520149953139644,0.353411470723654,0.219268698796234,0.129102573503847,0.075081156563485,0.0445302205099906,0.0275246107391612],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00575485388832814,0.00632812394764187,0.00642354741685922,0.0062032666247866,0.0058226939690775,0.00538101505874988],"text":["mutant: F359C<br />time: 0<br />proportion: 4.686036e-03","mutant: F359C<br />time: 1<br />proportion: 5.754854e-03","mutant: F359C<br />time: 2<br />proportion: 6.328124e-03","mutant: F359C<br />time: 3<br />proportion: 6.423547e-03","mutant: F359C<br />time: 4<br />proportion: 6.203267e-03","mutant: F359C<br />time: 5<br />proportion: 5.822694e-03","mutant: F359C<br />time: 6<br />proportion: 5.381015e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(254,237,161,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"F359C","legendgroup":"F359C","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.515463917525773,0.347788856509655,0.21322805915209,0.123111745094676,0.0694287108888609,0.039346472681214,0.0228441557183972],"x":[0,1,2,3,4,5,6],"y":[0.0046860356138706,0.00562261421399823,0.00604063964414395,0.00599082840917109,0.00565244567462411,0.00518374782877668,0.00468045502076398],"text":["mutant: L248V<br />time: 0<br />proportion: 4.686036e-03","mutant: L248V<br />time: 1<br />proportion: 5.622614e-03","mutant: L248V<br />time: 2<br />proportion: 6.040640e-03","mutant: L248V<br />time: 3<br />proportion: 5.990828e-03","mutant: L248V<br />time: 4<br />proportion: 5.652446e-03","mutant: L248V<br />time: 5<br />proportion: 5.183748e-03","mutant: L248V<br />time: 6<br />proportion: 4.680455e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(254,249,181,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"L248V","legendgroup":"L248V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.510777881911903,0.342820603135232,0.208511624390413,0.118978574723222,0.0659828455817158,0.036554113524049,0.020616331196742],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00496825337442358,0.00471643476167688,0.00413317037145386,0.00344586530714512,0.00279235915716494,0.00222782452165517],"text":["mutant: H396R<br />time: 0<br />proportion: 4.686036e-03","mutant: H396R<br />time: 1<br />proportion: 4.968253e-03","mutant: H396R<br />time: 2<br />proportion: 4.716435e-03","mutant: H396R<br />time: 3<br />proportion: 4.133170e-03","mutant: H396R<br />time: 4<br />proportion: 3.445865e-03","mutant: H396R<br />time: 5<br />proportion: 2.792359e-03","mutant: H396R<br />time: 6<br />proportion: 2.227825e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(250,253,183,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"H396R","legendgroup":"H396R","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.506091846298032,0.337971243386572,0.204018223618324,0.115135088690862,0.0628551753569919,0.0340802565204656,0.0186898491934932],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00484935974866013,0.00449340077208887,0.00384348603236008,0.00312767022472385,0.00247385700358344,0.00192648200324885],"text":["mutant: F359V<br />time: 0<br />proportion: 4.686036e-03","mutant: F359V<br />time: 1<br />proportion: 4.849360e-03","mutant: F359V<br />time: 2<br />proportion: 4.493401e-03","mutant: F359V<br />time: 3<br />proportion: 3.843486e-03","mutant: F359V<br />time: 4<br />proportion: 3.127670e-03","mutant: F359V<br />time: 5<br />proportion: 2.473857e-03","mutant: F359V<br />time: 6<br />proportion: 1.926482e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(240,249,168,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"F359V","legendgroup":"F359V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.501405810684161,0.333212085079018,0.199690428856553,0.111502112376962,0.0599537996975136,0.0318280752277039,0.0169686170173956],"x":[0,1,2,3,4,5,6],"y":[0.0046860356138706,0.00475915830755386,0.00432779476177078,0.00363297631390028,0.00290137565947837,0.00225218129276173,0.00172123217609756],"text":["mutant: M351T<br />time: 0<br />proportion: 4.686036e-03","mutant: M351T<br />time: 1<br />proportion: 4.759158e-03","mutant: M351T<br />time: 2<br />proportion: 4.327795e-03","mutant: M351T<br />time: 3<br />proportion: 3.632976e-03","mutant: M351T<br />time: 4<br />proportion: 2.901376e-03","mutant: M351T<br />time: 5<br />proportion: 2.252181e-03","mutant: M351T<br />time: 6<br />proportion: 1.721232e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(231,245,153,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"M351T","legendgroup":"M351T","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.496719775070291,0.328582960617836,0.195595898535672,0.108158863726311,0.0573567588453064,0.0298672138806903,0.0155109721536558],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00462912446118202,0.00409453032088147,0.00334324865065032,0.00259704085220715,0.0019608613470136,0.00145764486373979],"text":["mutant: E355G<br />time: 0<br />proportion: 4.686036e-03","mutant: E355G<br />time: 1<br />proportion: 4.629124e-03","mutant: E355G<br />time: 2<br />proportion: 4.094530e-03","mutant: E355G<br />time: 3<br />proportion: 3.343249e-03","mutant: E355G<br />time: 4<br />proportion: 2.597041e-03","mutant: E355G<br />time: 5<br />proportion: 1.960861e-03","mutant: E355G<br />time: 6<br />proportion: 1.457645e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(210,237,156,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E355G","legendgroup":"E355G","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.49203373945642,0.324126264313235,0.191800717478134,0.105175465304282,0.0551255740221812,0.0282453372251151,0.0143502270477002],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387065,0.00445669630460077,0.00379518105753779,0.00298339842202905,0.0022311848231252,0.00162187665557512,0.00116074510595567],"text":["mutant: F317L<br />time: 0<br />proportion: 4.686036e-03","mutant: F317L<br />time: 1<br />proportion: 4.456696e-03","mutant: F317L<br />time: 2<br />proportion: 3.795181e-03","mutant: F317L<br />time: 3<br />proportion: 2.983398e-03","mutant: F317L<br />time: 4<br />proportion: 2.231185e-03","mutant: F317L<br />time: 5<br />proportion: 1.621877e-03","mutant: F317L<br />time: 6<br />proportion: 1.160745e-03"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(187,227,160,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"F317L","legendgroup":"F317L","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.487347703842549,0.319931197548596,0.18843804752144,0.102687245628274,0.0533739582103738,0.0270468125094721,0.0135428213349885],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387065,0.00419506676463927,0.0033626699566936,0.00248821967600861,0.00175161581180744,0.00119852471564303,0.000807405712711654],"text":["mutant: F359I<br />time: 0<br />proportion: 4.686036e-03","mutant: F359I<br />time: 1<br />proportion: 4.195067e-03","mutant: F359I<br />time: 2<br />proportion: 3.362670e-03","mutant: F359I<br />time: 3<br />proportion: 2.488220e-03","mutant: F359I<br />time: 4<br />proportion: 1.751616e-03","mutant: F359I<br />time: 5<br />proportion: 1.198525e-03","mutant: F359I<br />time: 6<br />proportion: 8.074057e-04"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(164,218,164,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"F359I","legendgroup":"F359I","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.482661668228679,0.315917864198691,0.185360413701626,0.100508594829184,0.0519067083559061,0.0260863542322293,0.0129238227704724],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387065,0.00401333334990489,0.00307763381981435,0.00217865079908991,0.00146724985446766,0.000960458277242802,0.000618998564516089],"text":["mutant: E355A<br />time: 0<br />proportion: 4.686036e-03","mutant: E355A<br />time: 1<br />proportion: 4.013333e-03","mutant: E355A<br />time: 2<br />proportion: 3.077634e-03","mutant: E355A<br />time: 3<br />proportion: 2.178651e-03","mutant: E355A<br />time: 4<br />proportion: 1.467250e-03","mutant: E355A<br />time: 5<br />proportion: 9.604583e-04","mutant: E355A<br />time: 6<br />proportion: 6.189986e-04"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(138,208,164,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E355A","legendgroup":"E355A","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.477975632614808,0.312279177550961,0.182830559829884,0.0988848957741947,0.0509152800862245,0.0254979510275425,0.01258000725087],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387071,0.00363868664772998,0.00252985387174193,0.00162369905498901,0.000991428269681627,0.000588403204686835,0.000343815519602471],"text":["mutant: D276G<br />time: 0<br />proportion: 4.686036e-03","mutant: D276G<br />time: 1<br />proportion: 3.638687e-03","mutant: D276G<br />time: 2<br />proportion: 2.529854e-03","mutant: D276G<br />time: 3<br />proportion: 1.623699e-03","mutant: D276G<br />time: 4<br />proportion: 9.914283e-04","mutant: D276G<br />time: 5<br />proportion: 5.884032e-04","mutant: D276G<br />time: 6<br />proportion: 3.438155e-04"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(111,197,164,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"D276G","legendgroup":"D276G","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.473289597000937,0.30871901479174,0.180408718041822,0.0973640639560206,0.0500067022576757,0.0249703555343578,0.0122783756955098],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387065,0.00356016275922116,0.00242184178806173,0.00152083181817415,0.000908577828548772,0.00052759549318462,0.000301631555360182],"text":["mutant: E459K<br />time: 0<br />proportion: 4.686036e-03","mutant: E459K<br />time: 1<br />proportion: 3.560163e-03","mutant: E459K<br />time: 2<br />proportion: 2.421842e-03","mutant: E459K<br />time: 3<br />proportion: 1.520832e-03","mutant: E459K<br />time: 4<br />proportion: 9.085778e-04","mutant: E459K<br />time: 5<br />proportion: 5.275955e-04","mutant: E459K<br />time: 6<br />proportion: 3.016316e-04"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(89,180,170,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E459K","legendgroup":"E459K","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0.00468603561387067,0.00232940065496704,0.00103679983845069,0.0004259952876873,0.000166517681038212,6.32665391249563e-05,2.36659608741579e-05],"x":[0,1,2,3,4,5,6],"y":[0.468603561387067,0.306389614136773,0.179371918203372,0.0969380686683333,0.0498401845766375,0.0249070889952329,0.0122547097346356],"text":["mutant: Wt<br />time: 0<br />proportion: 4.686036e-01","mutant: Wt<br />time: 1<br />proportion: 3.063896e-01","mutant: Wt<br />time: 2<br />proportion: 1.793719e-01","mutant: Wt<br />time: 3<br />proportion: 9.693807e-02","mutant: Wt<br />time: 4<br />proportion: 4.984018e-02","mutant: Wt<br />time: 5<br />proportion: 2.490709e-02","mutant: Wt<br />time: 6<br />proportion: 1.225471e-02"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(69,158,179,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"Wt","legendgroup":"Wt","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9],"base":[0,0,0,0,0,0,0],"x":[0,1,2,3,4,5,6],"y":[0.00468603561387067,0.00232940065496704,0.00103679983845069,0.0004259952876873,0.000166517681038212,6.32665391249563e-05,2.36659608741579e-05],"text":["mutant: V299L<br />time: 0<br />proportion: 4.686036e-03","mutant: V299L<br />time: 1<br />proportion: 2.329401e-03","mutant: V299L<br />time: 2<br />proportion: 1.036800e-03","mutant: V299L<br />time: 3<br />proportion: 4.259953e-04","mutant: V299L<br />time: 4<br />proportion: 1.665177e-04","mutant: V299L<br />time: 5<br />proportion: 6.326654e-05","mutant: V299L<br />time: 6<br />proportion: 2.366596e-05"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(50,136,189,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"V299L","legendgroup":"V299L","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"y":[0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.000442441713258388,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00129811873574292,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.00425363899436249,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0150989763259923,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.0563363668952642,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.216257998641395,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028,0.843177086678028],"text":["total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0004424417<br />time: 0<br />proportion: 0.0004424417","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0012981187<br />time: 1<br />proportion: 0.0012981187","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0042536390<br />time: 2<br />proportion: 0.0042536390","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0150989763<br />time: 3<br />proportion: 0.0150989763","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.0563363669<br />time: 4<br />proportion: 0.0563363669","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.2162579986<br />time: 5<br />proportion: 0.2162579986","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867","total/max(sol_comb_doses$total): 0.8431770867<br />time: 6<br />proportion: 0.8431770867"],"type":"scatter","mode":"lines","line":{"width":1.88976377952756,"color":"rgba(0,0,0,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":37.9178082191781,"r":7.30593607305936,"b":43.1050228310502,"l":54.7945205479452},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.795,6.795],"tickmode":"array","ticktext":["0","2","4","6"],"tickvals":[0,2,4,6],"categoryorder":"array","categoryarray":["0","2","4","6"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":"","hoverformat":".2f"},"annotations":[{"text":"<b> time <\/b>","x":0.5,"y":-0.0532724505327245,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"center","yanchor":"top","annotationType":"axis"},{"text":"<b> proportion <\/b>","x":-0.0597956077408132,"y":0.5,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-90,"xanchor":"right","yanchor":"center","annotationType":"axis"},{"text":"0.6","x":0.5,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(26,26,26,1)","family":"","size":11.689497716895},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"center","yanchor":"bottom"},{"text":"mutant","x":1.02,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"left","yanchor":"bottom","legendTitle":true}],"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.05,1.05],"tickmode":"array","ticktext":["0.00","0.25","0.50","0.75","1.00"],"tickvals":[0,0.25,0.5,0.75,1],"categoryorder":"array","categoryarray":["0.00","0.25","0.50","0.75","1.00"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":"","hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":"transparent","line":{"color":"rgba(51,51,51,1)","width":0.66417600664176,"linetype":"solid"},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1},{"type":"rect","fillcolor":"rgba(217,217,217,1)","line":{"color":"rgba(51,51,51,1)","width":0.66417600664176,"linetype":"solid"},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":23.37899543379,"yanchor":1,"ysizemode":"pixel"}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"y":0.913385826771654},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"4034746b83e9":{"fill":{},"x":{},"y":{},"type":"bar"},"40343ea171b5":{"y":{},"x":{},"y.1":{}}},"cur_data":"4034746b83e9","visdat":{"4034746b83e9":["function (y) ","x"],"40343ea171b5":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code>  #Can also use this for coloring (doesn&#39;t require counting the 22 mutants)
+  # palette_Dark2 &lt;- colorRampPalette(brewer.pal(14, &quot;Set2&quot;))
+  # +discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)
+
+# a=sol_comb_doses%&gt;%filter(!mutant%in%c(&quot;F359Lmini&quot;,&quot;M244V&quot;,&quot;F359Lmaxi&quot;,&quot;V299L_L&quot;,&quot;V299L_H&quot;,&quot;V299L_H&quot;,&quot;D276G&quot;))%&gt;%group_by(dose,time)%&gt;%summarize(min_coverage=100/min(proportion),min_coverage_sp=mutant[proportion==min(proportion)][1])
+#Check that D275G is resistant
+a=sol_comb_doses%&gt;%filter(time%in%c(0,3,6),dose==.6)
+# write.csv(sol_comb_doses,&quot;10kmutants_wt_1_1.csv&quot;)
+b=ic50data_specificdose$mutant
+aa=sol_comb_doses%&gt;%filter(mutant%in%&quot;E255K&quot;)%&gt;%mutate(percent=proportion*100)
+aa=sol_comb_doses%&gt;%filter(time%in%4)%&gt;%mutate(percent=proportion*100)
+
+e255kdiagnostics=twinstrand_simple_melt_merge%&gt;%filter(mutant%in%&quot;E255K&quot;,experiment%in%&quot;M6&quot;)
+e255kdiagnostics=twinstrand_simple_melt_merge%&gt;%filter(mutant%in%&quot;E255K&quot;,experiment%in%&quot;M5&quot;)</code></pre>
+<pre class="r"><code># ic50data_long2=ic50data_long
+ic50data_long=ic50data_long%&gt;%filter(mutant%in%c(&quot;T315I&quot;,&quot;L248V&quot;,&quot;E355A&quot;))
+# rm(list=ls())
+# growthrate_nodrug=1.1 ##1.1 means a 15 hour doubling time
+growthrate_nodrug=1.4 ##1.4 means a 12 hour doubling time
+t=0:8
+
+
+# ic50data_long$mutant=factor(ic50data_long$mutant,ordered = T)
+# ic50data=dcast(data = ic50data_long,conc~mutant)
+#Ideally, we would fit a 4 parameter logistic to this and then get the predicted 625 values
+# x0=c(15000000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,39*15000,56*15000,15000)
+# trying out 1:10,000
+x0=c(10000000,10000000,10000000)
+
+sol_comb_doses=data.frame()
+# for(j in 1:length(ic50data[,1])){
+for(dose in sort(unique(ic50data_long$conc))){
+  # dose=.8
+  #Grabbing net growth rate at desired concentration
+  ic50data_specificdose=ic50data_long%&gt;%filter(conc==dose)
+  ic50data_specificdose$drugeffect=-log(ic50data_specificdose$y_model)/3
+  ic50data_specificdose$growthrate_net=growthrate_nodrug-ic50data_specificdose$drugeffect
+  
+##Differential equation function
+cgrowth=function(times,y,params){
+  dN.dt=ic50data_specificdose$growthrate_net[i]*y[1]
+  return(list(dN.dt))
+}
+sol_comb=data.frame()
+for(i in 1:length(ic50data_specificdose[,1])){
+sol=ode(y=x0[i],times=t,func=cgrowth,parms=growthrate_net[i])
+sol_df=data.frame(sol)
+sol_df$mutant=ic50data_specificdose$mutant[i]
+  # colnames(growthrate_net[i])
+sol_comb=rbind(sol_comb,data.frame(sol_df))
+}
+colnames(sol_comb)[colnames(sol_comb)==&quot;X1&quot;]=&quot;count&quot;
+# sol_comb$dose=ic50data$conc[j]
+sol_comb$dose=dose
+sol_comb_doses=rbind(sol_comb_doses,sol_comb)
+}
+
+#Plotting total # of cells
+getPalette = colorRampPalette(brewer.pal(9, &quot;Spectral&quot;))
+
+ggplot(data=sol_comb_doses,aes(time,count))+
+  geom_col(aes(fill=mutant))+
+  facet_wrap(~dose)+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Log scale shows that other mutants are actually growing too
+ggplot(data=sol_comb_doses,aes(y=log(count),x=time,color=factor(mutant)))+geom_line()+facet_wrap(~dose)+cleanup+scale_color_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>sol_comb_doses=sol_comb_doses%&gt;%group_by(dose,time)%&gt;%mutate(total=sum(count))%&gt;%group_by(dose,time,mutant)%&gt;%mutate(proportion=count/total)
+
+
+###Looking at the proportion of mutants given various starting doses
+ggplot(data=sol_comb_doses,aes(time,proportion))+geom_col(aes(fill=mutant))+geom_line(aes(y=total/max(sol_comb_doses$total)))+scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = &quot;Total Count&quot;))+facet_wrap(~dose)+cleanup+scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Can also use this for coloring (doesn&#39;t require counting the 22 mutants)
+  palette_Dark2 &lt;- colorRampPalette(brewer.pal(14, &quot;Set2&quot;))</code></pre>
+<pre><code>Warning in brewer.pal(14, &quot;Set2&quot;): n too large, allowed maximum for palette Set2 is 8
+Returning the palette you asked for with that many colors</code></pre>
+<pre class="r"><code>  # +discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)
+  
+##Looking closely at just one plot
+  sol_comb_doses$mutant=factor(sol_comb_doses$mutant,levels=c(&quot;E355A&quot;,&quot;L248V&quot;,&quot;T315I&quot;))
+  x=ggplot(data=sol_comb_doses%&gt;%filter(dose==1.2),aes(time,proportion))+
+    geom_col(aes(fill=mutant))+
+    # geom_line(aes(y=total/max(sol_comb_doses$total)))+
+    # scale_y_continuous(sec.axis = sec_axis(~.*max(sol_comb_doses$total), name = &quot;Total Count&quot;))+
+    # facet_wrap(~dose)+
+    cleanup+
+    discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+    scale_x_continuous(expand = c(0,0),name = &quot;Time (Days)&quot;)+
+    scale_y_continuous(expand = c(0,0),name = &quot;Mutant Allele Fraction&quot;)+
+    theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            axis.line = element_line(colour = &quot;black&quot;))
+    # theme(plot.title = element_text(hjust=.5),text = element_text(size=30,face=&quot;bold&quot;),axis.title = element_text(face=&quot;bold&quot;,size=&quot;26&quot;),axis.text=element_text(face=&quot;bold&quot;,color=&quot;black&quot;,size=&quot;26&quot;))
+    # scale_fill_manual(values = getPalette(length(unique(sol_comb_doses$mutant))))
+ggplotly(x)</code></pre>
+<div id="htmlwidget-a087dcd16dd97c86e8e3" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a087dcd16dd97c86e8e3">{"x":{"data":[{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.899999999999999],"base":[0.666666666666667,0.832530786068917,0.927029427918685,0.970849949215506,0.9889240457679,0.99591632190088,0.998523444518449,0.99947325039704,0.999813884898042],"x":[0,1,2,3,4,5,6,7,8],"y":[0.333333333333333,0.167469213931083,0.0729705720813151,0.0291500507844935,0.0110759542320997,0.0040836780991198,0.00147655548155123,0.000526749602960286,0.000186115101957873],"text":["mutant: E355A<br />time: 0<br />proportion: 0.3333333333","mutant: E355A<br />time: 1<br />proportion: 0.1674692139","mutant: E355A<br />time: 2<br />proportion: 0.0729705721","mutant: E355A<br />time: 3<br />proportion: 0.0291500508","mutant: E355A<br />time: 4<br />proportion: 0.0110759542","mutant: E355A<br />time: 5<br />proportion: 0.0040836781","mutant: E355A<br />time: 6<br />proportion: 0.0014765555","mutant: E355A<br />time: 7<br />proportion: 0.0005267496","mutant: E355A<br />time: 8<br />proportion: 0.0001861151"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(102,194,165,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"E355A","legendgroup":"E355A","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.899999999999999],"base":[0.333333333333333,0.486072541974691,0.61472382520943,0.712750529642317,0.786041448461825,0.841166189645765,0.882767006714851,0.914042300771693,0.937367314557546],"x":[0,1,2,3,4,5,6,7,8],"y":[0.333333333333333,0.346458244094226,0.312305602709255,0.258099419573189,0.202882597306075,0.154750132255115,0.115756437803598,0.0854309496253461,0.0624465703404962],"text":["mutant: L248V<br />time: 0<br />proportion: 0.3333333333","mutant: L248V<br />time: 1<br />proportion: 0.3464582441","mutant: L248V<br />time: 2<br />proportion: 0.3123056027","mutant: L248V<br />time: 3<br />proportion: 0.2580994196","mutant: L248V<br />time: 4<br />proportion: 0.2028825973","mutant: L248V<br />time: 5<br />proportion: 0.1547501323","mutant: L248V<br />time: 6<br />proportion: 0.1157564378","mutant: L248V<br />time: 7<br />proportion: 0.0854309496","mutant: L248V<br />time: 8<br />proportion: 0.0624465703"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(198,177,139,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"L248V","legendgroup":"L248V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.899999999999999],"base":[0,0,0,0,0,0,0,0,0],"x":[0,1,2,3,4,5,6,7,8],"y":[0.333333333333333,0.486072541974691,0.61472382520943,0.712750529642317,0.786041448461825,0.841166189645765,0.882767006714851,0.914042300771693,0.937367314557546],"text":["mutant: T315I<br />time: 0<br />proportion: 0.3333333333","mutant: T315I<br />time: 1<br />proportion: 0.4860725420","mutant: T315I<br />time: 2<br />proportion: 0.6147238252","mutant: T315I<br />time: 3<br />proportion: 0.7127505296","mutant: T315I<br />time: 4<br />proportion: 0.7860414485","mutant: T315I<br />time: 5<br />proportion: 0.8411661896","mutant: T315I<br />time: 6<br />proportion: 0.8827670067","mutant: T315I<br />time: 7<br />proportion: 0.9140423008","mutant: T315I<br />time: 8<br />proportion: 0.9373673146"],"type":"bar","marker":{"autocolorscale":false,"color":"rgba(179,179,179,1)","line":{"width":1.88976377952756,"color":"transparent"}},"name":"T315I","legendgroup":"T315I","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.2283105022831,"r":7.30593607305936,"b":43.1050228310502,"l":54.7945205479452},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.45,8.45],"tickmode":"array","ticktext":["0","2","4","6","8"],"tickvals":[5.55111512312578e-17,2,4,6,8],"categoryorder":"array","categoryarray":["0","2","4","6","8"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":{"text":"<b> Time (Days) <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0,1],"tickmode":"array","ticktext":["0.00","0.25","0.50","0.75","1.00"],"tickvals":[0,0.25,0.5,0.75,1],"categoryorder":"array","categoryarray":["0.00","0.25","0.50","0.75","1.00"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":{"text":"<b> Mutant Allele Fraction <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":"transparent","line":{"color":"rgba(51,51,51,1)","width":0.66417600664176,"linetype":"solid"},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"y":0.913385826771654},"annotations":[{"text":"mutant","x":1.02,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"left","yanchor":"bottom","legendTitle":true}],"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"40345b83e176":{"fill":{},"x":{},"y":{},"type":"bar"}},"cur_data":"40345b83e176","visdat":{"40345b83e176":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code># ggsave(&quot;enrichment_simulations_3mutants.pdf&quot;,width = 4,height = 3,units = &quot;in&quot;,useDingbats=F)  
+
+########Analysis trying to show that there is a real depletion effecf:
+sol_comb_doses$mutant=factor(sol_comb_doses$mutant,levels=c(&quot;T315I&quot;,&quot;L248V&quot;,&quot;E355A&quot;))
+ggplot(sol_comb_doses%&gt;%filter(time&lt;=6,dose%in%1.2),aes(x=time,y=proportion,group=mutant))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  cleanup+
+  scale_fill_manual(values = getPalette(3))+
+  # discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+  # discrete_scale(&quot;color&quot;, &quot;manual&quot;, palette_Dark2)+
+  scale_y_continuous(name=&quot;Mutant Allele Fraction&quot;)+
+  scale_x_continuous(name=&quot;Time (Days)&quot;)+
+  theme(legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-5.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/enrichment_simulations_3mutant_MAF.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+ggplot(sol_comb_doses%&gt;%filter(time&lt;=6,dose%in%1.2),aes(x=time,y=count,group=mutant))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  cleanup+
+  # discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  # discrete_scale(&quot;color&quot;, &quot;manual&quot;, palette_Dark2)+
+  scale_y_continuous(name=&quot;Mutant Count&quot;,trans=&quot;log10&quot;,breaks=c(1e7,1e8,1e9,1e10),labels=parse(text=c(&quot;10^7&quot;,&quot;10^8&quot;,&quot;10^9&quot;,&quot;10^10&quot;)))+
+  # scale_y_continuous(name=&quot;Mutant Count&quot;,breaks=c(0,1e10,2e10),labels=parse(text=c(&quot;0&quot;,&quot;10^10&quot;,&quot;2*10^10&quot;)))+
+  scale_x_continuous(name=&quot;Time (Days)&quot;)+
+  theme(legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-6.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/enrichment_simulations_3mutant_count.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+
+
+
+ggplot(sol_comb_doses%&gt;%filter(dose%in%1.2)%&gt;%filter(time%in%c(0,3,6)),aes(x=(factor(time)),y=proportion,fill=factor(mutant)))+
+  geom_col(color=&quot;black&quot;)+
+  facet_wrap(~mutant)+
+  cleanup+
+  # discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  scale_y_continuous(name=&quot;Mutant Allele Fraction&quot;,expand = c(0.01,0))+
+  scale_x_discrete(name=&quot;Time (Days)&quot;)+
+  theme(strip.text = element_blank(),
+        legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-7.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/allele_freq_enrichment_sim.pdf&quot;,width=2.5,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+
+ggplot(sol_comb_doses%&gt;%filter(dose%in%1.2)%&gt;%filter(time%in%c(0,3,6)),aes(x=(factor(time)),y=count,fill=factor(mutant)))+geom_col(color=&quot;black&quot;)+
+  facet_wrap(~mutant)+
+  cleanup+
+  # discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+  scale_fill_manual(values = getPalette(3))+
+  scale_y_continuous(name=&quot;Estimated Counts&quot;,
+                     expand = c(0.4,1),
+                     trans=&quot;log10&quot;,
+                     # limits=c(10^5,10^11),
+                     breaks=c(1e6,1e7,1e8,1e9,1e10),
+                     labels=parse(text=c(&quot;10^6&quot;,&quot;10^7&quot;,&quot;10^8&quot;,&quot;10^9&quot;,&quot;10^10&quot;)))+
+  scale_x_discrete(name=&quot;Time (Days)&quot;)+
+  theme(strip.text = element_blank(),
+        legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())+
+  coord_cartesian(ylim = c(10^7, 10^9))</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-8.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/count_enrichment_sim.pdf&quot;,width=2.5,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+
+
+data=sol_comb_doses%&gt;%filter(dose%in%1.2,time%in%c(3,6))
+data=data%&gt;%
+  mutate(lfc=log(proportion/0.333,2),
+         netgr=log(count/1e7)/(time*24))
+data$mutant=factor(data$mutant,levels=c(&quot;T315I&quot;,&quot;L248V&quot;,&quot;E355A&quot;))
+
+
+ggplot(data,aes(x=time,y=lfc,fill=mutant))+
+  # geom_col(position=position_dodge(1))+
+  geom_col(color=&quot;black&quot;,position=position_dodge(1))+
+  scale_fill_manual(values = getPalette(3))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(&quot;Expected log2 fold-change&quot;,
+                     expand = c(0.01,0))+
+  scale_x_continuous(&quot;Treatment duration (days)&quot;,
+                     breaks = c(3,6))+
+  theme(strip.text = element_blank(),
+        legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x=element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-9.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/lfc_enrichment_sim.pdf&quot;,width=2.5,height=2,units=&quot;in&quot;,useDingbats=F)
+
+getPalette = colorRampPalette(brewer.pal(9, &quot;Spectral&quot;))
+
+ggplot(data,aes(x=time,y=netgr,fill=mutant))+
+  geom_col(color=&quot;black&quot;,position=position_dodge(1))+
+  scale_fill_manual(values = getPalette(3))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(&quot;Expected net growth rate (Hrs-1)&quot;,
+                     expand = c(0.01,0))+
+  scale_x_continuous(&quot;Treatment duration (days)&quot;,
+                     breaks=c(3,6))+
+  theme(strip.text = element_blank(),
+        legend.position = &quot;none&quot;,
+        axis.title = element_text(face=&quot;bold&quot;,size=10),
+        axis.text = element_text(face=&quot;plain&quot;,size=9),
+        axis.title.x=element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="figure/enrichment_simulations.Rmd/unnamed-chunk-3-10.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/Enrichmentsimulations/netgr_enrichment_sim.pdf&quot;,width=2.5,height=2,units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre class="r"><code># facet_wrap(~mutant)+
+#   cleanup+
+#   # discrete_scale(&quot;fill&quot;, &quot;manual&quot;, palette_Dark2)+
+#   scale_fill_manual(values = getPalette(3))+
+#   scale_y_continuous(name=&quot;Estimated Counts&quot;,
+#                      expand = c(0.4,1),
+#                      trans=&quot;log10&quot;,
+#                      # limits=c(10^5,10^11),
+#                      breaks=c(1e6,1e7,1e8,1e9,1e10),
+#                      labels=parse(text=c(&quot;10^6&quot;,&quot;10^7&quot;,&quot;10^8&quot;,&quot;10^9&quot;,&quot;10^10&quot;)))+
+#   scale_x_discrete(name=&quot;Time (Days)&quot;)+
+#   theme(strip.text = element_blank(),
+#         legend.position = &quot;none&quot;,
+#         axis.title = element_text(face=&quot;bold&quot;,size=10),
+#         axis.text = element_text(face=&quot;plain&quot;,size=9),
+#         axis.title.x=element_blank(),
+#         axis.title.y=element_blank())+
+#   coord_cartesian(ylim = c(10^7, 10^9))</code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.0.0 (2020-04-24)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS  10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] parallel  grid      stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+ [1] deSolve_1.28        boot_1.3-24         lme4_1.1-23        
+ [4] Matrix_1.2-18       fitdistrplus_1.0-14 npsurv_0.4-0.1     
+ [7] lsei_1.2-0.1        survival_3.1-12     lmtest_0.9-37      
+[10] zoo_1.8-8           drc_3.0-1           MASS_7.3-55        
+[13] BiocManager_1.30.10 plotly_4.9.2.1      ggsignif_0.6.0     
+[16] devtools_2.3.0      usethis_1.6.1       RColorBrewer_1.1-2 
+[19] reshape2_1.4.4      ggplot2_3.3.3       doParallel_1.0.15  
+[22] iterators_1.0.12    foreach_1.5.0       dplyr_1.0.6        
+[25] VennDiagram_1.6.20  futile.logger_1.4.3 workflowr_1.6.2    
+[28] tictoc_1.0          knitr_1.28         
+
+loaded via a namespace (and not attached):
+ [1] minqa_1.2.4          TH.data_1.0-10       colorspace_1.4-1    
+ [4] ellipsis_0.3.2       rio_0.5.16           rprojroot_1.3-2     
+ [7] fs_1.4.1             farver_2.0.3         remotes_2.1.1       
+[10] fansi_0.4.1          mvtnorm_1.1-0        codetools_0.2-16    
+[13] splines_4.0.0        pkgload_1.0.2        jsonlite_1.7.2      
+[16] nloptr_1.2.2.1       compiler_4.0.0       httr_1.4.2          
+[19] backports_1.1.7      assertthat_0.2.1     fastmap_1.1.0       
+[22] lazyeval_0.2.2       cli_2.5.0            later_1.0.0         
+[25] formatR_1.7          htmltools_0.5.2      prettyunits_1.1.1   
+[28] tools_4.0.0          gtable_0.3.0         glue_1.4.1          
+[31] Rcpp_1.0.4.6         carData_3.0-3        cellranger_1.1.0    
+[34] jquerylib_0.1.4      vctrs_0.3.8          nlme_3.1-147        
+[37] crosstalk_1.1.0.1    xfun_0.31            stringr_1.4.0       
+[40] ps_1.3.3             openxlsx_4.1.5       testthat_2.3.2      
+[43] lifecycle_1.0.0      gtools_3.8.2         statmod_1.4.34      
+[46] scales_1.1.1         hms_1.1.0            promises_1.1.0      
+[49] sandwich_2.5-1       lambda.r_1.2.4       yaml_2.2.1          
+[52] curl_4.3             memoise_1.1.0        sass_0.4.1          
+[55] stringi_1.7.5        desc_1.2.0           plotrix_3.8-1       
+[58] pkgbuild_1.0.8       zip_2.0.4            rlang_0.4.11        
+[61] pkgconfig_2.0.3      evaluate_0.14        lattice_0.20-41     
+[64] purrr_0.3.4          labeling_0.3         htmlwidgets_1.5.1   
+[67] processx_3.5.2       tidyselect_1.1.0     plyr_1.8.6          
+[70] magrittr_2.0.1       R6_2.4.1             generics_0.0.2      
+[73] multcomp_1.4-13      DBI_1.1.0            pillar_1.6.1        
+[76] haven_2.4.1          foreign_0.8-78       withr_2.4.2         
+[79] abind_1.4-5          tibble_3.1.2         crayon_1.4.1        
+[82] car_3.0-7            futile.options_1.0.1 utf8_1.1.4          
+[85] rmarkdown_2.14       readxl_1.3.1         data.table_1.14.8   
+[88] callr_3.7.0          git2r_0.27.1         forcats_0.5.1       
+[91] digest_0.6.25        tidyr_1.1.3          httpuv_1.5.2        
+[94] munsell_0.5.0        viridisLite_0.3.0    bslib_0.3.1         
+[97] sessioninfo_1.1.1   </code></pre>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

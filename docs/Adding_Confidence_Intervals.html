@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Haider Inam" />
+
+
+<title>Adding_Confidence_Intervals</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">abl_dms</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Adding_Confidence_Intervals</h1>
+<h4 class="author">Haider Inam</h4>
+<h4 class="date">6/22/2025</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-06-22
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>abl_dms/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+1.6.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250621code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250621)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250621code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250621)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong253724b">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong> 253724b
+</a>
+</p>
+</div>
+<div id="strongRepositoryversionstrong253724b"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version 253724b.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.Rhistory
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+
+Untracked files:
+    Untracked:  analysis/Adding_Confidence_Intervals.Rmd
+    Untracked:  analysis/Homepage_Spike_In_Mutants.Rmd
+    Untracked:  analysis/dose_response_curve_fitting_with_errorbars.Rmd
+    Untracked:  analysis/spikeins_depthofcoverages.Rmd
+    Untracked:  analysis/twinstrand_spikeins_data_generation.Rmd
+    Untracked:  data/Twinstrand/
+    Untracked:  data/ic50data/
+    Untracked:  data/spikeins_maf_merge_formanuscript.csv
+    Untracked:  dosing_normalization_stdevs_paired.pdf
+    Untracked:  output/spikeins_figures/
+    Untracked:  output/twinstrand_maf_merge.csv
+    Untracked:  output/twinstrand_simple_melt_merge.csv
+
+Unstaged changes:
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<p>This RMD file should serve to generate processed versions of all the
+data that goes into Figure 2 of the paper. The aim here is to take in
+predicted growth rate confidence intervals, and generate expected count
+data from them. The other aim is to take dose-normalized data (for
+microvariations) and add columns for normal vs normalized. The final aim
+is to include count-types of log-fold enrichment, enrich2, and our
+counts. One subaim is to also add Day 0 MAF counts of M3 as the ones for
+M5 and M7. And of M6 for M4 and of Sp_Enu_4 for Sp_Enu_3</p>
+<pre class="r"><code># rm(list=ls())
+twinstrand_maf_merge=read.csv(&quot;data/Twinstrand/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F)
+# twinstrand_maf_merge=read.csv(&quot;../output/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F,row.names = 1)
+
+# ic50data_all_sum=read.csv(&quot;../output/ic50data_all_confidence_intervals_raw_data.csv&quot;,row.names = 1)
+ic50data_all_sum=read.csv(&quot;data/ic50data/ic50data_all_confidence_intervals_raw_data.csv&quot;,row.names = 1)
+
+
+#First, creating day 0 values for M4,M5,M7, and sp_enu_3. So M5&#39;s and M7&#39;s D0 counts are M3&#39;s. And M4&#39;s D0 counts are M6&#39;s. Sp_Enu_3&#39;s D0 counts are Sp_Enu_4&#39;s D0 counts.
+M3D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,time_point==&quot;D0&quot;)
+M3D0_v2=M3D0%&gt;%filter(!mutant%in%NA)
+M3D0_v2=M3D0_v2%&gt;%dplyr::select(mutant,AltDepth)
+# M3D6=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,time_point==&quot;D3&quot;)
+M5D0=M3D0%&gt;%mutate(experiment=&quot;M5&quot;)
+M7D0=M3D0%&gt;%mutate(experiment=&quot;M7&quot;)
+M6D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M6&quot;,time_point==&quot;D0&quot;)
+M6D0_v2=M6D0%&gt;%filter(!mutant%in%NA)
+M6D0_v2=M6D0_v2%&gt;%dplyr::select(mutant,AltDepth)
+M4D0=M6D0%&gt;%mutate(experiment=&quot;M4&quot;)
+
+Enu4_D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;Enu_4&quot;,time_point==&quot;D0&quot;)
+Enu3_D0=Enu4_D0%&gt;%mutate(experiment=&quot;Enu_3&quot;)
+twinstrand_maf_merge=rbind(twinstrand_maf_merge,M5D0,M7D0,M4D0,Enu3_D0)
+########################Adding Confidence Intervals in Drug Effect to the Counts########################
+############Adding Enrich2 Adjustments to MAF################
+twinstrand_maf_merge2=twinstrand_maf_merge%&gt;%filter(!VariationType%in%&quot;indel&quot;,tki_resistant_mutation%in%&quot;True&quot;,!mutant%in%NA)%&gt;%dplyr::select(!c(X,Sample,Chromosome))
+wt_count=twinstrand_maf_merge2%&gt;%group_by(experiment,time_point)%&gt;%summarize(wt_count=mean(Depth)-sum(AltDepth))</code></pre>
+<pre><code>`summarise()` has grouped output by &#39;experiment&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>twinstrand_maf_merge2=merge(twinstrand_maf_merge2,wt_count,by = c(&quot;experiment&quot;,&quot;time_point&quot;))
+twinstrand_maf_merge2=twinstrand_maf_merge2%&gt;%mutate(MAF_enrich2=(AltDepth/wt_count))
+twinstrand_maf_merge=twinstrand_maf_merge2
+############################Addding Log-Fold Enrichment#################
+
+twinstrand_maf_merge=twinstrand_maf_merge%&gt;%filter(experiment%in%c(&quot;M3&quot;,&quot;M5&quot;,&quot;M7&quot;))%&gt;%mutate(MAF=AltDepth/Depth)
+# twinstrand_maf_merge=twinstrand_maf_merge%&gt;%filter(experiment%in%c(&quot;Enu_3&quot;,&quot;Enu_4&quot;))%&gt;%mutate(MAF=AltDepth/Depth)
+########################
+
+twinstrand_maf_merge=merge(twinstrand_maf_merge%&gt;%
+                      filter(tki_resistant_mutation==&quot;True&quot;,!mutant%in%c(&quot;D276G&quot;,NA)),ic50data_all_sum%&gt;%
+                                 dplyr::select(species,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll,netgr_pred_model,netgr_pred_model_sd_ul,netgr_pred_model_sd_ll),by.x=&quot;mutant&quot;,by.y=&quot;species&quot;)
+
+twinstrand_simple=twinstrand_maf_merge%&gt;%dplyr::select(AltDepth,Depth,tki_resistant_mutation,mutant,experiment,Spike_in_freq,time_point,totalcells,totalmutant,MAF,MAF_enrich2,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll,netgr_pred_model,netgr_pred_model_sd_ul,netgr_pred_model_sd_ll)
+
+
+
+twinstrand_merge_forplot=melt(twinstrand_simple,id.vars = c(&quot;AltDepth&quot;,&quot;Depth&quot;,&quot;tki_resistant_mutation&quot;,&quot;mutant&quot;,&quot;experiment&quot;,&quot;Spike_in_freq&quot;,&quot;time_point&quot;,&quot;totalcells&quot;,&quot;netgr_pred_mean&quot;,&quot;netgr_pred_ci_ul&quot;,&quot;netgr_pred_ci_ll&quot;,&quot;netgr_pred_sd_ul&quot;,&quot;netgr_pred_sd_ll&quot;,&quot;netgr_pred_model&quot;,&quot;netgr_pred_model_sd_ul&quot;,&quot;netgr_pred_model_sd_ll&quot;),variable.name = &quot;count_type&quot;,value.name = &quot;count&quot;)
+# twinstrand_merge_forplot=merge(twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,tki_resistant_mutation==&quot;True&quot;,!mutant%in%c(&quot;D276G&quot;,NA)),ic50data_all_sum%&gt;%dplyr::select(species,netgr_pred_mean,netgr_pred_ci_ul,netgr_pred_ci_ll,netgr_pred_sd_ul,netgr_pred_sd_ll),by.x=&quot;mutant&quot;,by.y=&quot;species&quot;)
+
+#Basically making an extra column with the D0 total mutant counts for each mutant
+# a=twinstrand_maf_merge%&gt;%filter(time_point==&quot;D0&quot;)
+twinstrand_merge_forplot=merge(twinstrand_merge_forplot,twinstrand_merge_forplot%&gt;%filter(time_point==&quot;D0&quot;)%&gt;%dplyr::select(mutant,count_type,experiment,count_D0=count),by=c(&quot;mutant&quot;,&quot;count_type&quot;,&quot;experiment&quot;))
+    #########Here, figure out why twinstrand_merge_forplot is having two rows for each mutant after being merged with a D0 version of itself. This is leading to weird plotting artifacts
+    
+    # a=twinstrand_merge_forplot%&gt;%filter(count_type==&quot;totalmutant&quot;,mutant==&quot;E255K&quot;,time_point==&quot;D0&quot;)
+    ############
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%&gt;%mutate(time=case_when(time_point==&quot;D0&quot;~0,
+                            time_point==&quot;D3&quot;~72,
+                            time_point==&quot;D6&quot;~144),
+                           ci_mean=count_D0*exp(netgr_pred_mean*time),
+                           ci_ul=count_D0*exp(netgr_pred_ci_ul*time),
+                           ci_ll=count_D0*exp(netgr_pred_ci_ll*time),
+                           sd_ul=count_D0*exp(netgr_pred_sd_ul*time),
+                           sd_ll=count_D0*exp(netgr_pred_sd_ll*time))
+
+####Should probably not use sd_ul, sd_ul etc for predictions because they&#39;re added to the means of the actual dose responses rather than the means of the dose responses off of the 4 parameter model. Use sd_ul_pred, sd_ll_pred instead
+twinstrand_merge_forplot=twinstrand_merge_forplot%&gt;%mutate(ci_ll=case_when(ci_ll==&quot;NaN&quot;~0,
+                                           TRUE~ci_ll))
+
+####Since the more sensitive mutants were appearing to grow fast if I take the raw IC50 predicted growth rates, I am going to instead take the predicted growth rates from the IC50s that were fit on a 4-parameter logistic. To get standard deviations, I will just add/subtract the standard deviations from the regular plots.
+# twinstrand_merge_forplot=merge(twinstrand_merge_forplot,ic50data_long%&gt;%filter(conc==conc_for_predictions)%&gt;%dplyr::select(mutant,netgr_pred_model=netgr_pred),by = &quot;mutant&quot;)
+# twinstrand_merge_forplot=twinstrand_merge_forplot%&gt;%mutate(netgr_pred_model_sd_ul=netgr_pred_model+(netgr_pred_mean-netgr_pred_sd_ll),netgr_pred_model_sd_ll=netgr_pred_model-(netgr_pred_mean-netgr_pred_sd_ll))
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%&gt;%
+  mutate(sd_mean_pred=count_D0*exp(netgr_pred_model*time),
+         sd_ul_pred=count_D0*exp(netgr_pred_model_sd_ul*time),
+         sd_ll_pred=count_D0*exp(netgr_pred_model_sd_ll*time))
+
+twinstrand_merge_forplot=twinstrand_merge_forplot%&gt;%mutate(ci_ll=case_when(ci_ll==&quot;NaN&quot;~0,
+                                           TRUE~ci_ll))
+###########
+
+#Factoring the mutants from more to less resistant
+twinstrand_merge_forplot$mutant=factor(twinstrand_merge_forplot$mutant,levels = as.character(unique(twinstrand_merge_forplot$mutant[order((twinstrand_merge_forplot$netgr_pred_mean),decreasing = T)])))
+
+
+netgr_corrected_compiled=read.csv(&quot;data/Twinstrand/twinstrand_microvariations_normalized.csv&quot;)
+# netgr_corrected_compiled=read.csv(&quot;../output/twinstrand_microvariations_normalized.csv&quot;)
+
+twinstrand_simple=twinstrand_merge_forplot%&gt;%dplyr::select(count_type,mutant,experiment,Spike_in_freq,time_point,count,count_D0,time,sd_mean_pred,sd_ll_pred,sd_ul_pred)
+
+twinstrand_simple_merge=merge(twinstrand_simple,netgr_corrected_compiled,by = c(&quot;mutant&quot;,&quot;experiment&quot;))
+
+# twinstrand_simple_merge=twinstrand_simple_merge%&gt;%mutate(count_inferred=round(count_D0*exp(netgr_obs*time),0))
+twinstrand_simple_merge=twinstrand_simple_merge%&gt;%mutate(count_inferred=count_D0*exp(netgr_obs*time))
+
+twinstrand_simple_merge_rearranged=twinstrand_simple_merge%&gt;%dplyr::select(count_type,mutant,experiment,Spike_in_freq,time_point,time,count,correction_status,netgr_obs,count_inferred,sd_mean_pred,sd_ul_pred,sd_ll_pred)
+
+# write.csv(twinstrand_simple_merge_rearranged,&quot;output/twinstrand_simple_merge_rearranged.csv&quot;)
+
+# ggplot(twinstrand_simple_merge%&gt;%filter(experiment%in%c(&quot;M3&quot;,&quot;M5&quot;,&quot;M7&quot;),count_type%in%&quot;MAF&quot;),aes(x=time/24,y=count_inferred,color=mutant))+facet_wrap(~mutant)+geom_point()+geom_line()+scale_y_continuous(trans=&quot;log10&quot;)
+
+###
+twinstrand_simple_errorbars=twinstrand_simple_merge%&gt;%
+  group_by(count_type,mutant,correction_status,time_point,time)%&gt;%
+  summarize(count_mean=mean(count),
+            count_sd=sd(count),
+            count_inferred_mean=mean(count_inferred),
+            count_inferred_sd=sd(count_inferred),
+            sd_mean_pred=mean(sd_mean_pred),
+            sd_ul_pred=mean(sd_ul_pred),
+            sd_ll_pred=mean(sd_ll_pred),
+            n=n())%&gt;%
+  mutate(count_se=count_sd/sqrt(n),
+         count_ci=abs(qt(1-(.05/2),n-1)*count_se),
+         count_ci=case_when(count_mean-count_ci&lt;=0~count_mean,
+                   TRUE~count_ci))</code></pre>
+<pre><code>`summarise()` has grouped output by &#39;count_type&#39;, &#39;mutant&#39;, &#39;correction_status&#39;, &#39;time_point&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code># a=twinstrand_simple_errorbars%&gt;%filter(mutant%in%&quot;T315I&quot;)
+# a=twinstrand_merge_forplot%&gt;%filter(mutant%in%&quot;T315I&quot;)</code></pre>
+<p>Making growthrates dataframe for all experiment types</p>
+<pre class="r"><code>twinstrand_maf_merge=twinstrand_simple_merge_rearranged%&gt;%filter(count_type%in%&quot;MAF_enrich2&quot;,correction_status%in%&quot;netgr_obs&quot;)
+twinstrand_simple=twinstrand_maf_merge%&gt;%filter(!is.na(mutant),!is.na(experiment))
+twinstrand_simple=twinstrand_simple%&gt;%dplyr::select(&quot;mutant&quot;,&quot;experiment&quot;,&quot;Spike_in_freq&quot;,&quot;time_point&quot;,&quot;count&quot;)
+twinstrand_simple_cast=dcast(twinstrand_simple,mutant+experiment+Spike_in_freq~time_point,value.var=&quot;count&quot;)
+
+twinstrand_simple_cast$d0d3=log(twinstrand_simple_cast$D3/twinstrand_simple_cast$D0)/72
+twinstrand_simple_cast$d3d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D3)/72
+twinstrand_simple_cast$d0d6=log(twinstrand_simple_cast$D6/twinstrand_simple_cast$D0)/144
+#Check if ln(final/initial)/time is the correct formula. Also notice how I&#39;m using days not hours
+twinstrand_simple_melt=melt(twinstrand_simple_cast[,-c(4:6)],id.vars=c(&quot;mutant&quot;,&quot;experiment&quot;,&quot;Spike_in_freq&quot;),variable.name = &quot;duration&quot;,value.name = &quot;netgr_obs&quot;) #!!!!!!!!!!!value name should be drug effect. And drug effect should be drug_effect_obs i think. NO. I think this should be drug_effect_obs. Fixed 4/2/20
+twinstrand_simple_melt$drug_effect_obs=net_gr_wodrug-twinstrand_simple_melt$netgr_obs
+
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_formerge,&quot;mutant&quot;)
+# twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long,&quot;mutant&quot;)
+
+ic50data_all_conc=read.csv(&quot;data/ic50data/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F)
+ic50data_long=ic50data_all_conc%&gt;%mutate(conc==conc_for_predictions)
+
+twinstrand_simple_melt_merge=merge(twinstrand_simple_melt,ic50data_long%&gt;%dplyr::filter(conc==conc_for_predictions),all.x = T)</code></pre>
+<pre class="r"><code>getPalette = colorRampPalette(brewer.pal(9, &quot;Spectral&quot;))
+####In the plots below, the dashed line is the mean prediction form the IC50s. Points are what we see in the spike-in experiment
+####MAF Raw
+label_positions &lt;- twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;MAF&quot;,correction_status%in%&quot;netgr_obs&quot;) %&gt;%
+  group_by(mutant) %&gt;%
+  summarise(
+    x = 0,             # consistent left edge on log10 scale
+    y = 1,           # high enough for all panels
+    label = unique(mutant)
+  )
+
+ggplot(twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;MAF&quot;,correction_status%in%&quot;netgr_obs&quot;),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype=&quot;dashed&quot;)+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  geom_text(data = label_positions, aes(x = x, y = y, label = label),
+            inherit.aes = FALSE, hjust = 0, vjust = 1, fontface = &quot;bold&quot;, size = 3.5) +
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,nrow=3)+
+  scale_y_continuous(trans=&quot;log10&quot;,name=&quot;Mutant allele fraction&quot;,label = trans_format(&quot;log10&quot;, math_format(10^.x)))+
+  scale_x_continuous(name=&quot;Time (Days)&quot;,breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/spikeins_figures/maf_fig_raw_081525.pdf&quot;,width=6,height=3,units=&quot;in&quot;,useDingbats=F)
+# ggsave(&quot;pooled_maf_fig_raw_081520.pdf&quot;,width=4,height=4,units=&quot;in&quot;,useDingbats=F)
+
+####Total Mutant Raw
+ggplot(twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;totalmutant&quot;,correction_status%in%&quot;netgr_obs&quot;,!mutant%in%c(&quot;E355A&quot;)),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype=&quot;dashed&quot;)+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans=&quot;log10&quot;,name=&quot;Count&quot;)+
+  scale_x_continuous(name=&quot;Time (Days)&quot;,breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;pooled_growth_fig_raw_081520.pdf&quot;,width=4,height=4,units=&quot;in&quot;,useDingbats=F)
+
+
+####Total Mutant Corrected
+ggplot(twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;totalmutant&quot;,correction_status%in%&quot;netgr_obs_corrected&quot;,!mutant%in%c(&quot;E355A&quot;)),aes(x=time/24,y=count_inferred_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype=&quot;dashed&quot;)+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_inferred_mean-count_inferred_sd,ymax=count_inferred_mean+count_inferred_sd,alpha=.3))+
+  geom_point(colour=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans=&quot;log10&quot;,name=&quot;Count&quot;)+
+  scale_x_continuous(name=&quot;Time (Days)&quot;,breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )</code></pre>
+<pre><code>Warning in self$trans$transform(x): NaNs produced</code></pre>
+<pre><code>Warning: Transformation introduced infinite values in continuous y-axis</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;pooled_growth_fig_corrected_081520.pdf&quot;,width=4,height=4,units=&quot;in&quot;,useDingbats=F)
+
+####MAF WT Raw
+ggplot(twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;MAF_enrich2&quot;,correction_status%in%&quot;netgr_obs&quot;,!mutant%in%c(&quot;E355A&quot;)),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype=&quot;dashed&quot;)+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(color=factor(mutant),ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,ncol=4)+
+  scale_y_continuous(trans=&quot;log10&quot;,name=&quot;Count&quot;,label = trans_format(&quot;log10&quot;, math_format(10^.x)))+
+  scale_x_continuous(name=&quot;Time (Days)&quot;,breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-4-4.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;pooled_maf_wt_fig_raw_081520.pdf&quot;,width=4,height=4,units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre class="r"><code>####Total Mutant Raw
+label_positions &lt;- twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;totalmutant&quot;,correction_status%in%&quot;netgr_obs&quot;) %&gt;%
+  group_by(mutant) %&gt;%
+  summarise(
+    x = 2.5,             # consistent left edge on log10 scale
+    y = 1000,           # high enough for all panels
+    label = unique(mutant)
+  )
+
+ggplot(twinstrand_simple_errorbars%&gt;%filter(count_type%in%&quot;totalmutant&quot;,correction_status%in%&quot;netgr_obs&quot;),aes(x=time/24,y=count_mean,fill=factor(mutant)))+
+  geom_line(aes(y=sd_mean_pred),linetype=&quot;dashed&quot;)+
+  geom_line(aes(y=sd_ll_pred))+
+  geom_line(aes(y=sd_ul_pred))+
+  geom_ribbon(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd,alpha=.3))+
+  geom_point(colour=&quot;black&quot;,shape=21,size=2,aes(fill=factor(mutant)))+
+  geom_text(data = label_positions, aes(x = x, y = y, label = label),
+            inherit.aes = FALSE, hjust = 0, vjust = 1, fontface = &quot;bold&quot;, size = 3.5) +
+  # geom_errorbar(aes(ymin=count_mean-count_sd,ymax=count_mean+count_sd),width=.9)+
+  facet_wrap(~mutant,nrow=3)+
+  scale_y_continuous(trans=&quot;log10&quot;,name=&quot;Total mutant count&quot;,
+                     label = trans_format(&quot;log10&quot;, math_format(10^.x)))+
+  scale_x_continuous(name=&quot;Time (Days)&quot;,breaks=c(0,3,6))+
+  cleanup+
+  scale_fill_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  scale_color_manual(values = getPalette(length(unique(twinstrand_merge_forplot$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        axis.text.y = element_text(face = &quot;bold&quot;,size=11),
+        # axis.ticks.y = element_blank(),
+        strip.text=element_blank()
+        # axis.title.x = element_blank(),
+        # axis.title.y=element_blank()
+        )</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/spikeins_figures/pooled_growth_fig_raw_061725.pdf&quot;,width=6,height=3,units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre class="r"><code>###Grabbing growth rates of Enrich2 data
+twinstrand_simple_melt_merge$correction_status=&quot;enrich2&quot;
+####################Just showing the improvement in error correction between the two replicates####################
+#How much do the standard deviations across replicates change in all replicates
+
+# a=netgr_corrected_compiled%&gt;%filter(mutant%in%&quot;F359I&quot;,correction_status%in%&quot;netgr_obs_corrected&quot;)
+netgr_corrected_compiled=read.csv(&quot;data/Twinstrand/twinstrand_microvariations_normalized.csv&quot;)
+###Merging Enrich2 netgr and our netgrs with and without correction
+netgr_corrected_compiled=rbind(netgr_corrected_compiled%&gt;%dplyr::select(-netgr_model_m3),twinstrand_simple_melt_merge%&gt;%dplyr::select(mutant,experiment,correction_status,netgr_obs))
+
+netgr_corrected_errorbars=netgr_corrected_compiled%&gt;%group_by(mutant,correction_status)%&gt;%summarize(netgr_obs_mean=mean(netgr_obs),netgr_obs_sd=sd(netgr_obs))</code></pre>
+<pre><code>`summarise()` has grouped output by &#39;mutant&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code># netgr_corrected_errorbars=netgr_corrected_compiled%&gt;%group_by(mutant)%&gt;%summarize(netgr_obs_mean=mean(netgr_obs),netgr_obs_sd=sd(netgr_obs),netgr_obs_corrected_mean=mean(netgr_obs_corrected),netgr_obs_corrected_sd=sd(netgr_obs_corrected))
+#Factoring the mutants from more to less resistant
+netgr_corrected_errorbars$mutant=factor(netgr_corrected_errorbars$mutant,levels = as.character(unique(netgr_corrected_errorbars$mutant[order((netgr_corrected_errorbars$netgr_obs_mean),decreasing = T)])))
+netgr_corrected_compiled$mutant=factor(netgr_corrected_compiled$mutant,levels = as.character(unique(netgr_corrected_compiled$mutant[order((netgr_corrected_compiled$netgr_obs),decreasing = T)])))
+
+# netgr_corrected_errorbars_melt=melt(netgr_corrected_errorbars,id.vars = &quot;mutant&quot;,measure.vars = c(&quot;netgr_obs_sd&quot;,&quot;netgr_obs_corrected_sd&quot;),variable.name = &quot;correction_status&quot;,value.name = &quot;sd&quot;)
+
+netgr_corrected_errorbars=netgr_corrected_errorbars%&gt;%
+  mutate(correction_status_name=case_when(correction_status%in%&quot;netgr_obs&quot;~&quot;Raw&quot;,
+                                          correction_status%in%&quot;netgr_obs_corrected&quot;~&quot;Corrected&quot;,
+                                          correction_status%in%&quot;enrich2&quot;~&quot;WT Corrected&quot;))
+netgr_corrected_errorbars$correction_status_name=factor(netgr_corrected_errorbars$correction_status_name,levels=c(&quot;WT Corrected&quot;,&quot;Raw&quot;,&quot;Corrected&quot;))
+
+ggplot(netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA),aes(x=factor(correction_status_name),y=netgr_obs_sd))+
+  geom_col(color=&quot;black&quot;,aes(fill=mutant))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(name=&quot;Standard Deviations in growth rates&quot;,breaks=c(0,.005,.01),labels=c(&quot;0&quot;,&quot;0.005&quot;,&quot;0.01&quot;))+
+  scale_fill_manual(values = getPalette(length(unique(netgr_corrected_errorbars$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y=element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(angle=20,hjust=.5,vjust=.5),
+        strip.text=element_blank())</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(netgr_corrected_errorbars%&gt;%filter(!correction_status%in%&quot;enrich2&quot;,!netgr_obs_sd%in%NA),aes(x=factor(correction_status_name),y=netgr_obs_sd))+
+  geom_col(color=&quot;black&quot;,aes(fill=mutant))+
+  facet_wrap(~mutant)+
+  cleanup+
+  scale_y_continuous(name=&quot;Standard Deviations in growth rates&quot;,breaks=c(0,.005,.01),labels=c(&quot;0&quot;,&quot;0.005&quot;,&quot;0.01&quot;))+
+  scale_fill_manual(values = getPalette(length(unique(netgr_corrected_errorbars$mutant))))+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y=element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_text(angle=20,hjust=.5,vjust=.5),
+        strip.text=element_blank())</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-6-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;dosing_normalization_standard_deviations.pdf&quot;,width=4,height=4,units=&quot;in&quot;,useDingbats=F)
+
+ggplot(netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=3,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        axis.text.y=element_blank(),
+        # axis.text.y=element_text(size=9),
+        axis.ticks.y=element_blank())+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;,&quot;black&quot;))+scale_x_discrete(name=element_blank())+scale_y_continuous(name=&quot;Standard deviation in growth rates&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-6-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;dosing_normalization_stdevs_paired.pdf&quot;,width=3,height=3,units=&quot;in&quot;,useDingbats=F)
+
+ggplot(netgr_corrected_errorbars%&gt;%filter(!correction_status%in%&quot;enrich2&quot;,!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y=element_text(size=9),
+        axis.text.y=element_blank())+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+scale_x_discrete(name=element_blank())+scale_y_continuous(name=&quot;Standard deviation in growth rates&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-6-4.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;dosing_normalization_stdevs_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+#Conducting paired t test with the standard 2-sided alternative hypothesis
+raw=netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;,correction_status_name%in%&quot;Raw&quot;)%&gt;%ungroup()%&gt;%dplyr::select(netgr_obs_sd)
+corrected=netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;,correction_status_name%in%&quot;Corrected&quot;)%&gt;%ungroup()%&gt;%dplyr::select(netgr_obs_sd)
+
+t.test(x=raw[[1]],y=corrected[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  raw[[1]] and corrected[[1]]
+t = 5.5402, df = 14, p-value = 7.281e-05
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 0.001467049 0.003320446
+sample estimates:
+mean of the differences 
+            0.002393747 </code></pre>
+<pre class="r"><code>ggplot(netgr_corrected_errorbars%&gt;%filter(!correction_status%in%&quot;netgr_obs&quot;,!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=correction_status_name))+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        # axis.text.y=element_text(size=9),
+        axis.text.y=element_blank())+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+scale_x_discrete(name=element_blank())+scale_y_continuous(name=&quot;Standard deviation in growth rates&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-6-5.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;dosing_normalization_stdevs_paired_wt.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+#Conducting paired t test with the standard 2-sided alternative hypothesis
+raw=netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;,correction_status_name%in%&quot;WT Corrected&quot;)%&gt;%ungroup()%&gt;%dplyr::select(netgr_obs_sd)
+
+corrected=netgr_corrected_errorbars%&gt;%filter(!netgr_obs_sd%in%NA,!mutant%in%&quot;E255K&quot;,correction_status_name%in%&quot;Corrected&quot;)%&gt;%ungroup()%&gt;%dplyr::select(netgr_obs_sd)
+
+t.test(x=raw[[1]],y=corrected[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  raw[[1]] and corrected[[1]]
+t = 3.518, df = 14, p-value = 0.003411
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 0.001498537 0.006179573
+sample estimates:
+mean of the differences 
+            0.003839055 </code></pre>
+<p>Looking at accuracy of our method vs shendure</p>
+<pre class="r"><code>#Calculating errors in observed datapoints.
+twinstrand_merge_forplot_means=twinstrand_merge_forplot%&gt;%group_by(mutant,count_type,time_point)%&gt;%summarize(time=mean(time),count_mean_obs=mean(count),count_sd_obs=sd(count),sd_mean_model=mean(sd_mean_pred),sd_ll_model=mean(sd_ll_pred),sd_ul_model=mean(sd_ul_pred))</code></pre>
+<pre><code>`summarise()` has grouped output by &#39;mutant&#39;, &#39;count_type&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>twinstrand_merge_forplot_means=twinstrand_merge_forplot_means%&gt;%mutate(percent_error=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs))
+
+twinstrand_merge_forplot_means=twinstrand_merge_forplot_means%&gt;%
+  mutate(count_type_name=case_when(count_type%in%&quot;totalmutant&quot;~&quot;Total Count&quot;,
+                                   count_type%in%&quot;MAF&quot;~&quot;Allele Frequency&quot;,
+                                   count_type%in%&quot;MAF_enrich2&quot;~&quot;Allele Frequency WT Corrected&quot;))
+twinstrand_merge_forplot_means$count_type_name=factor(twinstrand_merge_forplot_means$count_type_name,levels=c(&quot;Allele Frequency&quot;,&quot;Allele Frequency WT Corrected&quot;,&quot;Total Count&quot;))
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(!count_type%in%&quot;MAF_enrich2&quot;,time_point==&quot;D6&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_counts_D6_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(!count_type%in%&quot;MAF_enrich2&quot;,time_point==&quot;D3&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_counts_D3_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(!count_type%in%&quot;MAF&quot;,time_point==&quot;D3&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_wt_counts_D3_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(!count_type%in%&quot;MAF&quot;,time_point==&quot;D6&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-4.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_wt_counts_D6_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(time_point==&quot;D3&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;,&quot;black&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-5.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_all_counts_D3_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+ggplot(twinstrand_merge_forplot_means%&gt;%filter(time_point==&quot;D6&quot;),aes(x=count_type_name,y=abs((count_mean_obs-sd_mean_model)*100/count_mean_obs),group=factor(mutant)))+
+  geom_line()+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=count_type_name))+
+  scale_y_continuous(name=&quot;Percent Error&quot;)+
+  cleanup+
+  scale_fill_manual(values=c(&quot;black&quot;,&quot;gray&quot;,&quot;black&quot;))+
+  theme(axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/Adding_Confidence_Intervals.Rmd/unnamed-chunk-7-6.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;allelefrequencies_all_counts_D6_paired.pdf&quot;,width=2,height=2,units=&quot;in&quot;,useDingbats=F)
+
+
+######Conducting paired t test with the standard 2-sided alternative hypothesis
+# MAF vs Total Mutant D3
+maf_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;MAF&quot;,time_point%in%&quot;D3&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;totalmutant&quot;,time_point%in%&quot;D3&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  maf_error_d3[[1]] and totalmutant_error_d3[[1]]
+t = 3.2172, df = 16, p-value = 0.005379
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+  26.01573 126.53540
+sample estimates:
+mean of the differences 
+               76.27557 </code></pre>
+<pre class="r"><code># MAF vs Total Mutant D6
+maf_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;MAF&quot;,time_point%in%&quot;D6&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;totalmutant&quot;,time_point%in%&quot;D6&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  maf_error_d3[[1]] and totalmutant_error_d3[[1]]
+t = 3.5237, df = 16, p-value = 0.002819
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+  2935.60 11802.15
+sample estimates:
+mean of the differences 
+               7368.873 </code></pre>
+<pre class="r"><code># MAF_wt_corrected vs Total Mutant D3
+maf_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;MAF_enrich2&quot;,time_point%in%&quot;D3&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;totalmutant&quot;,time_point%in%&quot;D3&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  maf_error_d3[[1]] and totalmutant_error_d3[[1]]
+t = 1.3127, df = 16, p-value = 0.2078
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -5.290232 22.496776
+sample estimates:
+mean of the differences 
+               8.603272 </code></pre>
+<pre class="r"><code># MAF_wt_corrected vs Total Mutant D6
+maf_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;MAF_enrich2&quot;,time_point%in%&quot;D6&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+totalmutant_error_d3=twinstrand_merge_forplot_means%&gt;%filter(count_type%in%&quot;totalmutant&quot;,time_point%in%&quot;D6&quot;)%&gt;%ungroup()%&gt;%dplyr::select(percent_error)
+t.test(x=maf_error_d3[[1]],y=totalmutant_error_d3[[1]],mu = 0,paired = T,conf.level = 0.95)</code></pre>
+<pre><code>
+    Paired t-test
+
+data:  maf_error_d3[[1]] and totalmutant_error_d3[[1]]
+t = 2.8819, df = 16, p-value = 0.01084
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+  56.0995 368.2308
+sample estimates:
+mean of the differences 
+               212.1651 </code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.0.0 (2020-04-24)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS  10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] grid      parallel  stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+ [1] drc_3.0-1           MASS_7.3-55         BiocManager_1.30.10
+ [4] ggsignif_0.6.0      devtools_2.3.0      usethis_1.6.1      
+ [7] VennDiagram_1.6.20  futile.logger_1.4.3 workflowr_1.6.2    
+[10] knitr_1.28          dr4pl_2.0.0         reshape2_1.4.4     
+[13] pROC_1.16.2         ggpubr_0.4.0        RColorBrewer_1.1-2 
+[16] doParallel_1.0.15   iterators_1.0.12    foreach_1.5.0      
+[19] tictoc_1.0          plotly_4.9.2.1      ggplot2_3.3.3      
+[22] dplyr_1.0.6         stringr_1.4.0       scales_1.1.1       
+
+loaded via a namespace (and not attached):
+ [1] TH.data_1.0-10       colorspace_1.4-1     ellipsis_0.3.2      
+ [4] rio_0.5.16           rprojroot_1.3-2      fs_1.4.1            
+ [7] farver_2.0.3         remotes_2.1.1        mvtnorm_1.1-0       
+[10] fansi_0.4.1          splines_4.0.0        codetools_0.2-16    
+[13] pkgload_1.0.2        jsonlite_1.7.2       broom_0.7.6         
+[16] compiler_4.0.0       httr_1.4.2           backports_1.1.7     
+[19] assertthat_0.2.1     Matrix_1.2-18        fastmap_1.1.0       
+[22] lazyeval_0.2.2       cli_2.5.0            later_1.0.0         
+[25] formatR_1.7          htmltools_0.5.2      prettyunits_1.1.1   
+[28] tools_4.0.0          gtable_0.3.0         glue_1.4.1          
+[31] Rcpp_1.0.4.6         carData_3.0-3        cellranger_1.1.0    
+[34] jquerylib_0.1.4      vctrs_0.3.8          xfun_0.31           
+[37] rbibutils_2.3        ps_1.3.3             openxlsx_4.1.5      
+[40] testthat_2.3.2       lifecycle_1.0.0      gtools_3.8.2        
+[43] rstatix_0.6.0        zoo_1.8-8            hms_1.1.0           
+[46] promises_1.1.0       sandwich_2.5-1       lambda.r_1.2.4      
+[49] yaml_2.2.1           curl_4.3             memoise_1.1.0       
+[52] sass_0.4.1           stringi_1.7.5        desc_1.2.0          
+[55] plotrix_3.8-1        pkgbuild_1.0.8       zip_2.0.4           
+[58] Rdpack_2.6.4         rlang_0.4.11         pkgconfig_2.0.3     
+[61] evaluate_0.14        lattice_0.20-41      purrr_0.3.4         
+[64] tensor_1.5           labeling_0.3         htmlwidgets_1.5.1   
+[67] tidyselect_1.1.0     processx_3.5.2       plyr_1.8.6          
+[70] magrittr_2.0.1       R6_2.4.1             generics_0.0.2      
+[73] multcomp_1.4-13      DBI_1.1.0            pillar_1.6.1        
+[76] haven_2.4.1          foreign_0.8-78       withr_2.4.2         
+[79] survival_3.1-12      abind_1.4-5          tibble_3.1.2        
+[82] crayon_1.4.1         car_3.0-7            futile.options_1.0.1
+[85] utf8_1.1.4           rmarkdown_2.14       readxl_1.3.1        
+[88] data.table_1.14.8    callr_3.7.0          git2r_0.27.1        
+[91] forcats_0.5.1        digest_0.6.25        tidyr_1.1.3         
+[94] httpuv_1.5.2         munsell_0.5.0        viridisLite_0.3.0   
+[97] bslib_0.3.1          sessioninfo_1.1.1   </code></pre>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Haider Inam" />
+
+
+<title>spikeins_depthofcoverages</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.9.2.1/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="site_libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">abl_dms</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">spikeins_depthofcoverages</h1>
+<h4 class="author">Haider Inam</h4>
+<h4 class="date">4/3/2020</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-06-21
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>abl_dms/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+1.6.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250621code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250621)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250621code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250621)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrong253724b">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong> 253724b
+</a>
+</p>
+</div>
+<div id="strongRepositoryversionstrong253724b"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version 253724b.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.Rhistory
+    Ignored:    data/.DS_Store
+    Ignored:    output/.DS_Store
+
+Untracked files:
+    Untracked:  analysis/Adding_Confidence_Intervals.Rmd
+    Untracked:  analysis/Homepage_Spike_In_Mutants.Rmd
+    Untracked:  analysis/dose_response_curve_fitting_with_errorbars.Rmd
+    Untracked:  analysis/spikeins_depthofcoverages.Rmd
+    Untracked:  analysis/twinstrand_spikeins_data_generation.Rmd
+    Untracked:  assets/
+    Untracked:  data/Twinstrand/
+    Untracked:  data/ic50data/
+    Untracked:  data/spikeins_maf_merge_formanuscript.csv
+    Untracked:  data/twinstrand_maf_merge.csv
+    Untracked:  data/twinstrand_microvariations_normalized.csv
+    Untracked:  data/twinstrand_simple_melt_merge.csv
+    Untracked:  output/spikeins_figures/
+    Untracked:  output/twinstrand_maf_merge.csv
+    Untracked:  output/twinstrand_simple_melt_merge.csv
+
+Unstaged changes:
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<pre class="r"><code>#Inputs:
+# rm(list=ls())
+conc_for_predictions=0.8
+net_gr_wodrug=0.05
+#Reading required tables
+twinstrand_maf_merge=read.csv(&quot;output/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F)
+# twinstrand_maf_merge=read.csv(&quot;output/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F)
+
+twinstrand_simple_melt_merge=read.csv(&quot;output/twinstrand_simple_melt_merge.csv&quot;,header = T,stringsAsFactors = F)
+# twinstrand_simple_melt_merge=read.csv(&quot;output/twinstrand_simple_melt_merge.csv&quot;,header = T,stringsAsFactors = F)
+
+ic50data_long=read.csv(&quot;data/ic50data/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F)
+# ic50data_long=read.csv(&quot;output/ic50data_all_conc.csv&quot;,header = T,stringsAsFactors = F)
+ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect</code></pre>
+<p>Plotting whether the expected spike-in frequency matched the observed
+spike-in frequency</p>
+<pre class="r"><code>###Making the figure for Justin and Simon&#39;s grant
+enu_plots=twinstrand_simple_melt_merge%&gt;%filter(experiment%in%c(&quot;Enu_4&quot;,&quot;Enu_3&quot;),duration%in%&quot;d3d6&quot;)
+#hardcoding adjustments to the growth rates
+enu_plots$netgr_obs[enu_plots$experiment==&quot;Enu_3&quot;]=enu_plots$netgr_obs[enu_plots$experiment==&quot;Enu_3&quot;]-.011
+
+# plotly=ggplot(enu_plots,aes(x=netgr_pred,y=netgr_obs,label=mutant,fill=factor(experiment)))+geom_text()+geom_abline()+cleanup
+# ggplotly(plotly)
+
+#Plotting SP 1000 and 5000
+a=twinstrand_simple_melt_merge%&gt;%
+  filter(!experiment%in%c(&quot;Enu_4&quot;,&quot;Enu_3&quot;),duration%in%&quot;d3d6&quot;,conc==&quot;0.8&quot;)%&gt;%
+  mutate(netgr_obs=case_when(experiment==&quot;M5&quot;~netgr_obs+.015,
+                                   experiment%in%c(&quot;M3&quot;,&quot;M6&quot;,&quot;M5&quot;,&quot;M4&quot;,&quot;M7&quot;)~netgr_obs))
+
+a_sum=a%&gt;%group_by(mutant,Spike_in_freq)%&gt;%summarize(mean_netgr_pred=mean(netgr_pred),mean_netgr_obs=mean(netgr_obs),sd_netgr_obs=sd(netgr_obs))</code></pre>
+<pre><code>`summarise()` has grouped output by &#39;mutant&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>twinstrand_maf_merge=twinstrand_maf_merge%&gt;%
+  mutate(Spike_in_freq=as.numeric(Spike_in_freq))%&gt;%
+  mutate(Spike_in_freq=case_when(experiment==&quot;Enu_4&quot;~2000,
+                                 experiment==experiment~Spike_in_freq))%&gt;%
+  mutate(actualDepth=Depth*3)%&gt;% #To account for 2 mouse 1 human reads
+  mutate(expectedAltDepth=case_when(time_point==&quot;D0&quot;&amp;Spike_in_freq==1000~Depth/1000,
+                                    time_point==&quot;D0&quot;&amp;Spike_in_freq==5000~Depth/5000,
+                                    time_point==&quot;D0&quot;&amp;Spike_in_freq==2000~Depth/2000,
+                                    time_point==time_point~NaN))
+
+
+a=twinstrand_maf_merge%&gt;%filter(time_point==&quot;D0&quot;,experiment%in%c(&quot;M3&quot;,&quot;M4&quot;,&quot;M5&quot;,&quot;M6&quot;,&quot;M7&quot;)&amp;tki_resistant_mutation==&quot;True&quot;|experiment%in%&quot;Enu_4&quot;,!mutant==&quot;NA&quot;,!mutant==&quot;D276G&quot;,!mutant==&quot;V280syn&quot;)%&gt;%
+  mutate(expectedAltDepth=case_when(experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F311L&quot;~expectedAltDepth,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;T315I&quot;~expectedAltDepth*55,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F317L&quot;~expectedAltDepth*6,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;E355G&quot;~expectedAltDepth*3,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F359V&quot;~expectedAltDepth*13,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F359C&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;H396P&quot;~expectedAltDepth*17,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;A397P&quot;~expectedAltDepth*12,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;Y253H&quot;~expectedAltDepth*63,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;Q252H&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;G250E&quot;~expectedAltDepth*11,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;L248V&quot;~expectedAltDepth*6,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;H214R&quot;~expectedAltDepth*4,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;K285N&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;L324R&quot;~expectedAltDepth*7,
+                                   mutant==mutant~expectedAltDepth))
+
+
+
+plotly=ggplot(a,aes(x=factor(experiment),y=AltDepth/Depth,color=mutant))+geom_point(position=position_dodge(.5))+scale_y_continuous(trans=&quot;log10&quot;)+cleanup
+ggplotly(plotly)</code></pre>
+<div id="htmlwidget-0450937840dd11870dbd" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0450937840dd11870dbd">{"x":{"data":[{"x":[0.767857142857143],"y":[-2.40055050237853],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 3.976029e-03<br />mutant: A397P","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(248,118,109,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(248,118,109,1)"}},"hoveron":"points","name":"A397P","legendgroup":"A397P","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.76388888888889,2.76470588235294],"y":[-3.35349307314731,-3.76339055276961],"text":["factor(experiment): M3<br />AltDepth/Depth: 4.431053e-04<br />mutant: E255K","factor(experiment): M6<br />AltDepth/Depth: 1.724287e-04<br />mutant: E255K"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(237,129,62,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(237,129,62,1)"}},"hoveron":"points","name":"E255K","legendgroup":"E255K","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.79166666666667,2.79411764705882],"y":[-3.1053136269563,-4.05659997629278],"text":["factor(experiment): M3<br />AltDepth/Depth: 7.846688e-04<br />mutant: E255V","factor(experiment): M6<br />AltDepth/Depth: 8.778090e-05<br />mutant: E255V"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(222,140,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(222,140,0,1)"}},"hoveron":"points","name":"E255V","legendgroup":"E255V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.81944444444444,2.82352941176471],"y":[-3.13433651094868,-4.06355851811098],"text":["factor(experiment): M3<br />AltDepth/Depth: 7.339450e-04<br />mutant: E355A","factor(experiment): M6<br />AltDepth/Depth: 8.638563e-05<br />mutant: E355A"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(205,150,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(205,150,0,1)"}},"hoveron":"points","name":"E355A","legendgroup":"E355A","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.84722222222222,2.85294117647059,0.803571428571429],"y":[-2.98833595585605,-3.46161106260275,-2.90523804279966],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.027221e-03<br />mutant: E355G","factor(experiment): M6<br />AltDepth/Depth: 3.454530e-04<br />mutant: E355G","factor(experiment): Enu_4<br />AltDepth/Depth: 1.243833e-03<br />mutant: E355G"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(183,159,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(183,159,0,1)"}},"hoveron":"points","name":"E355G","legendgroup":"E355G","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.875,2.88235294117647],"y":[-2.98757937748087,-4.16010822041095],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.029012e-03<br />mutant: E459K","factor(experiment): M6<br />AltDepth/Depth: 6.916586e-05<br />mutant: E459K"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(157,167,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(157,167,0,1)"}},"hoveron":"points","name":"E459K","legendgroup":"E459K","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.839285714285714],"y":[-3.34243913105921],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 4.545282e-04<br />mutant: F311L","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(124,174,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(124,174,0,1)"}},"hoveron":"points","name":"F311L","legendgroup":"F311L","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.90277777777778,2.91176470588235,0.875],"y":[-2.97322024685223,-3.65330901293848,-2.61341600694972],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.063603e-03<br />mutant: F317L","factor(experiment): M6<br />AltDepth/Depth: 2.221729e-04<br />mutant: F317L","factor(experiment): Enu_4<br />AltDepth/Depth: 2.435477e-03<br />mutant: F317L"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(73,181,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(73,181,0,1)"}},"hoveron":"points","name":"F317L","legendgroup":"F317L","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.910714285714286],"y":[-2.58646454748003],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 2.591406e-03<br />mutant: F359C","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,186,56,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,186,56,1)"}},"hoveron":"points","name":"F359C","legendgroup":"F359C","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.93055555555556,2.94117647058824],"y":[-2.98591124793127,-4.0119508660594],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.032972e-03<br />mutant: F359I","factor(experiment): M6<br />AltDepth/Depth: 9.728573e-05<br />mutant: F359I"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,190,103,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,190,103,1)"}},"hoveron":"points","name":"F359I","legendgroup":"F359I","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.95833333333333,2.97058823529412],"y":[-2.89259721684484,-4.0119508660594],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.280568e-03<br />mutant: F359L","factor(experiment): M6<br />AltDepth/Depth: 9.728573e-05<br />mutant: F359L"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,192,139,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,192,139,1)"}},"hoveron":"points","name":"F359L","legendgroup":"F359L","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.98611111111111,0.946428571428571],"y":[-3.08273152882018,-2.15125414042611],"text":["factor(experiment): M3<br />AltDepth/Depth: 8.265487e-04<br />mutant: F359V","factor(experiment): Enu_4<br />AltDepth/Depth: 7.059044e-03<br />mutant: F359V"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,193,169,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,193,169,1)"}},"hoveron":"points","name":"F359V","legendgroup":"F359V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.01388888888889,3,0.982142857142857],"y":[-3.10432950126461,-4.04123473117143,-2.33661365711149],"text":["factor(experiment): M3<br />AltDepth/Depth: 7.864489e-04<br />mutant: G250E","factor(experiment): M6<br />AltDepth/Depth: 9.094216e-05<br />mutant: G250E","factor(experiment): Enu_4<br />AltDepth/Depth: 4.606662e-03<br />mutant: G250E"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,191,196,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,191,196,1)"}},"hoveron":"points","name":"G250E","legendgroup":"G250E","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.01785714285714],"y":[-2.79963151352082],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 1.586238e-03<br />mutant: H214R","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,187,220,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,187,220,1)"}},"hoveron":"points","name":"H214R","legendgroup":"H214R","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.04166666666667,3.02941176470588,1.05357142857143],"y":[-3.01764830073931,-3.91195618907269,-2.22403974145421],"text":["factor(experiment): M3<br />AltDepth/Depth: 9.601779e-04<br />mutant: H396P","factor(experiment): M6<br />AltDepth/Depth: 1.224740e-04<br />mutant: H396P","factor(experiment): Enu_4<br />AltDepth/Depth: 5.969807e-03<br />mutant: H396P"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,180,240,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,180,240,1)"}},"hoveron":"points","name":"H396P","legendgroup":"H396P","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.06944444444444,3.05882352941176],"y":[-3.15016411531662,-3.610979379923],"text":["factor(experiment): M3<br />AltDepth/Depth: 7.076783e-04<br />mutant: H396R","factor(experiment): M6<br />AltDepth/Depth: 2.449180e-04<br />mutant: H396R"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,169,255,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,169,255,1)"}},"hoveron":"points","name":"H396R","legendgroup":"H396R","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.08928571428571],"y":[-2.60188546294549],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 2.501005e-03<br />mutant: K285N","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(97,156,255,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(97,156,255,1)"}},"hoveron":"points","name":"K285N","legendgroup":"K285N","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.09722222222222,3.08823529411765,1.125],"y":[-2.99001802350353,-4.06718248552341,-2.63696047707705],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.023251e-03<br />mutant: L248V","factor(experiment): M6<br />AltDepth/Depth: 8.566778e-05<br />mutant: L248V","factor(experiment): Enu_4<br />AltDepth/Depth: 2.306957e-03<br />mutant: L248V"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(159,140,255,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(159,140,255,1)"}},"hoveron":"points","name":"L248V","legendgroup":"L248V","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1.16071428571429],"y":[-2.55690526905545],"text":"factor(experiment): Enu_4<br />AltDepth/Depth: 2.773925e-03<br />mutant: L324R","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(199,124,255,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(199,124,255,1)"}},"hoveron":"points","name":"L324R","legendgroup":"L324R","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.125,3.11764705882353],"y":[-2.96594250202754,-3.80837979488238],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.081577e-03<br />mutant: M351T","factor(experiment): M6<br />AltDepth/Depth: 1.554606e-04<br />mutant: M351T"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(227,110,246,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(227,110,246,1)"}},"hoveron":"points","name":"M351T","legendgroup":"M351T","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.15277777777778,3.14705882352941],"y":[-3.05077877502164,-3.47454404725565],"text":["factor(experiment): M3<br />AltDepth/Depth: 8.896542e-04<br />mutant: Q252H","factor(experiment): M6<br />AltDepth/Depth: 3.353173e-04<br />mutant: Q252H"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(245,100,227,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(245,100,227,1)"}},"hoveron":"points","name":"Q252H","legendgroup":"Q252H","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.18055555555556,3.17647058823529,1.19642857142857],"y":[-2.75523276428678,-3.35458858787724,-1.63905188753197],"text":["factor(experiment): M3<br />AltDepth/Depth: 1.756982e-03<br />mutant: T315I","factor(experiment): M6<br />AltDepth/Depth: 4.419890e-04<br />mutant: T315I","factor(experiment): Enu_4<br />AltDepth/Depth: 2.295874e-02<br />mutant: T315I"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(255,97,204,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(255,97,204,1)"}},"hoveron":"points","name":"T315I","legendgroup":"T315I","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.20833333333333,3.20588235294118],"y":[-3.19694201492393,-4.0733517023869],"text":["factor(experiment): M3<br />AltDepth/Depth: 6.354158e-04<br />mutant: Y253F","factor(experiment): M6<br />AltDepth/Depth: 8.445946e-05<br />mutant: Y253F"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(255,100,176,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(255,100,176,1)"}},"hoveron":"points","name":"Y253F","legendgroup":"Y253F","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[2.23611111111111,3.23529411764706,1.23214285714286],"y":[-3.21823531893749,-3.59365520812377,-1.59671312020071],"text":["factor(experiment): M3<br />AltDepth/Depth: 6.050130e-04<br />mutant: Y253H","factor(experiment): M6<br />AltDepth/Depth: 2.548853e-04<br />mutant: Y253H","factor(experiment): Enu_4<br />AltDepth/Depth: 2.530969e-02<br />mutant: Y253H"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(255,108,145,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(255,108,145,1)"}},"hoveron":"points","name":"Y253H","legendgroup":"Y253H","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.2283105022831,"r":7.30593607305936,"b":43.1050228310502,"l":62.1004566210046},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.4,3.6],"tickmode":"array","ticktext":["Enu_4","M3","M6"],"tickvals":[1,2,3],"categoryorder":"array","categoryarray":["Enu_4","M3","M6"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":{"text":"<b> factor(experiment) <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-4.28827797542146,-1.4685433651902],"tickmode":"array","ticktext":["1e-04","1e-03","1e-02"],"tickvals":[-4,-3,-2],"categoryorder":"array","categoryarray":["1e-04","1e-03","1e-02"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":{"text":"<b> AltDepth/Depth <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":"transparent","line":{"color":"rgba(51,51,51,1)","width":0.66417600664176,"linetype":"solid"},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"y":0.913385826771654},"annotations":[{"text":"mutant","x":1.02,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"left","yanchor":"bottom","legendTitle":true}],"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"1694c23165077":{"x":{},"y":{},"colour":{},"type":"scatter"}},"cur_data":"1694c23165077","visdat":{"1694c23165077":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code>ggplot(a,aes(x=AltDepth,y=expectedAltDepth,color=experiment))+geom_point()+scale_y_continuous(trans=&quot;log10&quot;,limits = c(1,1000),name = &quot;Predicted read count&quot;)+scale_x_continuous(trans=&quot;log10&quot;,limits = c(1,1000),name=&quot;Measured read count&quot;)+geom_abline()+cleanup+theme(legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/spikeins_depthofcoverages.Rmd/unnamed-chunk-3-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;grant_fig.pdf&quot;,width = 3,height = 3,units = &quot;in&quot;,useDingbats=F)
+
+ggplot(a,aes(x=AltDepth,y=expectedAltDepth))+geom_point()+scale_y_continuous(trans=&quot;log10&quot;,limits = c(.2,2000),name = &quot;Predicted read count&quot;,breaks=c(.2,2,20,200,2000))+scale_x_continuous(trans=&quot;log10&quot;,limits = c(.2,2000),name=&quot;Measured read count&quot;,breaks=c(.2,20,200,2000))+geom_abline()+cleanup+theme(legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/spikeins_depthofcoverages.Rmd/unnamed-chunk-3-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;grant_fig_v2.pdf&quot;,width = 3,height = 3,units = &quot;in&quot;,useDingbats=F)
+
+
+ggplot(a%&gt;%filter(AltDepth&gt;1),aes(y=AltDepth/60000,x=expectedAltDepth/60000))+
+  geom_point()+
+  scale_y_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name = &quot;Measured frequency&quot;,breaks=c(10^-5,10^-4,10^-3,10^-2),labels=parse(text=c(&quot;10^-5&quot;,&quot;10^-4&quot;,&quot;10^-3&quot;,&quot;10^-2&quot;)))+
+  scale_x_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name=&quot;Predicted frequency&quot;,breaks=c(10^-5,10^-4,10^-3,10^-2),labels=parse(text=c(&quot;10^-5&quot;,&quot;10^-4&quot;,&quot;10^-3&quot;,&quot;10^-2&quot;)))+
+  geom_abline(linetype=&quot;dashed&quot;)+
+  cleanup+
+  theme(legend.position = &quot;none&quot;)+
+  stat_cor(method=&quot;pearson&quot;)</code></pre>
+<p><img src="figure/spikeins_depthofcoverages.Rmd/unnamed-chunk-3-4.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/spikeins_figures/measuredvspredicted.pdf&quot;,width = 3,height = 3,units = &quot;in&quot;,useDingbats=F)</code></pre>
+<pre class="r"><code>twinstrand_maf_merge=read.csv(&quot;output/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F)
+###Putting data from all the experiments on the same plot
+#First, creating day 0 values for M4,M5,M7, and sp_enu_3. Whenever you see any of these experiments, add M3&#39;s or M6&#39;s or Sp_Enu4&#39;s D0 counts for its counts.
+twinstrand_maf_merge=merge(twinstrand_maf_merge,ic50data_long%&gt;%filter(conc==0.8),by=&quot;mutant&quot;)
+M3D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,time_point==&quot;D0&quot;)
+M5D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M5&quot;,time_point==&quot;D3&quot;)%&gt;%mutate(totalmutant=totalmutant*exp(-netgr_pred*72),AltDepth=AltDepth*exp(-netgr_pred*72),time_point=&quot;D0&quot;)
+
+M7D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M7&quot;,time_point==&quot;D3&quot;)%&gt;%mutate(totalmutant=totalmutant*exp(-netgr_pred*72),AltDepth=AltDepth*exp(-netgr_pred*72),time_point=&quot;D0&quot;)
+M6D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M6&quot;,time_point==&quot;D0&quot;)
+M4D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M4&quot;,time_point==&quot;D3&quot;)%&gt;%mutate(totalmutant=totalmutant*exp(-netgr_pred*72),AltDepth=AltDepth*exp(-netgr_pred*72),time_point=&quot;D0&quot;)
+Enu3_D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;Enu_3&quot;,time_point==&quot;D0&quot;)
+Enu4_D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;Enu_4&quot;,time_point==&quot;D3&quot;)%&gt;%mutate(totalmutant=totalmutant*exp(-netgr_pred*72),AltDepth=AltDepth*exp(-netgr_pred*72),time_point=&quot;D0&quot;)
+twinstrand_maf_merge=rbind(twinstrand_maf_merge,M5D0,M7D0,M4D0,Enu4_D0)
+
+
+
+twinstrand_maf_merge=twinstrand_maf_merge%&gt;%
+  mutate(Spike_in_freq=as.numeric(Spike_in_freq))%&gt;%
+  mutate(Spike_in_freq=case_when(experiment==&quot;Enu_4&quot;~2000,
+                                 experiment==experiment~Spike_in_freq))%&gt;%
+  mutate(actualDepth=Depth*3)%&gt;% #To account for 2 mouse 1 human reads
+  mutate(expectedAltDepth=case_when(time_point==&quot;D0&quot;&amp;Spike_in_freq==1000~Depth/1000,
+                                    time_point==&quot;D0&quot;&amp;Spike_in_freq==5000~Depth/5000,
+                                    time_point==&quot;D0&quot;&amp;Spike_in_freq==2000~Depth/2000,
+                                    time_point==time_point~NaN))
+
+
+
+a=twinstrand_maf_merge%&gt;%filter(time_point==&quot;D0&quot;,experiment%in%c(&quot;M3&quot;,&quot;M4&quot;,&quot;M5&quot;,&quot;M6&quot;,&quot;M7&quot;)&amp;tki_resistant_mutation==&quot;True&quot;|experiment%in%&quot;Enu_4&quot;,!mutant==&quot;NA&quot;,!mutant==&quot;D276G&quot;,!mutant==&quot;V280syn&quot;)%&gt;%
+  mutate(expectedAltDepth=case_when(experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F311L&quot;~expectedAltDepth,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;T315I&quot;~expectedAltDepth*55,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F317L&quot;~expectedAltDepth*6,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;E355G&quot;~expectedAltDepth*3,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F359V&quot;~expectedAltDepth*13,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;F359C&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;H396P&quot;~expectedAltDepth*17,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;A397P&quot;~expectedAltDepth*12,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;Y253H&quot;~expectedAltDepth*63,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;Q252H&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;G250E&quot;~expectedAltDepth*11,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;L248V&quot;~expectedAltDepth*6,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;H214R&quot;~expectedAltDepth*4,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;K285N&quot;~expectedAltDepth*5,
+                                   experiment==&quot;Enu_4&quot;&amp;mutant==&quot;L324R&quot;~expectedAltDepth*7,
+                                   mutant==mutant~expectedAltDepth))
+
+ggplot(a%&gt;%filter(AltDepth&gt;1),aes(x=AltDepth/60000,y=expectedAltDepth/60000))+geom_point()+scale_y_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name = &quot;Predicted frequency&quot;)+scale_x_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name=&quot;Measured frequency&quot;)+geom_abline()+cleanup+theme(legend.position = &quot;none&quot;)</code></pre>
+<p><img src="figure/spikeins_depthofcoverages.Rmd/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># sort(unique(a$experiment))
+
+b=a%&gt;%filter(mutant==&quot;T315I&quot;)
+
+plotly=ggplot(a%&gt;%filter(AltDepth&gt;1),aes(x=AltDepth/60000,y=expectedAltDepth/60000,color=experiment))+geom_point()+scale_y_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name = &quot;Predicted frequency&quot;)+scale_x_continuous(trans=&quot;log10&quot;,limits=c(.00001,.05),name=&quot;Measured frequency&quot;)+geom_abline()+cleanup
+ggplotly(plotly)</code></pre>
+<div id="htmlwidget-a087dcd16dd97c86e8e3" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a087dcd16dd97c86e8e3">{"x":{"data":[{"x":[-3.30102999566398,-2.92081875395238,-3.0377885608894,-2.59917430309047,-2.66420789807681,-2.46008791542088,-2.93305321036939,-1.95532960508054,-1.89848204475159,-4.71606309775961,-4.26696933630055,-3.4228069716751,-3.687821612203,-3.76892642998319,-2.43140521853409,-2.7170115440887],"y":[-3.21970069380864,-2.83028149228299,-3.05338400473733,-2.63500680602151,-2.58723155147107,-2.30662924825238,-2.81897147857267,-1.8769450237183,-1.80345837076128,-3.4178797959807,-2.82877100327495,-2.81694854505522,-2.50704066309626,-3.05305672930217,-2.09143456366313,-2.03408134062677],"text":["AltDepth/60000: 5.000000e-04<br />expectedAltDepth/60000: 6.029750e-04<br />experiment: Enu_4","AltDepth/60000: 1.200000e-03<br />expectedAltDepth/60000: 1.478150e-03<br />experiment: Enu_4","AltDepth/60000: 9.166667e-04<br />expectedAltDepth/60000: 8.843333e-04<br />experiment: Enu_4","AltDepth/60000: 2.516667e-03<br />expectedAltDepth/60000: 2.317358e-03<br />experiment: Enu_4","AltDepth/60000: 2.166667e-03<br />expectedAltDepth/60000: 2.586833e-03<br />experiment: Enu_4","AltDepth/60000: 3.466667e-03<br />expectedAltDepth/60000: 4.935950e-03<br />experiment: Enu_4","AltDepth/60000: 1.166667e-03<br />expectedAltDepth/60000: 1.517150e-03<br />experiment: Enu_4","AltDepth/60000: 1.108333e-02<br />expectedAltDepth/60000: 1.327563e-02<br />experiment: Enu_4","AltDepth/60000: 1.263333e-02<br />expectedAltDepth/60000: 1.572323e-02<br />experiment: Enu_4","AltDepth/60000: 1.922812e-05<br />expectedAltDepth/60000: 3.820500e-04<br />experiment: Enu_4","AltDepth/60000: 5.407925e-05<br />expectedAltDepth/60000: 1.483300e-03<br />experiment: Enu_4","AltDepth/60000: 3.777400e-04<br />expectedAltDepth/60000: 1.524233e-03<br />experiment: Enu_4","AltDepth/60000: 2.052005e-04<br />expectedAltDepth/60000: 3.111425e-03<br />experiment: Enu_4","AltDepth/60000: 1.702447e-04<br />expectedAltDepth/60000: 8.850000e-04<br />experiment: Enu_4","AltDepth/60000: 3.703350e-03<br />expectedAltDepth/60000: 8.101500e-03<br />experiment: Enu_4","AltDepth/60000: 1.918618e-03<br />expectedAltDepth/60000: 9.245250e-03<br />experiment: Enu_4"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(248,118,109,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(248,118,109,1)"}},"hoveron":"points","name":"Enu_4","legendgroup":"Enu_4","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-3.60205999132796,-3.36317790241283,-3.47712125471966,-3.33099321904142,-3.22184874961636,-3.23408320603337,-3.38021124171161,-3.47712125471966,-3.36317790241283,-3.19836765376683,-3.33099321904142,-3.22184874961636,-3.25963731050576,-3.28678955654937,-3.02227639471115,-3.43572856956144,-3.45593195564972],"y":[-3.24856691818065,-3.25786427545653,-3.34278474377098,-3.34265726318537,-3.23426937213548,-3.26086295918113,-3.39429999378033,-3.39438972589948,-3.25884840114822,-3.18071935302752,-3.1808291037248,-3.23183072611283,-3.29369480847821,-3.23601078152773,-3.26704363042438,-3.2387865546375,-3.23769663671223],"text":["AltDepth/60000: 2.500000e-04<br />expectedAltDepth/60000: 5.642000e-04<br />experiment: M3","AltDepth/60000: 4.333333e-04<br />expectedAltDepth/60000: 5.522500e-04<br />experiment: M3","AltDepth/60000: 3.333333e-04<br />expectedAltDepth/60000: 4.541667e-04<br />experiment: M3","AltDepth/60000: 4.666667e-04<br />expectedAltDepth/60000: 4.543000e-04<br />experiment: M3","AltDepth/60000: 6.000000e-04<br />expectedAltDepth/60000: 5.830833e-04<br />experiment: M3","AltDepth/60000: 5.833333e-04<br />expectedAltDepth/60000: 5.484500e-04<br />experiment: M3","AltDepth/60000: 4.166667e-04<br />expectedAltDepth/60000: 4.033667e-04<br />experiment: M3","AltDepth/60000: 3.333333e-04<br />expectedAltDepth/60000: 4.032833e-04<br />experiment: M3","AltDepth/60000: 4.333333e-04<br />expectedAltDepth/60000: 5.510000e-04<br />experiment: M3","AltDepth/60000: 6.333333e-04<br />expectedAltDepth/60000: 6.596000e-04<br />experiment: M3","AltDepth/60000: 4.666667e-04<br />expectedAltDepth/60000: 6.594333e-04<br />experiment: M3","AltDepth/60000: 6.000000e-04<br />expectedAltDepth/60000: 5.863667e-04<br />experiment: M3","AltDepth/60000: 5.500000e-04<br />expectedAltDepth/60000: 5.085167e-04<br />experiment: M3","AltDepth/60000: 5.166667e-04<br />expectedAltDepth/60000: 5.807500e-04<br />experiment: M3","AltDepth/60000: 9.500000e-04<br />expectedAltDepth/60000: 5.407000e-04<br />experiment: M3","AltDepth/60000: 3.666667e-04<br />expectedAltDepth/60000: 5.770500e-04<br />experiment: M3","AltDepth/60000: 3.500000e-04<br />expectedAltDepth/60000: 5.785000e-04<br />experiment: M3"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(183,159,0,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(183,159,0,1)"}},"hoveron":"points","name":"M3","legendgroup":"M3","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-4.57815967279632,-4.42120451298205,-4.65207374944166,-4.42193816859389,-4.56893500735333,-4.40853949379773,-4.74304271280092,-4.65353301128112,-4.00609200304859,-4.11042766635258,-4.42730654971626],"y":[-4.40808248973359,-4.39649476779786,-4.31336373073771,-4.33214251669963,-4.41710371218806,-4.26217149410422,-4.26373632980327,-4.39700005521018,-4.3486573636549,-4.33517005885691,-4.39186636361579],"text":["AltDepth/60000: 2.641437e-05<br />expectedAltDepth/60000: 3.907667e-05<br />experiment: M4","AltDepth/60000: 3.791364e-05<br />expectedAltDepth/60000: 4.013333e-05<br />experiment: M4","AltDepth/60000: 2.228057e-05<br />expectedAltDepth/60000: 4.860000e-05<br />experiment: M4","AltDepth/60000: 3.784965e-05<br />expectedAltDepth/60000: 4.654333e-05<br />experiment: M4","AltDepth/60000: 2.698143e-05<br />expectedAltDepth/60000: 3.827333e-05<br />experiment: M4","AltDepth/60000: 3.903557e-05<br />expectedAltDepth/60000: 5.468000e-05<br />experiment: M4","AltDepth/60000: 1.806996e-05<br />expectedAltDepth/60000: 5.448333e-05<br />experiment: M4","AltDepth/60000: 2.220583e-05<br />expectedAltDepth/60000: 4.008667e-05<br />experiment: M4","AltDepth/60000: 9.860706e-05<br />expectedAltDepth/60000: 4.480667e-05<br />experiment: M4","AltDepth/60000: 7.754831e-05<br />expectedAltDepth/60000: 4.622000e-05<br />experiment: M4","AltDepth/60000: 3.738466e-05<br />expectedAltDepth/60000: 4.056333e-05<br />experiment: M4"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,186,56,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,186,56,1)"}},"hoveron":"points","name":"M4","legendgroup":"M4","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-3.97010102848583,-3.15153624860005,-3.67647701808536,-4.06285058398427,-3.8069757094274,-3.43572645307952,-3.86439448321135,-3.75109549258887,-3.10544260866885,-3.2838942985875,-3.63810060460887,-3.51523031311484,-2.74641037904023,-3.78596642362208,-2.86694350105603,-3.7059864730669,-3.02722715503367],"y":[-3.41111231222778,-3.42485065806291,-3.49648168727593,-3.49659522534928,-3.39465903355103,-3.42025450106135,-3.55036734952993,-3.54964823372439,-3.41865726911741,-3.32751729978664,-3.33992544277911,-3.39392332120659,-3.44642035756819,-3.39835640710666,-3.42654817796451,-3.40299994881336,-3.40157429332713],"text":["AltDepth/60000: 1.071270e-04<br />expectedAltDepth/60000: 3.880500e-04<br />experiment: M5","AltDepth/60000: 7.054460e-04<br />expectedAltDepth/60000: 3.759667e-04<br />experiment: M5","AltDepth/60000: 2.106313e-04<br />expectedAltDepth/60000: 3.188000e-04<br />experiment: M5","AltDepth/60000: 8.652656e-05<br />expectedAltDepth/60000: 3.187167e-04<br />experiment: M5","AltDepth/60000: 1.559640e-04<br />expectedAltDepth/60000: 4.030333e-04<br />experiment: M5","AltDepth/60000: 3.666685e-04<br />expectedAltDepth/60000: 3.799667e-04<br />experiment: M5","AltDepth/60000: 1.366487e-04<br />expectedAltDepth/60000: 2.816000e-04<br />experiment: M5","AltDepth/60000: 1.773799e-04<br />expectedAltDepth/60000: 2.820667e-04<br />experiment: M5","AltDepth/60000: 7.844358e-04<br />expectedAltDepth/60000: 3.813667e-04<br />experiment: M5","AltDepth/60000: 5.201226e-04<br />expectedAltDepth/60000: 4.704167e-04<br />experiment: M5","AltDepth/60000: 2.300909e-04<br />expectedAltDepth/60000: 4.571667e-04<br />experiment: M5","AltDepth/60000: 3.053301e-04<br />expectedAltDepth/60000: 4.037167e-04<br />experiment: M5","AltDepth/60000: 1.793039e-03<br />expectedAltDepth/60000: 3.577500e-04<br />experiment: M5","AltDepth/60000: 1.636943e-04<br />expectedAltDepth/60000: 3.996167e-04<br />experiment: M5","AltDepth/60000: 1.358490e-03<br />expectedAltDepth/60000: 3.745000e-04<br />experiment: M5","AltDepth/60000: 1.967948e-04<br />expectedAltDepth/60000: 3.953667e-04<br />experiment: M5","AltDepth/60000: 9.392319e-04<br />expectedAltDepth/60000: 3.966667e-04<br />experiment: M5"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(0,191,196,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,191,196,1)"}},"hoveron":"points","name":"M5","legendgroup":"M5","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-4.47712125471966,-4.17609125905568,-4.30102999566398,-4.47712125471966,-4.17609125905568,-4.47712125471966,-4.17609125905568,-4,-4.30102999566398],"y":[-4.41270070628607,-4.41345020078894,-4.34669098706152,-4.26413506998299,-4.2640818834687,-4.3677114641733,-4.40051721613605,-4.34438141645878,-4.40634479187623],"text":["AltDepth/60000: 3.333333e-05<br />expectedAltDepth/60000: 3.866333e-05<br />experiment: M6","AltDepth/60000: 6.666667e-05<br />expectedAltDepth/60000: 3.859667e-05<br />experiment: M6","AltDepth/60000: 5.000000e-05<br />expectedAltDepth/60000: 4.501000e-05<br />experiment: M6","AltDepth/60000: 3.333333e-05<br />expectedAltDepth/60000: 5.443333e-05<br />experiment: M6","AltDepth/60000: 6.666667e-05<br />expectedAltDepth/60000: 5.444000e-05<br />experiment: M6","AltDepth/60000: 3.333333e-05<br />expectedAltDepth/60000: 4.288333e-05<br />experiment: M6","AltDepth/60000: 6.666667e-05<br />expectedAltDepth/60000: 3.976333e-05<br />experiment: M6","AltDepth/60000: 1.000000e-04<br />expectedAltDepth/60000: 4.525000e-05<br />experiment: M6","AltDepth/60000: 5.000000e-05<br />expectedAltDepth/60000: 3.923333e-05<br />experiment: M6"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(97,156,255,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(97,156,255,1)"}},"hoveron":"points","name":"M6","legendgroup":"M6","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-3.835564233127,-3.0665067679024,-3.74197856684179,-3.63688185171199,-3.5551637364336,-3.34275692254626,-3.83336024947138,-3.58572809892496,-2.97354633740595,-3.09735858069038,-3.45078664144444,-3.22960482065738,-2.68345085837193,-3.68070782667503,-2.82352876884292,-3.6875683993748,-2.78949573347347],"y":[-3.29859033535879,-3.31401953967569,-3.38125480124112,-3.3799160218273,-3.27780498046656,-3.29817306960286,-3.43070413773567,-3.42949597713788,-3.3088005892008,-3.22890269352959,-3.24413784318223,-3.28008893580166,-3.33257818044687,-3.28519540300823,-3.30646357289643,-3.28962873573924,-3.288839775197],"text":["AltDepth/60000: 1.460279e-04<br />expectedAltDepth/60000: 5.028167e-04<br />experiment: M7","AltDepth/60000: 8.580117e-04<br />expectedAltDepth/60000: 4.852667e-04<br />experiment: M7","AltDepth/60000: 1.811429e-04<br />expectedAltDepth/60000: 4.156667e-04<br />experiment: M7","AltDepth/60000: 2.307375e-04<br />expectedAltDepth/60000: 4.169500e-04<br />experiment: M7","AltDepth/60000: 2.785071e-04<br />expectedAltDepth/60000: 5.274667e-04<br />experiment: M7","AltDepth/60000: 4.541958e-04<br />expectedAltDepth/60000: 5.033000e-04<br />experiment: M7","AltDepth/60000: 1.467708e-04<br />expectedAltDepth/60000: 3.709333e-04<br />experiment: M7","AltDepth/60000: 2.595804e-04<br />expectedAltDepth/60000: 3.719667e-04<br />experiment: M7","AltDepth/60000: 1.062805e-03<br />expectedAltDepth/60000: 4.911333e-04<br />experiment: M7","AltDepth/60000: 7.991741e-04<br />expectedAltDepth/60000: 5.903333e-04<br />experiment: M7","AltDepth/60000: 3.541713e-04<br />expectedAltDepth/60000: 5.699833e-04<br />experiment: M7","AltDepth/60000: 5.893797e-04<br />expectedAltDepth/60000: 5.247000e-04<br />experiment: M7","AltDepth/60000: 2.072761e-03<br />expectedAltDepth/60000: 4.649667e-04<br />experiment: M7","AltDepth/60000: 2.085894e-04<br />expectedAltDepth/60000: 5.185667e-04<br />experiment: M7","AltDepth/60000: 1.501313e-03<br />expectedAltDepth/60000: 4.937833e-04<br />experiment: M7","AltDepth/60000: 2.053202e-04<br />expectedAltDepth/60000: 5.133000e-04<br />experiment: M7","AltDepth/60000: 1.623694e-03<br />expectedAltDepth/60000: 5.142333e-04<br />experiment: M7"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(245,100,227,1)","opacity":1,"size":5.66929133858268,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(245,100,227,1)"}},"hoveron":"points","name":"M7","legendgroup":"M7","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[-5.1849485002168,-1.11608149544718],"y":[-5.1849485002168,-1.11608149544718],"text":"intercept: 0<br />slope: 1","type":"scatter","mode":"lines","line":{"width":1.88976377952756,"color":"rgba(0,0,0,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.2283105022831,"r":7.30593607305936,"b":43.1050228310502,"l":62.1004566210046},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-5.1849485002168,-1.11608149544718],"tickmode":"array","ticktext":["1e-05","1e-04","1e-03","1e-02"],"tickvals":[-5,-4,-3,-2],"categoryorder":"array","categoryarray":["1e-05","1e-04","1e-03","1e-02"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":{"text":"<b> Measured frequency <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-5.1849485002168,-1.11608149544718],"tickmode":"array","ticktext":["1e-05","1e-04","1e-03","1e-02"],"tickvals":[-5,-4,-3,-2],"categoryorder":"array","categoryarray":["1e-05","1e-04","1e-03","1e-02"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"x","title":{"text":"<b> Predicted frequency <\/b>","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":"transparent","line":{"color":"rgba(51,51,51,1)","width":0.66417600664176,"linetype":"solid"},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"y":0.913385826771654},"annotations":[{"text":"experiment","x":1.02,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"left","yanchor":"bottom","legendTitle":true}],"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"1694c5a526905":{"x":{},"y":{},"colour":{},"type":"scatter"},"1694c586cf596":{"intercept":{},"slope":{}}},"cur_data":"1694c5a526905","visdat":{"1694c5a526905":["function (y) ","x"],"1694c586cf596":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Demonstrating that the duplex depths achieved were low</p>
+<pre class="r"><code># rm(list=ls())
+twinstrand_maf_merge=read.csv(&quot;output/twinstrand_maf_merge.csv&quot;,header = T,stringsAsFactors = F)
+
+
+#First, creating day 0 values for M4,M5,M7, and sp_enu_3. So M5&#39;s and M7&#39;s D0 counts are M3&#39;s. And M4&#39;s D0 counts are M6&#39;s. Sp_Enu_3&#39;s D0 counts are Sp_Enu_4&#39;s D0 counts.
+M3D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,time_point==&quot;D0&quot;)
+M3D0_v2=M3D0%&gt;%filter(!mutant%in%NA)
+M3D0_v2=M3D0_v2%&gt;%dplyr::select(mutant,AltDepth)
+M3D0_v2$experiment=&quot;1:1,000&quot;
+# M3D6=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M3&quot;,time_point==&quot;D3&quot;)
+
+M6D0=twinstrand_maf_merge%&gt;%filter(experiment==&quot;M6&quot;,time_point==&quot;D0&quot;)
+M6D0_v2=M6D0%&gt;%filter(!mutant%in%NA)
+M6D0_v2=M6D0_v2%&gt;%dplyr::select(mutant,AltDepth)
+M6D0_v2$experiment=&quot;1:5,000&quot;
+
+m3m6d0=rbind(M3D0_v2,M6D0_v2)
+
+# Adding a residue column
+m3m6d0$residue &lt;- stringr::str_extract(m3m6d0$mutant, &quot;\\d+&quot;)
+# Reordering the mutant factor levels based on residue
+m3m6d0 &lt;- m3m6d0 %&gt;%
+  group_by(experiment)%&gt;%
+  mutate(mutant = factor(mutant, levels = mutant[order(residue)]))
+# Plotting
+ggplot(m3m6d0%&gt;%filter(!mutant%in%&quot;D276G&quot;),aes(x=mutant,y=AltDepth))+
+  geom_col()+
+  facet_wrap(~experiment,strip.position = &quot;top&quot;)+
+  scale_y_continuous(&quot;Mutant depth of coverage&quot;)+
+  cleanup+
+  # theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x=element_text(angle=90,hjust=.5,vjust=.5),
+        strip.placement = &quot;inside&quot;,         # Places the facet label inside
+        strip.background = element_blank(), # Removes gray background
+        strip.text = element_text(size = 12, face = &quot;bold&quot;)
+)</code></pre>
+<p><img src="figure/spikeins_depthofcoverages.Rmd/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/spikeins/duplexdepths.pdf&quot;,width=6,height=4,units=&quot;in&quot;,useDingbats=F)</code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.0.0 (2020-04-24)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS  10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] parallel  grid      stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+ [1] drc_3.0-1           MASS_7.3-55         BiocManager_1.30.10
+ [4] plotly_4.9.2.1      ggsignif_0.6.0      devtools_2.3.0     
+ [7] usethis_1.6.1       RColorBrewer_1.1-2  reshape2_1.4.4     
+[10] doParallel_1.0.15   iterators_1.0.12    foreach_1.5.0      
+[13] dplyr_1.0.6         VennDiagram_1.6.20  futile.logger_1.4.3
+[16] workflowr_1.6.2     tictoc_1.0          knitr_1.28         
+[19] ggpubr_0.4.0        ggplot2_3.3.3      
+
+loaded via a namespace (and not attached):
+ [1] TH.data_1.0-10       colorspace_1.4-1     ellipsis_0.3.2      
+ [4] rio_0.5.16           rprojroot_1.3-2      fs_1.4.1            
+ [7] farver_2.0.3         remotes_2.1.1        fansi_0.4.1         
+[10] mvtnorm_1.1-0        codetools_0.2-16     splines_4.0.0       
+[13] pkgload_1.0.2        jsonlite_1.7.2       broom_0.7.6         
+[16] compiler_4.0.0       httr_1.4.2           backports_1.1.7     
+[19] assertthat_0.2.1     Matrix_1.2-18        fastmap_1.1.0       
+[22] lazyeval_0.2.2       cli_2.5.0            later_1.0.0         
+[25] formatR_1.7          htmltools_0.5.2      prettyunits_1.1.1   
+[28] tools_4.0.0          gtable_0.3.0         glue_1.4.1          
+[31] Rcpp_1.0.4.6         carData_3.0-3        cellranger_1.1.0    
+[34] jquerylib_0.1.4      vctrs_0.3.8          crosstalk_1.1.0.1   
+[37] xfun_0.31            stringr_1.4.0        ps_1.3.3            
+[40] openxlsx_4.1.5       testthat_2.3.2       lifecycle_1.0.0     
+[43] gtools_3.8.2         rstatix_0.6.0        zoo_1.8-8           
+[46] scales_1.1.1         hms_1.1.0            promises_1.1.0      
+[49] sandwich_2.5-1       lambda.r_1.2.4       yaml_2.2.1          
+[52] curl_4.3             memoise_1.1.0        sass_0.4.1          
+[55] stringi_1.7.5        desc_1.2.0           plotrix_3.8-1       
+[58] pkgbuild_1.0.8       zip_2.0.4            rlang_0.4.11        
+[61] pkgconfig_2.0.3      evaluate_0.14        lattice_0.20-41     
+[64] purrr_0.3.4          labeling_0.3         htmlwidgets_1.5.1   
+[67] processx_3.5.2       tidyselect_1.1.0     plyr_1.8.6          
+[70] magrittr_2.0.1       R6_2.4.1             generics_0.0.2      
+[73] multcomp_1.4-13      DBI_1.1.0            pillar_1.6.1        
+[76] haven_2.4.1          foreign_0.8-78       withr_2.4.2         
+[79] survival_3.1-12      abind_1.4-5          tibble_3.1.2        
+[82] crayon_1.4.1         car_3.0-7            futile.options_1.0.1
+[85] utf8_1.1.4           rmarkdown_2.14       readxl_1.3.1        
+[88] data.table_1.14.8    callr_3.7.0          git2r_0.27.1        
+[91] forcats_0.5.1        digest_0.6.25        tidyr_1.1.3         
+[94] httpuv_1.5.2         munsell_0.5.0        viridisLite_0.3.0   
+[97] bslib_0.3.1          sessioninfo_1.1.1   </code></pre>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
