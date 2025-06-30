@@ -1,0 +1,107 @@
+---
+title: "ABL1App_Analyses"
+author: "Haider Inam"
+date: "9/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(plotly)
+# library(paste)
+```
+
+
+```{r}
+rm(list=ls())
+#The following script finds all files ending with variant-calls.mut in a directory with subdirectories and puts all the data in a dataframe
+files=list.files(path = ".",pattern = "variant-calls.mut",recursive = T)
+for(i in 1:length(files)){
+  # i=1
+  name_curr=files[i]
+    #Trying to make the variable names look reasonable
+    name_sample=strsplit(name_curr,".1.consensus.variant-calls.mut")
+    name_sample=strsplit(name_sample[[1]][1],"Novogene_")
+    name_sample=gsub("/","_",name_sample[[1]][2])
+  alldata=data.frame(read.table(name_curr,header = T,stringsAsFactors = F,check.names = F,fill=T))
+  alldata$sample=name_sample
+  if(i==1){
+  alldata_comp=alldata
+  } else{
+  alldata_comp=rbind(alldata_comp,alldata)  
+  }
+}
+
+# alldata_comp=alldata_comp%>%dplyr::select(-c("SVLEN",))
+alldata_comp_rearranged=alldata_comp%>%dplyr::select(c("sample","contig","start","end","variation_type","ref","alt","alt_depth","depth","context",))%>%filter(!variation_type%in%c("indel","sv"))
+
+```
+
+Low
+```{r}
+RP5_Low_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_Low_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_Low_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_Low_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_Low_merged=merge(RP5_Low_D2,RP5_Low_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP5_Low_merged=RP5_Low_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+RP4_Low_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_Low_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_Low_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_Low_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_Low_merged=merge(RP4_Low_D2,RP4_Low_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP4_Low_merged=RP4_Low_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+Low_merged=merge(RP5_Low_merged,RP4_Low_merged,by=c("contig","start","end","variation_type","ref","alt","context"))
+
+ggplot(Low_merged,aes(x=enr.x,y=enr.y))+geom_point()+
+  scale_x_continuous(trans="log10")+
+  scale_y_continuous(trans="log10")
+cor(Low_merged$enr.x,Low_merged$enr.y)
+```
+
+High
+```{r}
+RP5_High_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_High_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_High_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_High_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_High_merged=merge(RP5_High_D2,RP5_High_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP5_High_merged=RP5_High_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+RP4_High_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_High_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_High_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_High_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_High_merged=merge(RP4_High_D2,RP4_High_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP4_High_merged=RP4_High_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+High_merged=merge(RP5_High_merged,RP4_High_merged,by=c("contig","start","end","variation_type","ref","alt","context"))
+
+ggplot(High_merged,aes(x=enr.x,y=enr.y))+
+  geom_point()+
+  scale_x_continuous(trans="log10")+
+  scale_y_continuous(trans="log10")
+cor(High_merged$enr.x,High_merged$enr.y)
+```
+
+High
+```{r}
+RP5_High_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_High_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_High_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP5_Im_High_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP5_High_merged=merge(RP5_High_D2,RP5_High_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP5_High_merged=RP5_High_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+RP4_High_D2=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_High_D2")%>%mutate(D2=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_High_D4=alldata_comp_rearranged%>%filter(sample%in%"Lane5_RP4_Im_High_D4")%>%mutate(D4=alt_depth/depth)%>%dplyr::select(-c("sample","alt_depth","depth"))
+RP4_High_merged=merge(RP4_High_D2,RP4_High_D4,by = c("contig","start","end","variation_type","ref","alt","context"))
+RP4_High_merged=RP4_High_merged%>%mutate(enr=D4/D2)%>%dplyr::select(-c("D2","D4"))
+
+High_merged=merge(RP5_High_merged,RP4_High_merged,by=c("contig","start","end","variation_type","ref","alt","context"))
+
+ggplot(High_merged,aes(x=enr.x,y=enr.y))+geom_point()+
+scale_x_continuous(trans="log10")+
+scale_y_continuous(trans="log10")
+
+plotly=ggplot(High_merged,aes(x=enr.x,y=enr.y,label=end))+geom_text()+
+  scale_x_continuous(trans="log10")+
+  scale_y_continuous(trans="log10")
+ggplotly(plotly)
+cor(High_merged$enr.x,High_merged$enr.y)
+```

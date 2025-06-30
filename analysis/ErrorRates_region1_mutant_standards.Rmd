@@ -1,0 +1,277 @@
+---
+title: "ErrorRates_region1_mutant_standards"
+author: "Haider Inam"
+date: '2025-06-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)# knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library("ggrepel")
+library(reshape2)
+library(ggpubr)
+library(tidyr)
+```
+
+```{r cleanup}
+source("code/resmuts_adder.R")
+#Cleanup code for plotting
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+
+
+Doing an NGS, SSCS, DCS, and Tileseq comparison
+
+The following data was taken from Marta 
+This is lane 18b sample 8 vs 10 duplex and tileseq data
+
+```{r}
+#Cleanup code for plotting
+source("code/compare_screens_archive.R")
+
+source("code/plotting/cleanup.R")
+source("code/cosmic_data_adder.R")
+# source("code/compare_screens.R")
+
+source("code/compare_screens_twosamples.R")
+source("code/merge_samples_twosamples.R")
+source("code/plotting/heatmap_plotting_function.R")
+```
+## Data Plotting.   
+This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
+
+```{r}
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="duplex"
+data_duplex=data
+
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="ngs"
+data_ngs=data
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="sscs"
+data_sscs=data
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="tileseq"
+data_tileseq=data
+
+data=rbind(data_duplex,data_ngs,data_sscs,data_tileseq)
+
+data_sum=data%>%
+  filter(protein_start%in%c(242:322),is_intended%in%1)%>%
+  group_by(seqtech)%>%
+  summarize(mean_depth=mean(depth_screen1_before),
+            num=n())
+
+data=data%>%rowwise%>%mutate(n_nuc=nchar(alt))
+
+```
+
+## Plotting mutant standards. 
+
+Looking at the imatinib resistant of known clinically imatR mutants
+
+## Plotting mutant standards binomial confidence intervals
+```{r}
+library(binom)
+
+standards=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+standards=standards%>%filter(conc%in%1.2)
+
+# data=data%>%filter(is_intended%in%1)
+################### Standards with NGS data###############
+standards_ngs=merge(data%>%filter(seqtech%in%"ngs",is_intended%in%1),standards,by.x="species",by.y="mutant")
+
+standards_ngs=standards_ngs%>%
+  rowwise()%>%
+  mutate(
+    mean_fitness = mean(c(netgr_obs_screen1, netgr_obs_screen2)),
+    sd_fitness = sd(c(netgr_obs_screen1, netgr_obs_screen2)),
+    se_fitness = sd_fitness / sqrt(2),  # SE with two replicates
+    lower_ci = mean_fitness - 1.96 * se_fitness,  # 95% CI lower bound
+    upper_ci = mean_fitness + 1.96 * se_fitness   # 95% CI upper bound
+  )
+################### Standards with tileseq data###############
+standards_tileseq=merge(data%>%filter(seqtech%in%"tileseq",is_intended%in%1),standards,by.x="species",by.y="mutant")
+
+standards_tileseq=standards_tileseq%>%
+  rowwise()%>%
+  mutate(
+    mean_fitness = mean(c(netgr_obs_screen1, netgr_obs_screen2)),
+    sd_fitness = sd(c(netgr_obs_screen1, netgr_obs_screen2)),
+    se_fitness = sd_fitness / sqrt(2),  # SE with two replicates
+    lower_ci = mean_fitness - 1.96 * se_fitness,  # 95% CI lower bound
+    upper_ci = mean_fitness + 1.96 * se_fitness   # 95% CI upper bound
+  )
+################### Standards with dupseq data###############
+standards_duplex=merge(data%>%filter(seqtech%in%"duplex",is_intended%in%1),standards,by.x="species",by.y="mutant")
+
+standards_duplex=standards_duplex%>%
+  rowwise()%>%
+  mutate(
+    mean_fitness = mean(c(netgr_obs_screen1, netgr_obs_screen2)),
+    sd_fitness = sd(c(netgr_obs_screen1, netgr_obs_screen2)),
+    se_fitness = sd_fitness / sqrt(2),  # SE with two replicates
+    lower_ci = mean_fitness - 1.96 * se_fitness,  # 95% CI lower bound
+    upper_ci = mean_fitness + 1.96 * se_fitness   # 95% CI upper bound
+  )
+standards_duplex$netgr_pred=0.055-standards_duplex$drug_effect
+
+#########################################################
+# Counts for my reference
+# Day 0: 89
+# No drug rep 1: 123767
+# No drug rep 2: 94619
+# High drug rep 1: 5775
+# High drug rep 2: 6240
+# this function takes count, depth, and ct_before, and ct_after counts. Then, this function returns the binomial confidence intervals around the ct_after counts
+ # 89 initiated as teh before count because that was the cells/mL count on D0 in our high imatinib dose condition for R1
+  # 5775 initiated as teh before count because that was the cells/mL count on D0 in our high imatinib dose condition for R1
+binom_netgr=function(ct_before,
+                     depth_before,
+                     ct_after,
+                     depth_after,
+                     deltat=144,
+                     cells_before=89,
+                     cells_after){
+  ct_before=round(ct_before,0)
+  depth_before=round(depth_before,0)
+  ct_after=round(ct_after,0)
+  depth_after=round(depth_after,0)
+  # ct_before=2
+  # depth_before=6745
+  # ct_after=3
+  # depth_after=4665
+  # deltat=144
+  # cells_before=89
+  # cells_after=5775
+  ct_before_ll=round(binom.test(ct_before,depth_before,conf.level = 0.95)$conf.int[1]*depth_before,0)
+  ct_before_ul=round(binom.test(ct_before,depth_before,conf.level = 0.95)$conf.int[2]*depth_before,0)
+  
+  ct_after_ll=round(binom.test(ct_after,depth_after,conf.level = 0.95)$conf.int[1]*depth_after,0)
+  ct_after_ul=round(binom.test(ct_after,depth_after,conf.level = 0.95)$conf.int[2]*depth_after,0)
+  
+  # Important: note how this estimate of the confidence interval of the net growth rate is using the confidence intervals from both the timepoints, not just one of the timepoints. Another option is to calculate confidence intervals using the count data from one of the timepoints..
+  netgr_ll=round(log(((ct_after_ll/depth_after)*cells_after)/((ct_before_ul/depth_before)*cells_before))/deltat,4)
+  netgr_ul=round(log(((ct_after_ul/depth_after)*cells_after)/((ct_before_ll/depth_before)*cells_before))/deltat,4)
+  # Other way of doing this:
+  # netgr_ll=log(((ct_after_ll/depth_after)*cells_after)/((ct_before/depth_before)*cells_before))/deltat
+  list(netgr_ll,netgr_ul)
+}
+# binom_netgr(2,6000,6,4000,cells_after=5775)[1]
+
+standards_duplex=standards_duplex%>%
+  rowwise()%>%
+  mutate(netgr_ll=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[1]),
+         netgr_ul=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[2]))
+
+standards_tileseq=standards_tileseq%>%
+  rowwise()%>%
+  mutate(netgr_ll=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[1]),
+         netgr_ul=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[2]))
+
+standards_ngs=standards_ngs%>%
+  rowwise()%>%
+  mutate(netgr_ll=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[1]),
+         netgr_ul=unlist(binom_netgr(ct_screen1_before,
+                              depth_screen1_before,
+                              ct_screen1_after,
+                              depth_screen1_after,
+                              cells_after = 5775)[2]))
+
+ggplot()+
+geom_point(size=2,shape=21,fill="#FB8072",aes(x=.055-standards_duplex$drug_effect,y=standards_duplex$netgr_obs_screen1))+
+  geom_errorbar(aes(x=.055-standards_duplex$drug_effect,ymin=standards_duplex$netgr_ll,ymax=standards_duplex$netgr_ul,width=0.001))+
+  stat_cor(aes(x=.055-standards_duplex$drug_effect,y=standards_duplex$mean_fitness),method="pearson",color="#FB8072",size=2,vjust=0)+
+scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.016,.06))+
+  scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.016,.06))+
+  geom_abline(linetype="dashed")+
+  cleanup+
+  theme(legend.position = c(0.92,0.45),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=8),
+        axis.text.x=element_text(color="black",size=8),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(color="black",size=8),
+        plot.margin=grid::unit(c(1,1,1,1), "mm"))
+ggsave("output/errorrates_figures/plot5_duplex.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+
+ggplot()+
+geom_point(size=2,shape=21,fill="#8ED3C7",aes(x=.055-standards_tileseq$drug_effect,y=standards_tileseq$netgr_obs_screen1))+
+  geom_errorbar(aes(x=.055-standards_tileseq$drug_effect,ymin=standards_tileseq$netgr_ll,ymax=standards_tileseq$netgr_ul,width=0.001))+
+  stat_cor(aes(x=.055-standards_tileseq$drug_effect,y=standards_tileseq$mean_fitness),method="pearson",color="#8ED3C7",size=2,vjust=1.5)+
+  scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.016,.06))+
+  scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.016,.06))+
+  geom_abline(linetype="dashed")+
+  cleanup+
+  theme(legend.position = c(0.92,0.45),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=8),
+        axis.text.x=element_text(color="black",size=8),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(color="black",size=8),
+        plot.margin=grid::unit(c(1,1,1,1), "mm"))
+ggsave("output/errorrates_figures/plot5_tileseq.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+
+
+ggplot()+
+  geom_point(size=2,shape=21,fill="#3287BD",aes(x=.055-standards_ngs$drug_effect,y=standards_ngs$netgr_obs_screen1))+
+  geom_errorbar(aes(x=.055-standards_ngs$drug_effect,ymin=standards_ngs$netgr_ll,ymax=standards_ngs$netgr_ul,width=0.001))+
+  stat_cor(aes(x=.055-standards_ngs$drug_effect,y=standards_ngs$mean_fitness),method="pearson",color="#3287BD",size=2,vjust=3)+
+scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.016,.06))+
+  scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.016,.06))+
+  geom_abline(linetype="dashed")+
+  cleanup+
+  theme(legend.position = c(0.92,0.45),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=8),
+        axis.text.x=element_text(color="black",size=8),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(color="black",size=8),
+        plot.margin=grid::unit(c(1,1,1,1), "mm"))
+ggsave("output/errorrates_figures/plot5_ngs.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+
+```

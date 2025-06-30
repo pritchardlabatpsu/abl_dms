@@ -1,0 +1,187 @@
+---
+title: "ErrorRates_NNMD&ROC_region1"
+author: "Haider Inam"
+date: '2025-06-29'
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library("ggrepel")
+library(reshape2)
+library(ggpubr)
+library(tidyr)
+```
+
+```{r cleanup}
+source("code/resmuts_adder.R")
+#Cleanup code for plotting
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+
+Doing an NGS, SSCS, DCS, and Tileseq comparison
+
+The following data was taken from Marta 
+This is lane 18b sample 8 vs 10 duplex and tileseq data
+
+```{r}
+#Cleanup code for plotting
+source("code/compare_screens_archive.R")
+
+source("code/plotting/cleanup.R")
+source("code/cosmic_data_adder.R")
+# source("code/compare_screens.R")
+
+source("code/compare_screens_twosamples.R")
+source("code/merge_samples_twosamples.R")
+source("code/plotting/heatmap_plotting_function.R")
+```
+## Data Plotting.   
+This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
+
+```{r}
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="duplex"
+data_duplex=data
+
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="ngs"
+data_ngs=data
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="sscs"
+data_sscs=data
+
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
+data$seqtech="tileseq"
+data_tileseq=data
+
+data=rbind(data_duplex,data_ngs,data_sscs,data_tileseq)
+
+data_sum=data%>%
+  filter(protein_start%in%c(242:322),is_intended%in%1)%>%
+  group_by(seqtech)%>%
+  summarize(mean_depth=mean(depth_screen1_before),
+            num=n())
+
+data=data%>%rowwise%>%mutate(n_nuc=nchar(alt))
+
+```
+
+### Plotting Null normalized mean differences
+```{r}
+#######################NNMD NGS#######################
+nnmd_ngs_intended=data%>%filter(ct_screen1_before>=5,seqtech%in%"ngs",is_intended%in%1)
+nnmd_ngs_intended=nnmd_ngs_intended[,"ct_screen1_before"]
+nnmd_ngs_unintended=data%>%filter(ct_screen1_before>=5,seqtech%in%"ngs",is_intended%in%0)
+nnmd_ngs_unintended=nnmd_ngs_unintended[,"ct_screen1_before"]
+
+(mean(nnmd_ngs_unintended$ct_screen1_before)-mean(nnmd_ngs_intended$ct_screen1_before))/sd(nnmd_ngs_unintended$ct_screen1_before)
+#######################NNMD Tileseq#######################
+
+nnmd_ngs_intended=data%>%filter(ct_screen1_before>=5,seqtech%in%"tileseq",is_intended%in%1)
+nnmd_ngs_intended=nnmd_ngs_intended[,"ct_screen1_before"]
+nnmd_ngs_unintended=data%>%filter(ct_screen1_before>=5,seqtech%in%"tileseq",is_intended%in%0)
+nnmd_ngs_unintended=nnmd_ngs_unintended[,"ct_screen1_before"]
+(mean(nnmd_ngs_unintended$ct_screen1_before)-mean(nnmd_ngs_intended$ct_screen1_before))/sd(nnmd_ngs_unintended$ct_screen1_before)
+#######################NNMD Duplex#######################
+
+nnmd_ngs_intended=data%>%filter(seqtech%in%"duplex",is_intended%in%1)
+nnmd_ngs_intended=nnmd_ngs_intended[,"ct_screen1_before"]
+nnmd_ngs_unintended=data%>%filter(seqtech%in%"duplex",is_intended%in%0)
+nnmd_ngs_unintended=nnmd_ngs_unintended[,"ct_screen1_before"]
+(mean(nnmd_ngs_unintended$ct_screen1_before)-mean(nnmd_ngs_intended$ct_screen1_before))/sd(nnmd_ngs_unintended$ct_screen1_before)
+##############################################
+df <- data.frame(
+  seqtech = c("NGS", "Tileseq", "Duplex"),
+  nnmd = c(-0.6647498, -4.328837, -0.7182519)
+)
+
+ggplot(df,aes(x=seqtech,y=nnmd,fill=seqtech))+
+  geom_col()+
+  scale_fill_manual(values = c("#FB8072","#3287BD","#8ED3C7"))+
+  # scale_y_continuous("Null-normalized mean difference")+
+  cleanup+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none")
+
+ggsave("output/errorrates_figures/plot7.pdf",width=2,height=2,useDingbats=F)
+```
+
+
+### Plotting ROC curves 
+```{r}
+###################Plotting ROC curves for being able to tell intended mutants (signal) from unintended mutants (noise)###############
+library(pROC)
+data_roc=data%>%filter(seqtech%in%"ngs",ct_screen1_before>5)
+ctdata_ngs=data_roc%>%dplyr::select(ct_screen1_before,is_intended)
+data_roc=data%>%filter(seqtech%in%"tileseq",ct_screen1_before>5)
+ctdata_tileseq=data_roc%>%dplyr::select(ct_screen1_before,is_intended)
+data_roc=data%>%filter(seqtech%in%"duplex")
+ctdata_duplex=data_roc%>%dplyr::select(ct_screen1_before,is_intended)
+
+ctdata_ngs$is_intended=as.numeric(ctdata_ngs$is_intended)
+ctdata_tileseq$is_intended=as.numeric(ctdata_tileseq$is_intended)
+ctdata_duplex$is_intended=as.numeric(ctdata_duplex$is_intended)
+
+ggplot(ctdata_ngs,aes(x=ct_screen1_before,y=is_intended))+geom_point()
+ggplot(ctdata_tileseq,aes(x=ct_screen1_before,y=is_intended))+geom_point()
+ggplot(ctdata_duplex,aes(x=ct_screen1_before,y=is_intended))+geom_point()
+
+glm.fit=glm(as.numeric(ctdata_ngs$is_intended)~ctdata_ngs$ct_screen1_before,family=binomial)
+ctdata_ngs$glm_fits=glm.fit$fitted.values
+
+glm.fit=glm(as.numeric(ctdata_tileseq$is_intended)~ctdata_tileseq$ct_screen1_before,family=binomial)
+ctdata_tileseq$glm_fits=glm.fit$fitted.values
+
+glm.fit=glm(as.numeric(ctdata_duplex$is_intended)~ctdata_duplex$ct_screen1_before,family=binomial)
+ctdata_duplex$glm_fits=glm.fit$fitted.values
+
+ggplot(ctdata_ngs,aes(x=ct_screen1_before,y=as.numeric(is_intended)))+geom_point()+geom_line(aes(x=ct_screen1_before,y=glm_fits))+scale_x_continuous(trans="log10")
+
+ggplot(ctdata_tileseq,aes(x=ct_screen1_before,y=as.numeric(is_intended)))+geom_point()+geom_line(aes(x=ct_screen1_before,y=glm_fits))+scale_x_continuous(trans="log10")
+
+ggplot(ctdata_duplex,aes(x=ct_screen1_before,y=as.numeric(is_intended)))+geom_point()+geom_line(aes(x=ct_screen1_before,y=glm_fits))+scale_x_continuous(trans="log10")
+
+roc(as.numeric(ctdata_ngs$is_intended),ctdata_ngs$glm_fits,plot=T,legacy.axes=T,percent=T,xlab="False Positive Percentage",ylab="True Positive Percentage",print.auc=T,col="#3287BD",lwd=4,print.auc.y=45)
+roc(as.numeric(ctdata_tileseq$is_intended),ctdata_tileseq$glm_fits,plot=T,legacy.axes=T,percent=T,xlab="False Positive Percentage",ylab="True Positive Percentage",print.auc=T,col="#8ED3C7",add=T,lwd=4,print.auc.y=55)
+roc(as.numeric(ctdata_duplex$is_intended),ctdata_duplex$glm_fits,plot=T,legacy.axes=T,percent=T,xlab="False Positive Percentage",ylab="True Positive Percentage",print.auc=T,col="#FB8072",add=T,lwd=4,print.auc.y=65)
+
+roc_1=roc(as.numeric(ctdata_ngs$is_intended),ctdata_ngs$glm_fits,plot=T)
+
+roc_2=roc(as.numeric(ctdata_tileseq$is_intended),ctdata_tileseq$glm_fits)
+
+roc_3=roc(as.numeric(ctdata_duplex$is_intended),ctdata_duplex$glm_fits)
+
+pdf("output/errorrates_figures/plot8_roc_curve.pdf", width = 3, height = 3)
+par(pty="s")
+plot(roc_1,legacy.axes=T,percent=T,xlab="",ylab="",print.auc=T,col="#3287BD",lwd=3,print.auc.y=45)
+
+plot(roc_2,plot=T,legacy.axes=T,percent=T,xlab="",ylab="",print.auc=T,col="#8ED3C7",add=T,lwd=3,print.auc.y=55)
+
+plot(roc_3,plot=T,legacy.axes=T,percent=T,xlab="",ylab="",print.auc=T,col="#FB8072",add=T,lwd=3,print.auc.y=65)
+
+dev.off()
+```

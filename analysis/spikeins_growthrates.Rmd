@@ -426,7 +426,7 @@ ggplot(netgr_corrected_errorbars%>%filter(!netgr_obs_sd%in%NA,!mutant%in%"E255K"
         # axis.text.y=element_text(size=9),
         axis.ticks.y=element_blank())+
   scale_fill_manual(values=c("black","gray","black"))+scale_x_discrete(name=element_blank())+scale_y_continuous(name="Standard deviation in growth rates")
-# ggsave("dosing_normalization_stdevs_paired.pdf",width=3,height=3,units="in",useDingbats=F)
+# ggsave("output/spikeins_figures/dosing_normalization_stdevs_paired.pdf",width=3,height=3,units="in",useDingbats=F)
 
 ggplot(netgr_corrected_errorbars%>%filter(!correction_status%in%"enrich2",!netgr_obs_sd%in%NA,!mutant%in%"E255K"),aes(x=factor(correction_status_name),y=netgr_obs_sd,group=mutant))+
   geom_line()+

@@ -1,0 +1,145 @@
+---
+title: "ErrorRates_dataparser_region1"
+author: "Haider Inam"
+date: '2025-06-29'
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library("ggrepel")
+library(reshape2)
+library(ggpubr)
+library(tidyr)
+```
+
+```{r cleanup}
+source("code/resmuts_adder.R")
+#Cleanup code for plotting
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+```
+
+### Data parsing.  
+
+The following piece of code does some data parsing on ABL region 1 data.
+The output of this code is used for downstream analyses comparing error rates between Tileseq and NGS and Duplex Sequencing
+
+```{r}
+#Cleanup code for plotting
+source("code/compare_screens_archive.R")
+
+source("code/plotting/cleanup.R")
+source("code/cosmic_data_adder.R")
+# source("code/compare_screens.R")
+
+source("code/compare_screens_twosamples.R")
+source("code/merge_samples_twosamples.R")
+source("code/plotting/heatmap_plotting_function.R")
+```
+
+
+```{r}
+# getwd()
+# rm(list=ls())
+cellcounts_matrix_dir="data/Consensus_Data/novogene_lane18b_rerun/TwistRegion1Screen_CellCounts_Matrix.csv"
+comparisons=read.csv("data/Consensus_Data/novogene_lane18b_rerun/TwistRegion1Screen_Comparisons_Todo.csv")
+# comparisons=comparisons%>%filter(Completed%in%"FALSE")
+
+for(i in 1:nrow(comparisons)){
+# for(i in 1:1){
+  # i=4
+  dirname=comparisons$dirname[i]
+  pathname=paste("output/ABLEnrichmentScreens/ABL_Region1_lane18b/",dirname,sep = "")
+  # Create directory if it doesn't already exist
+  if (!file.exists(pathname)){
+    dir.create(pathname)
+} 
+before_screen1_identifier=unlist(strsplit(comparisons$before_screen1_identifier[i],","))
+after_screen1_identifier=unlist(strsplit(comparisons$after_screen1_identifier[i],","))
+before_screen2_identifier=unlist(strsplit(comparisons$before_screen2_identifier[i],","))
+after_screen2_identifier=unlist(strsplit(comparisons$after_screen2_identifier[i],","))
+seqtech=unlist(strsplit(comparisons$seqtech[i],","))
+  # length(after_screen1_identifier)
+# screen_compare_means=compare_screens(comparisons$before_screen1_identifier[i],
+#                                      comparisons$after_screen1_identifier[i],
+#                                      comparisons$before_screen2_identifier[i],
+#                                      comparisons$after_screen2_identifier[i])
+screen_compare_means=compare_screens_archive(before_screen1_identifier,
+                                     after_screen1_identifier,
+                                     before_screen2_identifier,
+                                     after_screen2_identifier,
+                                     cellcounts_matrix_dir,
+                                     seqtech)
+# Adding a flag,"depleted", for when a mutant completely drops out of a screen in both replicates
+screen_compare_means=screen_compare_means%>%mutate(depleted=case_when(ct_screen1_after%in%0.5&&ct_screen2_after%in%0.5~"TRUE",
+                                                                      T~"FALSE"))
+
+
+
+screen_compare_means_forexport=apply(screen_compare_means,2,as.character)
+write.csv(screen_compare_means_forexport,file = paste(pathname,"/screen_comparison_",dirname,".csv",sep=""))
+# pathname
+start_site=240
+end_site=322
+# Plot 1. What does the heatmap look like from the average of the net growth rate?
+heatmap_plotting_function(screen_compare_means%>%filter(is_intended%in%1),242,321,fill_variable = "netgr_obs_mean",fill_name = "Net growth rate")
+ggsave(paste(pathname,"/plot1_heatmap.pdf",sep=""),width=10,height=6,units="in",useDingbats=F)
+
+# Plot 2a: What do the correlations look like for net growth rate (show mutants in text)?
+
+ggplot(screen_compare_means%>%filter(is_intended%in%1),aes(x=netgr_obs_screen1,y=netgr_obs_screen2,color=resmuts,label=species))+geom_text(size=2.5)+geom_abline()+cleanup+stat_cor(method = "pearson")+labs(color="Known\nResistant\nMutant")+scale_x_continuous("Net growth rate screen 1")+scale_y_continuous("Net growth rate screen 2")
+ggsave(paste(pathname,"/plot2a_Netgrowthrate_correlations_text.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+
+# Plot 2b: What do the correlations look like for enrichment scores (show mutants in points)?
+ggplot(screen_compare_means%>%filter(is_intended%in%1),aes(x=netgr_obs_screen1,y=netgr_obs_screen2,label=species))+geom_point(color="black",shape=21,size=2,aes(fill=resmuts))+geom_abline()+cleanup+stat_cor(method = "pearson")+labs(fill="Known\nResistant\nMutant")+scale_x_continuous("Net growth rate screen 1")+scale_y_continuous("Net growth rate screen 2")
+ggsave(paste(pathname,"/plot2b_Netgrowthrate_correlations_points.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+# Plot 2c: What do the correlations look like for enrichment scores (show mutants in text)?
+ggplot(screen_compare_means%>%filter(is_intended%in%1),aes(x=score_screen1,y=score_screen2,color=resmuts,label=species))+geom_text(size=2.5)+geom_abline()+cleanup+ stat_cor(method = "pearson")+labs(color="Known\nResistant\nMutant")+scale_x_continuous("Enrichment score screen 1")+scale_y_continuous("Enrichment score screen 2")
+ggsave(paste(pathname,"/plot2c_Enrichmentscores_correlations_text.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+
+
+# Plot 2d: What do the correlations look like for net growth rates (show mutants in text + add depleted flag)?
+ggplot(screen_compare_means%>%filter(is_intended%in%1,protein_start%in%c(start_site:end_site)),aes(x=netgr_obs_screen1,y=netgr_obs_screen2,label=species))+geom_point(color="black",shape=21,size=2,aes(fill=depleted),alpha=.7)+geom_abline()+cleanup+stat_cor(method = "pearson")+labs(fill="Depleting\nMutant")+scale_x_continuous("Net growth rate screen 1")+scale_y_continuous("Net growth rate screen 2")
+ggsave(paste(pathname,"/plot2d_Netgrowthrate_correlations_depletedmutants_points.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+
+# Plot 3a: Plots: what are the overall net growth rate distributions?
+ggplot(screen_compare_means%>%filter(is_intended%in%1),aes(x=netgr_obs_mean,fill=resmuts))+geom_density(alpha=0.7)+cleanup+labs(fill="Known\nResistant\nMutant")+scale_x_continuous("Mean net growth rate of screens")
+ggsave(paste(pathname,"/plot3a_Netgrowthrate_distributions_resmuts.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+# Plot 3b: Plots: what are the net growth rate distributions?
+
+library(reshape2)
+screen_compare_melt=melt(screen_compare_means%>%dplyr::select(species,netgr_obs_screen1,netgr_obs_screen2),id.vars = "species",measure.vars =c("netgr_obs_screen1","netgr_obs_screen2"),variable.name = "Condition",value.name = "netgr_obs")
+
+
+ggplot(screen_compare_melt,aes(x=netgr_obs,fill=Condition))+
+  geom_density(alpha=0.7)+
+  cleanup+
+  scale_x_continuous("Net growth rate observed")+
+  scale_fill_discrete(labels=c("Screen 1","Screen 2"))
+ggsave(paste(pathname,"/plot3b_Netgrowthrate_distributions.pdf",sep=""),width=6,height=4,units="in",useDingbats=F)
+
+}
+
+# dirname="K562_Medium_rep1vs2"
+
+```

@@ -1,0 +1,22 @@
+---
+title: "Homepage Error Rates"
+author: "Haider Inam"
+date: '2025-06-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+* Click [here](ErrorRates_dataparser_region1.html) for the script that parses region 1 data. This data is later used for the error rate analyses below.  
+
+
+* Click [here](ErrorRates_Tileseq_NGS_Duplex_SSCS.html) for the script that looks at signal to noise in NGS vs Tileseq vs Duplex Sequencing data.  
+<img src="assets/4param_fit.png" width="400" height="300"  alt="">    
+
+* Click [here](ErrorRates_NNMD-ROC_region1.html) for the our NNMD, ROCAUC analyses of these data.  
+<img src="assets/errorrates_nnmdroc.png" width="400" height="200"  alt="">    
+
+* Click [here](ErrorRates_region1_mutant_standards.html) for the our NNMD, ROCAUC analyses of these data.  
+<img src="assets/errorrates_mutantstandards.png" width="600" height="250"  alt="">    

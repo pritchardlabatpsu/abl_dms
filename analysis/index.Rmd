@@ -10,7 +10,7 @@ editor_options:
 
 # **BCR ABL Deep Mutational Scan**  
 
-* Click [here](homepage_Spike_In_Mutants.html) to view our spike-in experiments. These are analyses of the growth of 17 mutant standards under imatinib at low allele frequencies.  
+* Click below to view our spike-in experiments. These are analyses of the growth of 17 mutant standards under imatinib at low allele frequencies.  
 <a href="Homepage_Spike_In_Mutants.html">
     <img src="assets/spikeins_figure.png" width="300" height="378" alt="Click to go to spike-in mutant analyses" class="extrude-effect">
 </a>
@@ -59,9 +59,9 @@ editor_options:
 
 
 
-* Click [here](Homepage_Modeling.html) to view various computational improvements including: logistic regressions of dose-response curves, predicting the effect on fitness of dosing errors.  
-<a href="Homepage_Modeling.html">
-    <img src="assets/enrichment_simulations_3mutants.png" width="300" height="232" alt="Click to go to spike-in mutant analyses" class="extrude-effect">
+* Click below to view various computational improvements including: logistic regressions of dose-response curves, predicting the effect on fitness of dosing errors.  
+<a href="Homepage_errorrates.html">
+    <img src="assets/tileseq_figure.png" width="300" height="378" alt="Click to go to spike-in mutant analyses" class="extrude-effect">
 </a>
 
 <style>
