@@ -197,6 +197,8 @@ ggplot(e255k_sequenced_facs,aes(x=Experiment,y=netgr_obs,fill=measurement))+
   cleanup
 
 getPalette = colorRampPalette(brewer.pal(6, "Spectral"))
+# getPalette = colorRampPalette(brewer.pal(4, "Spectral"))
+getPalette(4)
 ggplot(e255k_sequenced_facs,aes(x=measurement,y=netgr_obs,group=Experiment))+
   geom_line()+
   geom_point(color="black",size=3,shape=21,aes(fill=Experiment))+

@@ -12,11 +12,151 @@ knitr::opts_chunk$set(echo = TRUE)
 * Click [here](ErrorRates_dataparser_region1.html) for the script that parses region 1 data. This data is later used for the error rate analyses below.  
 
 
-* Click [here](ErrorRates_Tileseq_NGS_Duplex_SSCS.html) for the script that looks at signal to noise in NGS vs Tileseq vs Duplex Sequencing data.  
-<img src="assets/4param_fit.png" width="400" height="300"  alt="">    
+* Click below for the script that looks at signal to noise in NGS vs Tileseq vs Duplex Sequencing data.  
 
-* Click [here](ErrorRates_NNMD-ROC_region1.html) for the our NNMD, ROCAUC analyses of these data.  
-<img src="assets/errorrates_nnmdroc.png" width="400" height="200"  alt="">    
+<a href="ErrorRates_Tileseq_NGS_Duplex_SSCS.html">
+    <img src="assets/errorrates_tileseqvsothers.png" width="600" height="200" alt="Click to go to landing page" class="extrude-effect">
+</a>
 
-* Click [here](ErrorRates_region1_mutant_standards.html) for the our NNMD, ROCAUC analyses of these data.  
-<img src="assets/errorrates_mutantstandards.png" width="600" height="250"  alt="">    
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+    
+        /* Styling for centered buttons */
+        .centered-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Hover effect for buttons */
+        .centered-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Centering container for text and buttons */
+        .center-container {
+            text-align: center; /* Center everything inside */
+        }
+</style>
+
+
+
+
+
+
+
+
+* Click below for the our NNMD, ROCAUC analyses of these data.  
+  
+
+<a href="ErrorRates_NNMD-ROC_region1.html">
+    <img src="assets/errorrates_nnmdroc.png" width="400" height="200" alt="Click to go to landing page" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+    
+        /* Styling for centered buttons */
+        .centered-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Hover effect for buttons */
+        .centered-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Centering container for text and buttons */
+        .center-container {
+            text-align: center; /* Center everything inside */
+        }
+</style>
+
+
+
+
+* Click below for the our NNMD, ROCAUC analyses of these data.  
+
+<a href="ErrorRates_region1_mutant_standards.html">
+    <img src="assets/errorrates_mutantstandards.png" width="325" height="400" alt="Click to go to landing page" class="extrude-effect">
+</a>
+
+<style>
+    /* Base styles for the image */
+    .extrude-effect {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Adds a shadow to give a 3D effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Adds smooth transition when hovering */
+        cursor: pointer; /* Changes the cursor to indicate it's clickable */
+        border-radius: 8px; /* Optional: Add rounded corners to the image */
+    }
+
+    /* Hover effect: image lifts up and shadow deepens */
+    .extrude-effect:hover {
+        transform: translateY(-10px); /* Makes the image appear to lift up */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Darkens the shadow */
+    }
+    
+        /* Styling for centered buttons */
+        .centered-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Hover effect for buttons */
+        .centered-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Centering container for text and buttons */
+        .center-container {
+            text-align: center; /* Center everything inside */
+        }
+</style>

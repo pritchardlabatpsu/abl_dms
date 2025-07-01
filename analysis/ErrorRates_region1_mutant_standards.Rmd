@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)# knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath(".."))
 
 library(stringr)
 library(dplyr)
@@ -37,10 +38,6 @@ cleanup=theme_bw() +
 ```
 
 
-Doing an NGS, SSCS, DCS, and Tileseq comparison
-
-The following data was taken from Marta 
-This is lane 18b sample 8 vs 10 duplex and tileseq data
 
 ```{r}
 #Cleanup code for plotting
@@ -54,8 +51,8 @@ source("code/compare_screens_twosamples.R")
 source("code/merge_samples_twosamples.R")
 source("code/plotting/heatmap_plotting_function.R")
 ```
-## Data Plotting.   
-This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
+ 
+The following data was taken from lane 18b sample 8 vs 10 duplex and tileseq data. This is region 1 (residues 242-322) of the ABL kinase sequenced with four different sequencing technologies. This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
 
 ```{r}
 data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
@@ -89,9 +86,8 @@ data=data%>%rowwise%>%mutate(n_nuc=nchar(alt))
 
 ## Plotting mutant standards. 
 
-Looking at the imatinib resistant of known clinically imatR mutants
+### Looking at the imatinib resistance of known clinically imatR mutants
 
-## Plotting mutant standards binomial confidence intervals
 ```{r}
 library(binom)
 
@@ -231,11 +227,11 @@ scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0
         legend.title = element_text(size=8),
         legend.text = element_text(size=8),
         axis.text.x=element_text(color="black",size=8),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
+        # axis.title.x=element_blank(),
+        # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-ggsave("output/errorrates_figures/plot5_duplex.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+# ggsave("output/errorrates_figures/plot5_duplex.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 
 ggplot()+
 geom_point(size=2,shape=21,fill="#8ED3C7",aes(x=.055-standards_tileseq$drug_effect,y=standards_tileseq$netgr_obs_screen1))+
@@ -249,11 +245,11 @@ geom_point(size=2,shape=21,fill="#8ED3C7",aes(x=.055-standards_tileseq$drug_effe
         legend.title = element_text(size=8),
         legend.text = element_text(size=8),
         axis.text.x=element_text(color="black",size=8),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
+        # axis.title.x=element_blank(),
+        # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-ggsave("output/errorrates_figures/plot5_tileseq.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+# ggsave("output/errorrates_figures/plot5_tileseq.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 
 
 ggplot()+
@@ -268,10 +264,9 @@ scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0
         legend.title = element_text(size=8),
         legend.text = element_text(size=8),
         axis.text.x=element_text(color="black",size=8),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
+        # axis.title.x=element_blank(),
+        # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-ggsave("output/errorrates_figures/plot5_ngs.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
-
+# ggsave("output/errorrates_figures/plot5_ngs.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 ```
