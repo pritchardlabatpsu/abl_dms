@@ -1,0 +1,4 @@
+Identifier,CellLine,Netgr_wodrug,Replicate,Time_Days,Time_Hours,TotalCells,SequencingLane_Num,SequencingLane_Sample,skip_flag,Comments
+BTRID0_FT,Baf3,0.055,1,0,0,38,18,10,FALSE,
+BTRI1_D6,Baf3,0.055,1,6,144,123767,18,2,FALSE,
+BTRI2_D6,Baf3,0.055,2,6,144,94619,18,3,FALSE,

@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Haider Inam" />
+
+<meta name="date" content="2025-07-24" />
+
+<title>gnomad_analysis</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">abl_dms</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">gnomad_analysis</h1>
+<h4 class="author">Haider Inam</h4>
+<h4 class="date">2025-07-24</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2025-07-27
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>abl_dms/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version
+1.6.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R
+Markdown file created these results, you’ll want to first commit it to
+the Git repo. If you’re still working on the analysis, you can ignore
+this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20250621code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20250621)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20250621code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20250621)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcompritchardlabatpsuabldmstree81e3a3eec7434fe430bbb3c4e697673deb13683atargetblank81e3a3ea">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/pritchardlabatpsu/abl_dms/tree/81e3a3eec7434fe430bbb3c4e697673deb13683a" target="_blank">81e3a3e</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcompritchardlabatpsuabldmstree81e3a3eec7434fe430bbb3c4e697673deb13683atargetblank81e3a3ea"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/pritchardlabatpsu/abl_dms/tree/81e3a3eec7434fe430bbb3c4e697673deb13683a" target="_blank">81e3a3e</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/.DS_Store
+    Ignored:    analysis/.Rhistory
+    Ignored:    code/.DS_Store
+    Ignored:    data/.DS_Store
+    Ignored:    data/ABL1AppOutput/.DS_Store
+    Ignored:    data/Consensus_Data/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample10/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample10/duplex/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample10/ngs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample10/sscs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample10/tileseq/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/duplex/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/duplex/variant_caller_outputs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/ngs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/sscs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample8/tileseq/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample9/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample9/duplex/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample9/ngs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample9/sscs/.DS_Store
+    Ignored:    data/Consensus_Data/novogene_lane18b_rerun/sample9/tileseq/.DS_Store
+    Ignored:    data/Refs/.DS_Store
+    Ignored:    data/Twinstrand/.DS_Store
+    Ignored:    output/.DS_Store
+    Ignored:    output/ABLEnrichmentScreens/.DS_Store
+    Ignored:    output/ABLEnrichmentScreens/ABL_Region1_lane18b/.DS_Store
+    Ignored:    output/Enrichmentsimulations/.DS_Store
+    Ignored:    output/spikeins_figures/.DS_Store
+
+Untracked files:
+    Untracked:  analysis/dms_abl_analysis.zip
+    Untracked:  analysis/dms_abl_analysis/
+    Untracked:  analysis/dose_escalation_verification.Rmd
+    Untracked:  analysis/errorrates.Rmd
+    Untracked:  analysis/gnomad_analysis.Rmd
+    Untracked:  analysis/mutant_standards_verification.Rmd
+    Untracked:  data/IC50s_verification/
+    Untracked:  data/gnomad_ABL/
+    Untracked:  data/ic50data/IC50HeatMap_v2.csv
+    Untracked:  data/ic50data/mutantstandards.pdf
+    Untracked:  output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/
+    Untracked:  output/gnomad_figures/
+
+Unstaged changes:
+    Modified:   analysis/dose_response_curve_fitting_with_errorbars.Rmd
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with
+<code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<pre class="r"><code>source(&quot;code/cosmic_data_adder.R&quot;)</code></pre>
+<div id="function-1" class="section level2">
+<h2>Function 1</h2>
+<pre class="r"><code># Now that I have the ALT Codon from each gnomad codon, I am going to figure out the subset of amino acids that are possible at an n_nuc of 1 from the alt codon and from the ref codon.
+codon_table=read.csv(&quot;data/codon_table.csv&quot;,header = T,stringsAsFactors = F)
+# Inputs: ref codon, alt_codon (which really is the new ref codon)
+# Outputs: list of amino acids possible at an n_nuc of 1 with the ref codon but not with the alt codon
+# refseq_codon=&quot;AAA&quot;
+# gnomad_codon=&quot;ATA&quot;
+# refseq_codon=&quot;GAA&quot;
+# gnomad_codon=&quot;GAG&quot;
+# rm(ref_codon)
+gnomad_unique_AAs=function(refseq_codon,gnomad_codon){
+  refseq_codons=codon_table%&gt;%
+    # filter(Letter%in%alt_aa)%&gt;%
+    rowwise()%&gt;%
+    mutate(distance=as.numeric(!substr(refseq_codon,1,1)%in%substr(Codon,1,1))+
+             as.numeric(!substr(refseq_codon,2,2)%in%substr(Codon,2,2))+
+             as.numeric(!substr(refseq_codon,3,3)%in%substr(Codon,3,3)),
+           subs_1=case_when(!substr(refseq_codon,1,1)%in%substr(Codon,1,1)~paste(substr(refseq_codon,1,1),&quot;&gt;&quot;,substr(Codon,1,1),sep = &quot;&quot;),
+                            T~&quot;&quot;),
+           subs_2=case_when(!substr(refseq_codon,2,2)%in%substr(Codon,2,2)~paste(substr(refseq_codon,2,2),&quot;&gt;&quot;,substr(Codon,2,2),sep = &quot;&quot;),
+                            T~&quot;&quot;),
+           subs_3=case_when(!substr(refseq_codon,3,3)%in%substr(Codon,3,3)~paste(substr(refseq_codon,3,3),&quot;&gt;&quot;,substr(Codon,3,3),sep = &quot;&quot;),
+                            T~&quot;&quot;))%&gt;%
+    ungroup()
+
+  refseq_codons=refseq_codons%&gt;%filter(distance%in%1)
+  # sort(unique(refseq_codons$Letter))
+  
+  gnomad_codons=codon_table%&gt;%
+      # filter(Letter%in%alt_aa)%&gt;%
+      rowwise()%&gt;%
+      mutate(distance=as.numeric(!substr(gnomad_codon,1,1)%in%substr(Codon,1,1))+
+               as.numeric(!substr(gnomad_codon,2,2)%in%substr(Codon,2,2))+
+               as.numeric(!substr(gnomad_codon,3,3)%in%substr(Codon,3,3)),
+             subs_1=case_when(!substr(gnomad_codon,1,1)%in%substr(Codon,1,1)~paste(substr(gnomad_codon,1,1),&quot;&gt;&quot;,substr(Codon,1,1),sep = &quot;&quot;),
+                              T~&quot;&quot;),
+             subs_2=case_when(!substr(gnomad_codon,2,2)%in%substr(Codon,2,2)~paste(substr(gnomad_codon,2,2),&quot;&gt;&quot;,substr(Codon,2,2),sep = &quot;&quot;),
+                              T~&quot;&quot;),
+             subs_3=case_when(!substr(gnomad_codon,3,3)%in%substr(Codon,3,3)~paste(substr(gnomad_codon,3,3),&quot;&gt;&quot;,substr(Codon,3,3),sep = &quot;&quot;),
+                              T~&quot;&quot;))%&gt;%
+      ungroup()
+  
+  gnomad_codons=gnomad_codons%&gt;%filter(distance%in%1)
+  gnomad_unique=sort(unique(gnomad_codons$Letter))
+  # sort(unique(gnomad_codons$Letter))
+  # Figuring out which gnomad amino acids are unique (i.e. not possible by refseq codon)
+  gnomad_unique_norefseq=gnomad_unique[!sort(unique(gnomad_codons$Letter))%in%sort(unique(refseq_codons$Letter))]
+  return(gnomad_unique_norefseq)
+  
+}</code></pre>
+</div>
+<div id="function-2" class="section level2">
+<h2>Function 2</h2>
+<p>####Reading and processing the reference txt and csv file</p>
+<pre class="r"><code># #############For ABL#############
+enst=&quot;ENST00000318560&quot; #Ensembl transcript ID for the canonical transcript
+chr=9 #The chromosome number on hg38. This argument is passed into the ensembl variant effect predictor
+ref_txt_name=&quot;data/Refs/ABL/NM_005157.6_CDS.txt&quot;
+ref_csv_name=&quot;data/Refs/ABL/abl1_NM_005157.6_full_coordinates.csv&quot;
+mode=&quot;local&quot;
+ref_offset=0
+
+
+#Reading the full sequence.
+reference_seq=read.table(ref_txt_name)
+reference_seq=as.character(reference_seq)
+
+# substr(reference_seq,1,2)
+#Ref_search is a function that returns the sequence of the cDNA, given start and stop coordinates
+ref_search=function(start,stop){
+  seachresult=substr(reference_seq,start,stop-1)
+  seachresult
+}
+
+ref_genomic_coordinates=read.csv(ref_csv_name,header = T,stringsAsFactors = F)
+# ref_genomic_coordinates=ref_genomic_coordinates%&gt;%dplyr::select(-X)
+
+####Adding sequence to each codon###
+ref_genomic_coordinates=ref_genomic_coordinates%&gt;%mutate(start=pos,end=start+3)%&gt;%dplyr::select(!pos)
+ref_genomic_coordinates=ref_genomic_coordinates%&gt;%filter(!resi%in%NA)
+ref_genomic_coordinates=ref_genomic_coordinates%&gt;%
+  rowwise()%&gt;%
+  mutate(codon=ref_search(start-ref_offset,end-ref_offset))
+ref_genomic_coordinates=ref_genomic_coordinates%&gt;%filter(!codon%in%&quot;&quot;)</code></pre>
+</div>
+<div id="main-gnomad-analysis" class="section level1">
+<h1>Main gnomad analysis</h1>
+<div id="data-parsing" class="section level2">
+<h2>Data parsing</h2>
+<pre class="r"><code># rm(list=ls())
+# gnomad=read.csv(&quot;data/Gnomad_ABL/gnomAD_v2.1.1_ENSG00000097007_2023_03_03_02_21_35.csv&quot;)
+# gnomad=read.csv(&quot;data/gnomad_ABL/gnomAD_v3.1.2_ENSG00000097007_2023_03_03_14_02_24.csv&quot;)
+gnomad=read.csv(&quot;data/gnomad_ABL/gnomAD_v4.1.0_ENSG00000097007_2025_07_27_16_16_27.csv&quot;)
+# 1100 Gnomad SNPS total
+gnomad=gnomad%&gt;%filter(Position&gt;=130835447,Position&lt;=130884388)
+# Half of the SNPS are within the ABL kinase
+gnomad=gnomad%&gt;%filter(!VEP.Annotation%in%c(&quot;intron_variant&quot;,&quot;frameshift_variant&quot;))
+# Half of the SNPS in the kinase are non-intron non-synonymous
+gnomad=gnomad%&gt;%rowwise()%&gt;%mutate(residue=substr(gsub(&quot;p\\.&quot;,&quot;&quot;,Protein.Consequence),4,6),
+                         residue=as.numeric(gsub(&quot;([0-9]+).*$&quot;, &quot;\\1&quot;, residue)))
+
+gnomad=gnomad%&gt;%filter(!residue%in%NA,residue&lt;=516)
+
+# Therefore, there are 186 gnomad variants in the in the SH3 or SH2 or Kinase domain of ABL
+# 84 out of the 186 gnomad variants are in the kinase domain of ABL
+# Within the gnomad variants in the kinase, only 10 are allele frequency &gt; 1 in 100,000
+# a=gnomad%&gt;%filter(!ClinVar.Clinical.Significance%in%&quot;&quot;)
+# a=gnomad%&gt;%group_by(ClinVar.Clinical.Significance)%&gt;%summarize(ct=n())
+# Of the 184 ABL SNPs, 152 have no clinvar annotation, 12 are benign, 14 are likely benign
+# 9 are uncertain significance
+# a=gnomad%&gt;%filter(residue&gt;=242,residue&lt;=516)
+# a=a%&gt;%arrange(desc(Allele.Count))
+# a=a%&gt;%select(Protein.Consequence,VEP.Annotation,ClinVar.Clinical.Significance,Allele.Frequency,Allele.Count,Allele.Number)
+# write.csv(a,&quot;gnomad_abl_kinase_coding_mutants.csv&quot;)
+# b=a%&gt;%filter(!VEP.Annotation%in%&quot;synonymous_variant&quot;,!ClinVar.Clinical.Significance%in%&quot;&quot;)
+# There are 7 non-synonymous clinvar variants in the kinase domain in which there is a clinical annotation. Two of these are high frequency: R473Q/G (not provided clinvar significance), and K247R (benign). Both of these are neutral in our screen
+# data=read.csv(&quot;output/ABLEnrichmentScreens/IL3_Enrichment_bgmerged_2.20.23.csv&quot;,header = T,stringsAsFactors = F)
+# c=data%&gt;%filter(protein_start%in%c(247,473))
+#Of the clinvar variants 
+
+# source(&quot;code/variantcaller/vep_fromquery.R&quot;)
+# b=vep_fromquery(&quot;130863033:130863036/TAC&quot;,9,&quot;ENST00000318560&quot;)
+# sort(unique(gnomad$VEP.Annotation))
+# a=gnomad%&gt;%filter(!Transcript%in%&quot;ENST00000318560.5&quot;)
+# a=gnomad%&gt;%filter(!Transcript%in%&quot;ENST00000372348.2&quot;)
+# sort(unique(gnomad$Transcript))
+# sort(unique(gnomad$VEP.Annotation))
+
+# ABL kinase Spans from 130835447 to 130884388
+
+#Aim is to create a list of gnomad enabled mutants, i.e. mutants that would have required multi-nucleotide variants before, but are now a single nucleotide away
+# First: Make a function that calculates all possible amino acid substitutions for a given ref codon at a hamming distance of 1.
+#A key pessimistic question to ask is: for any given residue, how many amino acid substitution types are only possible with two nucleotide substitutions? If basically every amino acid susbtitution is possible with a single nucleotide change, then it doesn&#39;t really matter if you make more possible with MNVs.
+gnomad_simple=gnomad%&gt;%dplyr::select(Position,Reference,Alternate,Protein.Consequence,residue,Transcript.Consequence,VEP.Annotation,Allele.Count)
+gnomad_simple=gnomad_simple%&gt;%
+  rowwise()%&gt;%
+  mutate(residue=substr(gsub(&quot;p\\.&quot;,&quot;&quot;,Protein.Consequence),4,6),
+         residue=as.numeric(gsub(&quot;([0-9]+).*$&quot;, &quot;\\1&quot;, residue)),
+         position=as.numeric(gsub(&quot;([0-9]+).*$&quot;, &quot;\\1&quot;,strsplit(Transcript.Consequence,&quot;\\.&quot;)[[1]][2])))
+
+gnomad_simple=gnomad_simple%&gt;%
+  # rowwise()%&gt;%
+  mutate(ref=ref_search(position-ref_offset,position+1-ref_offset))
+
+#The following set of functions takes a position, ref, and and alt nucleotide, figures out which codon was mutated for each mutant, which index within the codon, and makes the alt_codon based on the new index 
+# Alt offset: If alt_offset is 1, the mutation happens at position 1 in the codon, and so on
+# Please note that a lot of this code relies on there being a single nucleotide substitution, i.e. it ignores mnvs and frameshifting indels. If frameshifts are included, then you have to think about variants that have long alt_offset lengths (not just 1 or 2 or 3).
+# If its position 1: paste ALT with Second two Nucleotides
+# If its position 2: paste first nucleotide, ALT nucleotide, and third nucleotide
+# If it&#39;s position 3: paste second two nucleotides with the ALT nucleotide
+# a=gnomad%&gt;%filter(Position%in%c(130862953:130862953))
+# ref_genomic_coordinates[(130854922-ref_genomic_coordinates$start)%in%c(0,1,2),&quot;codon&quot;])[[1]]
+gnomad_simple=gnomad_simple%&gt;%
+  rowwise()%&gt;%
+  mutate(ref_codon=(ref_genomic_coordinates[(position-ref_genomic_coordinates$start)%in%c(0,1,2),&quot;codon&quot;])[[1]],
+         position_codon_end=(ref_genomic_coordinates[(position-ref_genomic_coordinates$start)%in%c(0,1,2),&quot;end&quot;])[[1]],
+         alt_offset=position_codon_end-position,
+         alt_codon=case_when(alt_offset%in%3~paste(Alternate,substr(ref_codon,2,3),sep=&quot;&quot;),
+                             alt_offset%in%1~paste(substr(ref_codon,1,2),Alternate,sep = &quot;&quot;),
+                             alt_offset%in%2~paste(substr(ref_codon,1,1),Alternate,substr(ref_codon,3,3),sep = &quot;&quot;)))
+# ref_genomic_coordinates(130835462)
+# ref_genomic_coordinates$start
+
+gnomad_simple=gnomad_simple%&gt;%dplyr::rename(&quot;refseq_codon&quot;=&quot;ref_codon&quot;,
+                                            &quot;gnomad_codon&quot;=&quot;alt_codon&quot;)
+
+gnomad_simple=gnomad_simple%&gt;%filter(nchar(gnomad_codon)&lt;=3)
+
+gnomad_simple=gnomad_simple%&gt;%mutate(ref_aa=codon_table[refseq_codon==codon_table$Codon,&quot;Letter&quot;],
+                                     gnomad_aa=codon_table[gnomad_codon==codon_table$Codon,&quot;Letter&quot;],
+                                     species_enabler=paste(ref_aa,residue,gnomad_aa,sep = &quot;&quot;))
+
+
+# a=gnomad_simple%&gt;%filter(refseq_codon%in%gnomad_codon)
+
+########## Next figure out all unique gnomad codons by ABL residue.
+# If a given residue has no gnomad SNPs, then there are no unique gnomad codons of course
+#   What if a given position has two gnomad codons: figure out all possible gnomad codons and which ones are unique
+# i=1
+# gnomad_simple$gnomad_enabled_AAs=NA
+for(i in seq(1:nrow(gnomad_simple))){
+  # gnomad_bypos=gnomad_simple%&gt;%filter(residue%in%residue_i)
+  # i=1
+  # i=168
+  # 167, 168
+  # i=177
+  gnomad_byiter=gnomad_simple[i,]
+  enabler_i=gnomad_byiter$species_enabler
+  resi_i=gnomad_byiter$residue
+  enabled_i=gnomad_unique_AAs(gnomad_byiter$refseq_codon,gnomad_byiter$gnomad_codon)
+  if(length(enabled_i)==0){
+    # i.e. if there are no unique gnomad AAs, then skip to the next iteration in the loop
+    next
+  }
+  # a=gnomad_simple%&gt;%group_by(residue)%&gt;%summarize(ct=n())
+  # gnomad_simple[i,&quot;gnomad_enabled_AAs&quot;]=as.list(gnomad_unique_AAs(gnomad_byiter$refseq_codon,gnomad_byiter$gnomad_codon))
+  gnomad_enabled_i=data.frame(enabler_i,enabled_i,resi_i)
+  if(i==1){
+    gnomad_enabled=gnomad_enabled_i
+  }
+  else if(!i==1){
+    gnomad_enabled=rbind(gnomad_enabled,gnomad_enabled_i)
+  }
+}
+
+gnomad_enabled=gnomad_enabled%&gt;%distinct(enabler_i,enabled_i,resi_i)
+gnomad_enabled=gnomad_enabled%&gt;%dplyr::select(species_enabler=enabler_i,protein_start=resi_i,alt_aa=enabled_i)
+gnomad_enabled$gnomad_enabled=T
+# a=gnomad_enabled%&gt;%fi lter(protein_start%in%c(242:494))
+# There are a total of 186 gnomad enabled ABL mutants. We see 72 of these mutants in our imatinib screens
+# I have the gnomad enabled alternate amino acid by residue, but it might also be nice ot get a residue specific gnomad probability.
+gnomad_pos_probabilities=gnomad%&gt;%
+  group_by(residue)%&gt;%
+  summarize(Allele.Count.Total=sum(Allele.Count),
+                                         Allele.Number.Total=sum(Allele.Number))%&gt;%
+  mutate(Allele.Frequency.Gnomad=Allele.Count.Total/Allele.Number.Total)%&gt;%
+  # dplyr::select(-c(&quot;Allele.Count.Total&quot;,&quot;Allele.Number.Total&quot;))%&gt;%
+  rename(protein_start=residue)
+
+gnomad_enabled=merge(gnomad_enabled,gnomad_pos_probabilities,by=c(&quot;protein_start&quot;),all.x = T)
+
+########## Then merge with Imatinib dataset by adding a &quot;gnomad enabled&quot; flag to the IL3 dataset###########
+# New Tileseq data as of 2.17.24
+imatdata=read.csv(&quot;output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv&quot;,header = T,stringsAsFactors = F)
+imatdata=imatdata%&gt;%filter(ct_screen1_before&gt;=5)
+# New CRISPR-DS imatinib data (conducted at 300nM, 600nM, 1200nM)
+# imatdata=read.csv(&quot;output/ABLEnrichmentScreens/ABL_Region234_Comparisons/ABLfullkinase_allconditions_growthrates_12.19.24.csv&quot;,header = T,stringsAsFactors = F)
+# imatdata=imatdata%&gt;%rowwise()%&gt;%mutate(netgr_obs_mean=mean(c(netgr.imat.high.1,netgr.imat.high.2)))
+
+imatdata=imatdata%&gt;%filter(is_intended%in%1,!(species==&quot;R332M&quot;&amp; alt ==&quot;ATG&quot;),!(species==&quot;R460N&quot;&amp; alt ==&quot;AAC&quot;))
+#######Adding clinical prevalence predictions###############
+# resistance_predictions=read.csv(&quot;output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/data/Tileseq_clinical_predictions_2.2.25.csv&quot;,header = T,stringsAsFactors = F)
+resistance_predictions=read.csv(&quot;output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_5.26.25.csv&quot;,header = T,stringsAsFactors = F)
+resistance_predictions=resistance_predictions%&gt;%dplyr::select(species,ref_aa,protein_start,alt_aa,fill_value,alpha.444,alpha.760,alpha.916)
+resistance_predictions=resistance_predictions%&gt;%filter(!ref_aa%in%NA)
+imatdata=merge(imatdata,resistance_predictions,by=c(&quot;species&quot;,&quot;ref_aa&quot;,&quot;protein_start&quot;,&quot;alt_aa&quot;))
+###################################
+
+# imatdata=imatdata%&gt;%filter(dose%in%&quot;1200nM&quot;)
+
+
+# Old enzymatic fragmentation imatinib data (conducted at 300nM)
+# imatdata=read.csv(&quot;output/ABLEnrichmentScreens/Imatinib_Enrichment_2.20.23_v2.csv&quot;,header = T,stringsAsFactors = F)
+# imatdata=imatdata%&gt;%rowwise()%&gt;%mutate(netgr_obs_mean=mean(netgr_obs.x,netgr_obs.y))
+
+imatdata=merge(imatdata,gnomad_enabled,by=c(&quot;protein_start&quot;,&quot;alt_aa&quot;),all.x=T)
+imatdata[imatdata$gnomad_enabled%in%NA,&quot;gnomad_enabled&quot;]=F
+
+imatdata_gnomad=imatdata%&gt;%filter(gnomad_enabled%in%T)%&gt;%dplyr::select(dose,species,ref_aa,protein_start,alt_aa,netgr_obs_mean,netgr_obs_mean_corr,species_enabler,gnomad_enabled,Allele.Frequency.Gnomad,fill_value,alpha.444,alpha.760,alpha.916)
+# imatdata_gnomad=imatdata_gnomad%&gt;%filter(protein_start%in%c(247,473))
+# a=imatdata_gnomad%&gt;%filter(dose%in%&quot;il3&quot;)
+# The following line of code gives you the percentile rankings of the net growth rate distribution
+quantile(imatdata$netgr_obs_mean,c(.5,.75,.90))</code></pre>
+<pre><code>       50%        75%        90% 
+0.02121700 0.04293685 0.05624128 </code></pre>
+<pre class="r"><code># The following line of code tells you what the percentile is for a given net growth rate
+ecdf(imatdata$netgr_obs_mean)(.0133)</code></pre>
+<pre><code>[1] 0.4369964</code></pre>
+<pre class="r"><code># write.csv(imatdata_gnomad,&quot;data/Gnomad_ABL/gnomad_enabled_mutants.csv&quot;)
+
+
+########## Then plot the distribtuion of the gnomad scores and figure out which mutants fall at the fringes of that distribution.##########
+ggplot(imatdata%&gt;%filter(dose%in%&quot;1200nM&quot;,protein_start%in%c(242:494)),aes(x=netgr_obs_mean,fill=gnomad_enabled))+geom_density()+facet_wrap(~gnomad_enabled)</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># a=imatdata%&gt;%filter(gnomad_enabled%in%T)
+# a=imatdata%&gt;%filter(protein_start%in%c(247,473))
+# Once I have all the alt amino acids possible, I will figure out how many of these alt amino acids are at a distance of 1
+# gnomad_unique_AAs(&quot;CGA&quot;,&quot;CAA&quot;)
+
+# imatdata_gnomad=imatdata
+# 6.1.24 checking if the gnomad enabled mutants are resistant across multiple imatinib contexts
+# imatdata_gnomad=imatdata%&gt;%filter(gnomad_enabled%in%T)%&gt;%dplyr::select(ref_aa,protein_start,alt_aa,species_enabler,gnomad_enabled,Allele.Frequency.Gnomad,netgr.imat.low.1,netgr.imat.low.2,netgr.imat.mid.1,netgr.imat.mid.2,netgr.imat.high.1,netgr.imat.high.2)
+# imatdata_gnomad=imatdata_gnomad%&gt;%mutate(species=paste(ref_aa,protein_start,alt_aa,sep=&quot;&quot;))
+
+# imatdata_gnomad=imatdata_gnomad%&gt;%
+#   rowwise()%&gt;%
+#   mutate(netgr_average=mean(c(netgr.imat.low.1,
+#                               netgr.imat.low.2,
+#                               netgr.imat.mid.1,
+#                               netgr.imat.mid.2,
+#                               netgr.imat.high.1,
+#                               netgr.imat.high.2)))
+
+# imatdata_gnomad=imatdata_gnomad%&gt;%
+#   mutate(rank= rank(-netgr_average))
+
+# imatdata_gnomad$rank=rank(-imatdata_gnomad$netgr_obs_mean_corr)
+imatdata_gnomad=imatdata_gnomad%&gt;%group_by(dose)%&gt;%mutate(rank=rank(-netgr_obs_mean_corr))
+# class(imatdata_gnomad$netgr_average)
+
+
+
+
+library(forcats)</code></pre>
+<pre><code>Warning: package &#39;forcats&#39; was built under R version 4.0.2</code></pre>
+<pre class="r"><code>imatdata_gnomad=imatdata_gnomad%&gt;%filter(!dose%in%&quot;il3&quot;)
+imatdata_gnomad &lt;- imatdata_gnomad %&gt;%
+  mutate(species = fct_reorder(species, -rank, .desc = TRUE))
+
+# ggplot(imatdata_gnomad,aes(x=species,y=netgr_obs_mean_corr,color=dose))+
+#   geom_point()
+
+netgr_average=imatdata_gnomad%&gt;%dplyr::select(dose,species_enabler,species,netgr_obs_mean_corr,rank)
+netgr_average=netgr_average%&gt;%filter(dose%in%&quot;1200nM&quot;)
+
+imatdata_gnomad$fill_value=factor(imatdata_gnomad$fill_value,
+                                     levels=c(&quot;Sensitive&quot;,
+                                              &quot;444nM&quot;,
+                                              &quot;760nM&quot;,
+                                              &quot;916nM&quot;))</code></pre>
+</div>
+<div id="data-plotting" class="section level2">
+<h2>Data Plotting</h2>
+<pre class="r"><code>tables7=imatdata_gnomad%&gt;%
+  filter(dose%in%&quot;1200nM&quot;)%&gt;%
+  dplyr::select(protein_start,
+                alt_aa,
+                species_enabler,
+                species_enabler_allele.Frequency=Allele.Frequency.Gnomad,
+                species_enabled=species,
+                Highest_resistant_dose=fill_value)</code></pre>
+<pre><code>Adding missing grouping variables: `dose`</code></pre>
+<pre class="r"><code>write.csv(tables7,&quot;data/gnomad_abl/table_s7.csv&quot;)
+ggplot(imatdata_gnomad%&gt;%filter(dose%in%&quot;1200nM&quot;)%&gt;%arrange(desc(rank)),aes(x=species,y=netgr_obs_mean_corr,label=species))+
+  # geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=fill_value))+
+  geom_col(color=&quot;black&quot;,aes(fill=fill_value),position = position_dodge(1))+
+  geom_text(data = netgr_average, aes(x = species, y = ifelse(netgr_obs_mean_corr &gt; 0, 
+                           netgr_obs_mean_corr + 0.01, # Move text above positive bars
+                           netgr_obs_mean_corr - 0.01), # Move text below negative bars))+,
+                           label = species),
+            size = 2, color = &quot;red&quot;,
+            angle=90)+
+  scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+  scale_y_continuous(&quot;Net growth rate (Hrs ^-1)&quot;,limits=c(-0.065,0.065))+
+  scale_fill_manual(values = c(&quot;#f7f7f7&quot;,
+                               &quot;#1f78b4&quot;,
+                               &quot;#f46d43&quot;,
+                               &quot;#a50026&quot;))+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/gnomad_figures/gnomad_enabled_mutants.pdf&quot;,width=12,height = 4, units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<pre class="r"><code>ggplot(imatdata_gnomad%&gt;%arrange(desc(rank)),aes(x=species,y=netgr_obs_mean_corr,label=species))+
+  geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=dose))+
+  # geom_col(color=&quot;black&quot;,aes(fill=dose),position = position_dodge(1))+
+  geom_text(data = netgr_average, aes(x = species,y=netgr_obs_mean_corr, # Move text below negative bars))+,
+                           label = species),
+            size = 2, color = &quot;red&quot;,
+            position = position_nudge(y = -0.01),
+            angle=90)+
+  scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+  scale_y_continuous(&quot;Net growth rate (Hrs ^-1)&quot;,limits=c(-0.065,0.065))+
+  cleanup+
+  theme(legend.position = c(0.1,.2),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/gnomad_figures/gnomad_enabled_mutants_bydose.pdf&quot;,width=12,height = 4, units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<pre class="r"><code>imatdata_gnomad &lt;- imatdata_gnomad %&gt;%
+  mutate(species = fct_reorder(species, -rank, .desc = TRUE))
+# imatdata_gnomad=imatdata_gnomad%&gt;%arrange(desc(rank))
+library(tidyverse)</code></pre>
+<pre><code>Warning: package &#39;tidyverse&#39; was built under R version 4.0.2</code></pre>
+<pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>✓ tibble 3.1.2     ✓ readr  1.4.0
+✓ tidyr  1.1.3     ✓ purrr  0.3.4</code></pre>
+<pre><code>Warning: package &#39;tibble&#39; was built under R version 4.0.2</code></pre>
+<pre><code>Warning: package &#39;tidyr&#39; was built under R version 4.0.2</code></pre>
+<pre><code>Warning: package &#39;readr&#39; was built under R version 4.0.2</code></pre>
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+x purrr::accumulate() masks foreach::accumulate()
+x plotly::filter()    masks dplyr::filter(), stats::filter()
+x dplyr::lag()        masks stats::lag()
+x purrr::when()       masks foreach::when()</code></pre>
+<pre class="r"><code>quartz(type = &#39;pdf&#39;, file =&#39;output/gnomad_figures/gnomad_enabled_mutants_penetrance.pdf&#39;,width=7,height = 4)
+
+ggplot(imatdata_gnomad%&gt;%filter(dose%in%&quot;1200nM&quot;)%&gt;%arrange(desc(rank)),aes(x=reorder(species, -netgr_obs_mean_corr),y=netgr_obs_mean_corr,label=species,size=Allele.Frequency.Gnomad))+
+  geom_point(color=&quot;black&quot;,fill=&quot;gray90&quot;,shape=21)+
+  geom_text(data = netgr_average, aes(x = species, y = netgr_obs_mean_corr, label = species),
+            position = position_nudge(y = 0.032), # Adjust the position if needed
+            size = 2, color = &quot;red&quot;,
+            angle=90)+
+    geom_text(aes(label = &quot;\u2191&quot;), size = 4,position = position_nudge(y = 0.022)) +  # Add arrow shape
+  geom_text(data = netgr_average, aes(x = species, y = netgr_obs_mean_corr, label = species_enabler),
+            position = position_nudge(y = 0.012), # Adjust the position if needed
+            size = 2, color = &quot;blue&quot;,
+            angle=90)+
+  scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+  scale_y_continuous(&quot;Net growth rate (Hrs ^-1)&quot;,limits=c(-0.055,0.075))+
+  cleanup+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = &quot;none&quot;,
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_point).</code></pre>
+<pre><code>Warning: Removed 6 rows containing missing values (geom_text).</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).
+
+Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<pre class="r"><code>ggsave(&quot;output/gnomad_figures/gnomad_enabled_mutants_penetrance2.pdf&quot;,width=7,height = 4, units=&quot;in&quot;,useDingbats=F)</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_point).</code></pre>
+<pre><code>Warning: Removed 6 rows containing missing values (geom_text).</code></pre>
+<pre><code>Warning: Removed 5 rows containing missing values (geom_text).
+
+Warning: Removed 5 rows containing missing values (geom_text).</code></pre>
+<pre class="r"><code>imatdata_gnomad=imatdata_gnomad%&gt;%mutate(species_name=paste(species,species_enabler,sep=&quot;\u27a1&quot;))
+
+ggplot(imatdata_gnomad%&gt;%arrange(desc(rank)),aes(x=reorder(species_name, -netgr_obs_mean_corr),y=netgr_obs_mean_corr,label=species,size=Allele.Frequency.Gnomad))+
+  geom_point(color=&quot;black&quot;,fill=&quot;gray90&quot;,shape=21)+
+  scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+  scale_y_continuous(&quot;Net growth rate (Hrs ^-1)&quot;)+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))
+# ggsave(&quot;output/ABLEnrichmentScreens/ABL_Region234_Comparisons/sm_imatinib_plots/gnomad_enabled_mutants_penetrance3.pdf&quot;,width=7,height = 4, units=&quot;in&quot;,useDingbats=F)
+imatdata_gnomad=imatdata_gnomad%&gt;%arrange(rank)
+imatdata_gnomad=imatdata_gnomad%&gt;%
+  relocate(rank,.before = dose)%&gt;%
+  relocate(Allele.Frequency.Gnomad,.before=dose)%&gt;%
+  relocate(species_enabler,.after = species)
+  
+# write.csv(imatdata_gnomad,&quot;output/gnomad_vudrs.csv&quot;)
+
+# write.csv(gnomad,&quot;output/gnomad_vudrs_byethnicities.csv&quot;)</code></pre>
+<pre class="r"><code>imatdata_gnomad=imatdata_gnomad%&gt;%mutate(netgr.444=0.055-alpha.444,
+                                         netgr.760=0.055-alpha.760,
+                                         netgr.916=0.055-alpha.916)
+imatdata_gnomad=imatdata_gnomad%&gt;%group_by(dose)%&gt;%mutate(rank_netgr760=rank(-netgr.760))
+imatdata_gnomad=imatdata_gnomad%&gt;%group_by(dose)%&gt;%mutate(rank_alpha444=rank(alpha.444))
+
+netgr_average=imatdata_gnomad%&gt;%dplyr::select(dose,species_enabler,species,alpha.444,rank_alpha444)
+netgr_average=netgr_average%&gt;%filter(dose%in%&quot;1200nM&quot;)
+
+a=imatdata_gnomad%&gt;%filter(dose%in%&quot;1200nM&quot;)
+d=a%&gt;%filter(protein_start%in%473)
+b=read.csv(&quot;data/IC50s_verification/IC50HeatMap_verification_Elvin.csv&quot;,header = T,stringsAsFactors = F)
+b=b%&gt;%group_by(species)%&gt;%summarize(n=n())
+c=a%&gt;%filter(species%in%b$species)
+c=a%&gt;%filter(species_enabler%in%b$species)
+
+imatdata_gnomad &lt;- imatdata_gnomad %&gt;%
+  mutate(species = fct_reorder(species, -rank_alpha444, .desc = TRUE))
+ggplot(imatdata_gnomad%&gt;%filter(dose%in%&quot;1200nM&quot;)%&gt;%arrange(desc(rank_alpha444)),aes(x=species,y=alpha.444,label=species))+
+  # geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=fill_value))+
+  geom_col(aes(fill=fill_value),position = position_dodge(1))+
+  geom_text(data = netgr_average, aes(x = species, y = ifelse(alpha.444 &gt; 0,
+                           alpha.444 + 0.0025, # Move text above positive bars
+                           alpha.44 - 0.0025), # Move text below negative bars))+,
+                           label = species),
+            size = 2, color = &quot;red&quot;,
+            angle=90)+
+  scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+  scale_y_continuous(&quot;Drug kill rate (Hrs ^-1)\n at frontline dose&quot;)+
+  scale_fill_manual(values = c(&quot;#f7f7f7&quot;,
+                               &quot;#1f78b4&quot;,
+                               &quot;#f46d43&quot;,
+                               &quot;#a50026&quot;))+
+  cleanup+
+  theme(legend.position = &quot;none&quot;,
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5),
+        axis.title.y=element_blank())</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/gnomad_figures/gnomad_enabled_mutants.pdf&quot;,width=7,height = 4, units=&quot;in&quot;,useDingbats=F)
+
+# imatdata_gnomad &lt;- imatdata_gnomad %&gt;%
+#   mutate(species = fct_reorder(species, -rank_netgr760, .desc = TRUE))
+# ggplot(imatdata_gnomad%&gt;%filter(dose%in%&quot;1200nM&quot;)%&gt;%arrange(desc(rank)),aes(x=species,y=netgr.760,label=species))+
+#   # geom_point(color=&quot;black&quot;,size=2,shape=21,aes(fill=fill_value))+
+#   geom_col(color=&quot;black&quot;,aes(fill=fill_value),position = position_dodge(1))+
+#   # geom_text(data = netgr_average, aes(x = species, y = ifelse(netgr_obs_mean_corr &gt; 0, 
+#   #                          netgr_obs_mean_corr + 0.01, # Move text above positive bars
+#   #                          netgr_obs_mean_corr - 0.01), # Move text below negative bars))+,
+#   #                          label = species),
+#   #           size = 2, color = &quot;red&quot;,
+#   #           angle=90)+
+#   scale_x_discrete(&quot;SNP-enabled ABL mutant&quot;)+
+#   scale_y_continuous(&quot;Net growth rate (Hrs ^-1)&quot;)+
+#   scale_fill_manual(values = c(&quot;#f7f7f7&quot;,
+#                                &quot;#1f78b4&quot;,
+#                                &quot;#f46d43&quot;,
+#                                &quot;#a50026&quot;))+
+#   cleanup+
+#   theme(legend.position = &quot;none&quot;,
+#         axis.text.x = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5))</code></pre>
+<p>Looking at which segments of the population are differentially
+affected by the gnomad mutants</p>
+<pre class="r"><code>gnomad &lt;- gnomad %&gt;%
+  select(-starts_with(&quot;Homozygote&quot;), -starts_with(&quot;Hemizygote&quot;))
+
+df_long &lt;- gnomad %&gt;%
+  pivot_longer(
+    cols = matches(&quot;Allele\\.(Count|Number)&quot;),
+    names_to = c(&quot;.value&quot;, &quot;ancestry&quot;),
+    names_pattern = &quot;Allele\\.(Count.|Number.)(.*)&quot;
+  )
+
+df_long=df_long%&gt;%filter(!ancestry%in%NA)%&gt;%
+  mutate(af=Count./Number.)
+gnomad_enrichment_melt=df_long
+
+ggplot(gnomad_enrichment_melt%&gt;%filter(!ancestry%in%&quot;af.european.nonfin&quot;,!ancestry%in%&quot;af.ashkenazi.jewish&quot;),aes(x=Protein.Consequence,y=af,color=ancestry))+
+  # geom_col(position = position_dodge(1))+
+  # geom_violin()+
+  geom_point()+
+  scale_y_continuous(trans=&quot;log10&quot;)+cleanup</code></pre>
+<pre><code>Warning: Transformation introduced infinite values in continuous y-axis</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># write.csv(gnomad_enrichment_melt,&quot;data/gnomad_ABL/gnomad_vudrs_byethnicities_melted.csv&quot;)</code></pre>
+</div>
+<div id="piecharts" class="section level2">
+<h2>Piecharts</h2>
+<pre class="r"><code>imatdata=read.csv(&quot;output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv&quot;,header = T,stringsAsFactors = F)
+imatdata=imatdata%&gt;%filter(ct_screen1_before&gt;=5)
+library(tools)
+gnomad_sum=gnomad_enrichment_melt%&gt;%group_by(ancestry)%&gt;%summarize(sum_freq=sum(af))
+gnomad_sum=gnomad_sum%&gt;%rowwise()%&gt;%
+  mutate(ancestry=gsub(&quot;\\.&quot;,&quot; &quot;,ancestry),ancestry=toTitleCase(ancestry))
+
+# gsub(&quot;\\.&quot;,&quot; &quot;,&quot;african.american&quot;)
+# strsplit(&quot;af.aaa&quot;,&quot;af.&quot;)[[1]][2]
+
+gnomad_sum &lt;- gnomad_sum %&gt;% 
+  arrange(desc(ancestry)) %&gt;%
+  mutate(prop = sum_freq / sum(gnomad_sum$sum_freq) *100) %&gt;%
+  mutate(ypos = cumsum(prop)- 0.5*prop )
+
+ggplot(gnomad_sum, aes(x=&quot;&quot;, y=sum_freq, fill=ancestry)) +
+  # geom_bar(stat=&quot;identity&quot;, width=1, color=&quot;white&quot;) +
+    geom_col(color = &quot;black&quot;) +
+  coord_polar(&quot;y&quot;, start=0) +
+  theme_void() + 
+  theme(legend.position=&quot;none&quot;) +
+  geom_text(aes(label = ancestry),
+            position = position_stack(vjust = 0.5),size=3.2) +
+  # geom_text(aes(y = ypos, label = round(sum_freq,2)), color = &quot;black&quot;, size=4) +
+  scale_fill_brewer(palette=&quot;Set3&quot;)</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(&quot;output/gnomad_figures/gnomad_piecharts.pdf&quot;,width=2.5,height = 2.5, units=&quot;in&quot;,useDingbats=F)
+source(&quot;code/resmuts_adder.R&quot;)
+imatdata=resmuts_adder(imatdata)
+ggplot(imatdata%&gt;%filter(dose%in%&quot;1200nM&quot;,!protein_start%in%&quot;359&quot;,!species%in%&quot;V299L&quot;),aes(y=netgr_obs_mean_corr,fill=resmuts))+
+  # geom_density(fill=&quot;gray90&quot;,alpha=.7)+
+  geom_density(alpha=.7)+
+  cleanup+
+  scale_y_continuous(limits=c(-0.055,0.075))+
+  theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),legend.position=&quot;none&quot;,
+          panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank())+
+  scale_fill_manual(values = c(&quot;gray90&quot;,&quot;red&quot;))</code></pre>
+<pre><code>Warning: Removed 54 rows containing non-finite values (stat_density).</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-8-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/ABLEnrichmentScreens/ABL_Region234_Comparisons/sm_imatinib_plots/gnomad_distributions.pdf&quot;,width=1,height = 4, units=&quot;in&quot;,useDingbats=F)
+
+
+gnomad=gnomad%&gt;%mutate(Allele.Count.Sum=case_when(Allele.Count%in%1~&quot;1&quot;,))
+nrow(gnomad[gnomad[,&quot;Allele.Count&quot;]==1,]) #Number of people with mutants only seen once</code></pre>
+<pre><code>[1] 205</code></pre>
+<pre class="r"><code>nrow(gnomad[gnomad[,&quot;Allele.Count&quot;]==2,]) #Number of people with mutants seen twice</code></pre>
+<pre><code>[1] 45</code></pre>
+<pre class="r"><code>sum(gnomad[gnomad[,&quot;Allele.Count&quot;]&gt;=2,&quot;Allele.Count&quot;]) #Number of people with mutants seen more than twice</code></pre>
+<pre><code>[1] 8604</code></pre>
+<pre class="r"><code>152194-sum(gnomad[gnomad[,&quot;Allele.Count&quot;]&gt;=2,&quot;Allele.Count&quot;]) #Number of people with mutants never seen in ABL</code></pre>
+<pre><code>[1] 143590</code></pre>
+<pre class="r"><code># There are 152194 alleles in most ABL stuff in gnomad data. This means that 152194/2 = 76097 people were seen with mutations in ABL
+
+# gnomad_piechart=data.frame(
+#   Allele.Count=c(&quot;0&quot;,&quot;1&quot;,&quot;2&quot;,&quot;&gt;2&quot;),
+#   Allele.Number=c(133467,95,64,18727)
+# )
+gnomad_piechart=data.frame(
+  Allele.Count=c(&quot;0&quot;,&quot;&gt;1&quot;),
+  Allele.Number=c(57139,18886)
+)
+
+# gnomad_piechart$Allele.Count=factor(gnomad_piechart$Allele.Count,levels=c(&quot;&gt;2&quot;,&quot;0&quot;,&quot;1&quot;,&quot;2&quot;))
+# gnomad_piechart$Allele.Number=as.numeric(gnomad_piechart$Allele.Number)
+
+ggplot(gnomad_piechart, aes(x=&quot;&quot;, y=Allele.Number,fill=Allele.Count)) +
+  # geom_bar(stat=&quot;identity&quot;, width=1, color=&quot;white&quot;) +
+    geom_col(color = &quot;black&quot;) +
+  coord_polar(&quot;y&quot;, start=2.3) +
+  theme_void() + 
+  theme(legend.position=&quot;none&quot;)+
+  scale_fill_manual(values = c(&quot;#3953A4&quot;,&quot;gray70&quot;))</code></pre>
+<p><img src="figure/gnomad_analysis.Rmd/unnamed-chunk-8-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ggsave(&quot;output/ABLEnrichmentScreens/ABL_Region234_Comparisons/sm_imatinib_plots/gnomad_piechart_overall_percentage.pdf&quot;,width=1.5,height = 1.5, units=&quot;in&quot;,useDingbats=F)</code></pre>
+</div>
+</div>
+<div id="archive." class="section level1">
+<h1>Archive.</h1>
+<div id="clinvar-mutants" class="section level2">
+<h2>Clinvar mutants</h2>
+</div>
+<div id="short-et-al-phall-mutants" class="section level2">
+<h2>Short et al PH+ALL mutants</h2>
+<p>Looking at ALL BCRABL mutants detected at pre-treatment according to
+short et al</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.0.0 (2020-04-24)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS  10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] tools     parallel  stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+ [1] purrr_0.3.4        readr_1.4.0        tidyr_1.1.3        tibble_3.1.2      
+ [5] tidyverse_1.3.1    forcats_0.5.1      reshape2_1.4.4     RColorBrewer_1.1-2
+ [9] doParallel_1.0.15  iterators_1.0.12   foreach_1.5.0      tictoc_1.0        
+[13] plotly_4.9.2.1     ggplot2_3.3.3      dplyr_1.0.6        stringr_1.4.0     
+
+loaded via a namespace (and not attached):
+ [1] httr_1.4.2        sass_0.4.1        jsonlite_1.7.2    viridisLite_0.3.0
+ [5] modelr_0.1.8      bslib_0.3.1       assertthat_0.2.1  cellranger_1.1.0 
+ [9] yaml_2.2.1        pillar_1.6.1      backports_1.1.7   glue_1.4.1       
+[13] digest_0.6.25     promises_1.1.0    rvest_1.0.0       colorspace_1.4-1 
+[17] htmltools_0.5.2   httpuv_1.5.2      plyr_1.8.6        pkgconfig_2.0.3  
+[21] broom_0.7.6       haven_2.4.1       scales_1.1.1      later_1.0.0      
+[25] git2r_0.27.1      generics_0.0.2    farver_2.0.3      ellipsis_0.3.2   
+[29] withr_2.4.2       lazyeval_0.2.2    cli_2.5.0         magrittr_2.0.1   
+[33] crayon_1.4.1      readxl_1.3.1      evaluate_0.14     fs_1.4.1         
+[37] fansi_0.4.1       xml2_1.3.2        data.table_1.14.8 hms_1.1.0        
+[41] lifecycle_1.0.0   munsell_0.5.0     reprex_2.0.0      compiler_4.0.0   
+[45] jquerylib_0.1.4   rlang_0.4.11      grid_4.0.0        rstudioapi_0.13  
+[49] htmlwidgets_1.5.1 labeling_0.3      rmarkdown_2.14    gtable_0.3.0     
+[53] codetools_0.2-16  DBI_1.1.0         R6_2.4.1          lubridate_1.7.10 
+[57] knitr_1.28        fastmap_1.1.0     utf8_1.1.4        workflowr_1.6.2  
+[61] rprojroot_1.3-2   stringi_1.7.5     Rcpp_1.0.4.6      vctrs_0.3.8      
+[65] dbplyr_2.1.1      tidyselect_1.1.0  xfun_0.31        </code></pre>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

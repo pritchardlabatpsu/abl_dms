@@ -1,0 +1,125 @@
+---
+title: "gnomad_analysis"
+author: "Haider Inam"
+date: '2025-07-24'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Setup RMarkdown environment
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+
+# Load required libraries
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library(reshape2)
+
+# Define a common clean plotting theme
+plot_theme <- theme_bw() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.grid.major = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.background = element_blank(),
+    axis.text = element_text(face = "bold", color = "black", size = 11),
+    text = element_text(size = 11, face = "bold"),
+    axis.title = element_text(face = "bold", size = 11)
+  )
+```
+
+```{r load-cosmic-helper}
+# Load custom helper functions to annotate COSMIC mutations
+source("code/cosmic_data_adder.R")
+```
+
+## Identify Unique Amino Acids Possible from Single-Nucleotide Substitutions
+
+```{r unique-aa-function}
+# Load codon table that maps codons to amino acids
+codon_table <- read.csv("data/codon_table.csv", header = TRUE, stringsAsFactors = FALSE)
+
+# Function to return amino acids reachable via 1-nucleotide substitutions from reference codons
+# but not reachable from alt (gnomAD) codons
+find_unique_amino_acids <- function(refseq_codon, alt_codon) {
+
+  # Get 1-nt substitution codons from reference codon
+  ref_aa_options <- codon_table %>%
+    rowwise() %>%
+    mutate(
+      distance = sum(substr(refseq_codon, 1:3, 1:3) != substr(Codon, 1:3, 1:3))
+    ) %>%
+    ungroup() %>%
+    filter(distance == 1)
+
+  # Get 1-nt substitution codons from gnomAD codon
+  alt_aa_options <- codon_table %>%
+    rowwise() %>%
+    mutate(
+      distance = sum(substr(alt_codon, 1:3, 1:3) != substr(Codon, 1:3, 1:3))
+    ) %>%
+    ungroup() %>%
+    filter(distance == 1)
+
+  # Return amino acids uniquely possible from ref codon but not from alt codon
+  setdiff(ref_aa_options$Letter, alt_aa_options$Letter)
+}
+```
+
+## Load and Annotate gnomAD Data
+
+```{r load-gnomad-data}
+# Read in raw gnomAD data
+raw_variants <- read.csv("data/ABL1_gnomad_variants.csv", stringsAsFactors = FALSE)
+
+# Filter relevant columns and remove rows without coding change annotations
+filtered_variants <- raw_variants %>%
+  filter(!is.na(HGVSc)) %>%
+  select(Chrom, Pos, Ref, Alt, HGVSc, Consequence, codon_change, aa_change, allele_freq, allele_count, allele_num)
+
+# Add COSMIC annotations
+annotated_variants <- add_cosmic_annotations(filtered_variants)
+```
+
+## Plotting Variant Consequences
+
+```{r plot-consequences}
+# Summarize variant consequences
+consequence_summary <- annotated_variants %>%
+  count(Consequence) %>%
+  arrange(desc(n))
+
+# Plot consequence types
+ggplot(consequence_summary, aes(x = reorder(Consequence, -n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Consequence Distribution of ABL1 Variants", x = "Consequence", y = "Count") +
+  plot_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Summary Statistics for ABL1 Variants
+
+```{r summarize-variants}
+# Compute number of unique codon changes and amino acid changes
+summary_stats <- annotated_variants %>%
+  summarise(
+    unique_codons = n_distinct(codon_change),
+    unique_amino_acids = n_distinct(aa_change),
+    mean_allele_frequency = mean(allele_freq, na.rm = TRUE)
+  )
+
+summary_stats
+```
+
+## Save Cleaned Data for Downstream Analysis
+
+```{r save-clean-data, eval=FALSE}
+# Save annotated and filtered variant data for reuse
+write.csv(annotated_variants, "results/ABL1_annotated_variants.csv", row.names = FALSE)
+```

@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_knit$set(root.dir = normalizePath(".."))
 
 library(stringr)
 library(dplyr)
@@ -83,6 +83,12 @@ data_sum=data%>%
 data=data%>%rowwise%>%mutate(n_nuc=nchar(alt))
 
 ```
+
+```{r}
+a=data%>%filter(is_intended%in%1,seqtech%in%"tileseq")
+median(a$ct_screen1_before)
+```
+
 
 ## Plotting mutant standards. 
 

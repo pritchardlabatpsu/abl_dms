@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_knit$set(root.dir = normalizePath(".."))
 ```
 Two ways of calculating errorbars for IC50 dose response data:  
 Method 1. Directly calculate the mean, SD, and 95% CI of the 8 or so replicates for each mutant at each of the 10 doses for BCRABL Imatinib IC50s. One Caveat here: You can calculate the errorbars this way but the data still fits better if the confidence intervals are around a mean that is not the average of the replicates but the fit from the 4 parameter logistic. Sounds confusing, yes.
@@ -31,20 +31,45 @@ library(drc)
 net_gr_wodrug=0.055
 conc_for_predictions=0.8
 
-ic50data_all=read.csv("data/ic50data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+ic50data_all=read.csv("data/ic50data/IC50HeatMap_v2.csv",header = T,stringsAsFactors = F)
+unique(ic50data_all$species)%in%(c("E255K","E255V","E255I"))
 # ic50data_all=read.csv("../data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
 
-ic50data_all=ic50data_all%>%filter(species%in%c("WT","V299L_H","E355A","D276G_maxi","H396R","F317L","F359I","E459K","G250E","F359C","F359V","M351T","L248V","E355G_maxi","Q252H_maxi","Y253F","F486S_maxi","H396P_maxi","E255K","Y253H","T315I","E255V"))
+# ic50data_all=ic50data_all%>%filter(species%in%c("WT","V299L_H","E355A","D276G_maxi","H396R","F317L","F359I","E459K","G250E","F359C","F359V","M351T","L248V","E355G_maxi","Q252H_maxi","Y253F","F486S_maxi","H396P_maxi","E255K","Y253H","T315I","E255V"))
 
+ic50data_all=ic50data_all%>%filter(species%in%c("D276G",
+                                                "E255K",
+                                                "E255V",
+                                                "E355A",
+                                                "E355G",
+                                                "E459K",
+                                                "F317L",
+                                                "F359C",
+                                                "F359I",
+                                                "F359L",
+                                                "F359V",
+                                                "F486S",
+                                                "G250E",
+                                                "H396P",
+                                                "H396R",
+                                                "L248V",
+                                                "M244V",
+                                                "M351T",
+                                                "Q252H",
+                                                "T315I",
+                                                "V299L",
+                                                "WT",
+                                                "Y253F",
+                                                "Y253H"))
 
-ic50data_all=ic50data_all%>%
-  mutate(species=case_when(species=="F486S_maxi"~"F486S",
-                          species=="H396P_maxi"~"H396P",
-                          species=="Q252H_maxi"~"Q252H",
-                          species=="E355G_maxi"~"E355G",
-                          species=="D276G_maxi"~"D276G",
-                          species=="V299L_H" ~ "V299L",
-                          TRUE ~as.character(species)))
+# ic50data_all=ic50data_all%>%
+#   mutate(species=case_when(species=="F486S_maxi"~"F486S",
+#                           species=="H396P_maxi"~"H396P",
+#                           species=="Q252H_maxi"~"Q252H",
+#                           species=="E355G_maxi"~"E355G",
+#                           species=="D276G_maxi"~"D276G",
+#                           species=="V299L_H" ~ "V299L",
+#                           TRUE ~as.character(species)))
 
 ic50data_long=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
 # ic50data_long=read.csv("../output/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
@@ -95,28 +120,40 @@ Method 2. Do a 4 parameter logistic fit on all the replicates individually. Then
 # rm(list=ls())
 twinstrand_maf_merge=read.csv("output/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F)
 # twinstrand_maf_merge=read.csv("../output/twinstrand_maf_merge.csv",header = T,stringsAsFactors = F)
-ic50data_all=read.csv("data/ic50data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
+ic50data_all=read.csv("data/ic50data/IC50HeatMap_v2.csv",header = T,stringsAsFactors = F)
 # ic50data_all=read.csv("../data/IC50HeatMap.csv",header = T,stringsAsFactors = F)
 net_gr_wodrug=0.055
 conc_for_predictions=0.8
 
-ic50data_all=ic50data_all%>%filter(species%in%c("WT","V299L_H","E355A","D276G_maxi","H396R","F317L","F359I","E459K","G250E","F359C","F359V","M351T","L248V","E355G_maxi","Q252H_maxi","Y253F","F486S_maxi","H396P_maxi","E255K","Y253H","T315I","E255V"))
-
-
-ic50data_all=ic50data_all%>%
-  mutate(species=case_when(species=="F486S_maxi"~"F486S",
-                          species=="H396P_maxi"~"H396P",
-                          species=="Q252H_maxi"~"Q252H",
-                          species=="E355G_maxi"~"E355G",
-                          species=="D276G_maxi"~"D276G",
-                          species=="V299L_H" ~ "V299L",
-                          TRUE ~as.character(species)))
-
+ic50data_all=ic50data_all%>%filter(species%in%c("D276G",
+                                                "E255K",
+                                                "E255V",
+                                                "E355A",
+                                                "E355G",
+                                                "E459K",
+                                                "F317L",
+                                                "F359C",
+                                                "F359I",
+                                                "F359L",
+                                                "F359V",
+                                                "F486S",
+                                                "G250E",
+                                                "H396P",
+                                                "H396R",
+                                                "L248V",
+                                                "M244V",
+                                                "M351T",
+                                                "Q252H",
+                                                "T315I",
+                                                "V299L",
+                                                "WT",
+                                                "Y253F",
+                                                "Y253H"))
 #Looking at how many replicates are there for each mutant in the data
 nreplicates=ic50data_all%>%group_by(species)%>%arrange(species)%>%summarize(replicates=n())
 
 #basically adding an identifier for replicate number.
-ic50data_all=ic50data_all%>%arrange(species)%>%mutate(replicate=c(1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:8,1:20,1:6,1:6))
+# ic50data_all=ic50data_all%>%arrange(species)%>%mutate(replicate=c(1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:6,1:8,1:6,1:6,1:6,1:6,1:6,1:8,1:20,1:6,1:6))
 
 ic50data_all_melt=melt(ic50data_all,id.vars = c("species","replicate"),measure.vars =c("X10","X5","X2.5","X1.25","X0.625","X0.3125","X0.15625","X0.078125","X0.0390625","X0.01953125") ,variable.name = "concentration",value.name = "y")
 ic50data_all_melt$concentration=as.character(ic50data_all_melt$concentration)
@@ -163,6 +200,7 @@ for(species_curr in sort(unique(ic50data_long$mutant))){
   for(conc.curr in conc.list){
     ic50.model.pred.species.rep.specific$conc[i]=conc.curr
     ic50.model.pred.species.rep.specific$y_model[i]=c+((d-c)/(1+exp(b*(log(conc.curr)-log(e)))))
+    ic50.model.pred.species.rep.specific$ic50[i]=e
     i=i+1
   }
   ic50.model.pred.species.specific=rbind(ic50.model.pred.species.specific,ic50.model.pred.species.rep.specific)
@@ -212,3 +250,74 @@ ic50data_all_sum=ic50data_all_sum%>%mutate(netgr_pred_mean=net_gr_wodrug-(-log(d
 # write.csv(ic50data_all_sum,"data/ic50data_all_confidence_intervals_individual_logistic_fits.csv")
 
 ```
+
+Getting the mean +- sd of the ic50 of the fits across species by each technical replicate
+
+```{r}
+
+ic50s_summarized=ic50.model.pred%>%group_by(mutant)%>%
+  summarise(ic50_u=round(mean(ic50)*1000,1),ic50_sd=round(sd(ic50)*1000,1))
+
+
+ic50data_all <- read.csv("data/ic50data/IC50HeatMap_v2.csv", header = TRUE, stringsAsFactors = FALSE)
+
+# Convert to long format
+ic50data_long <- ic50data_all %>%
+  pivot_longer(
+    cols = -c(species, replicate),  # all columns except 'species' and 'replicate'
+    names_to = "dose",
+    values_to = "rel.viab"
+  ) %>%
+  mutate(dose = round(as.numeric(gsub("X","",dose)),4))  # convert dose to numeric for proper ordering/plotting
+
+# Order species by resistance (descending relative viability at 1.250 uM)
+ordered_species <- ic50data_long %>%
+  filter(dose == 1.25,replicate==1) %>%
+  arrange(desc(rel.viab)) %>%
+  pull(species) %>%
+  as.character()
+
+# Decide on color values for plot
+getPalette = colorRampPalette(brewer.pal(11, "Spectral"))
+color_values <- getPalette(length(ordered_species))
+names(color_values) <- ordered_species  # ensures proper mapping
+
+# Apply ordered levels to both datasets
+ic50data_long$species <- factor(ic50data_long$species, levels = ordered_species)
+# class(ic50data_long$species)
+
+
+label_positions <- ic50data_long %>%
+  filter(!species%in%"M244V")%>%
+  group_by(species) %>%
+  summarise(
+    x = 10,             # consistent left edge on log10 scale
+    y = 0.15,           # high enough for all panels
+    label = unique(species)
+  )
+
+
+ggplot(ic50data_long%>%filter(!species%in%"M244V"),aes(x=dose*1000,y=rel.viab))+
+  geom_line(aes(group = interaction(species, replicate)),
+            linetype="dashed",
+            color="gray")+
+  geom_point(size=1,aes(color=species))+
+  facet_wrap(~species)+
+  scale_x_continuous("Concentration (nM)",
+                     trans="log10")+
+  scale_y_continuous("Relative viability",
+                     limits=c(0,1.2),breaks = c(0,0.5,1))+
+  geom_text(data = label_positions, aes(x = x, y = y, label = label),
+  inherit.aes = FALSE, hjust = 0, vjust = 1, fontface = "bold", size = 3.5) +
+  cleanup+
+  theme(strip.text=element_blank(),
+  legend.position = "none",
+  axis.text.x=element_text(face="plain",angle=90,hjust=.5,vjust=.5,size = 9),
+  axis.text.y=element_text(face = "plain",size=9))+
+  scale_color_manual(values=color_values)+
+  geom_hline(yintercept = 0.5,linetype="dashed")
+ggsave("data/ic50data/mutantstandards_v2.pdf",width=6,height=7,useDingbats=F)
+
+
+```
+

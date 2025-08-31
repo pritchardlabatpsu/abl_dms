@@ -84,9 +84,9 @@ editor_options:
 
 
 
-* Click [here](homepage_dms_screens.html) to view DMS analyses.  
-<a href="homepage_dms_screens.html">
-    <img src="assets/imatinib_heatmap.png" width="600" height="221" alt="Click to go to dms analyses" class="extrude-effect">
+* Click blow to view our analyses of how SNPs in Gnomad enable potentially drug resistant mutants, necessitating the study of multi-nucleotide variants in DMS screens.  
+<a href="gnomad_analysis.html">
+    <img src="assets/gnomad_figure.png" width="315" height="405" alt="Click to go to gnomad analyses" class="extrude-effect">
 </a>
 
 <style>

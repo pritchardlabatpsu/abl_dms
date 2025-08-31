@@ -1,0 +1,66 @@
+---
+title: "dms_abl_analysis"
+author: "Haider Inam"
+date: '2025-07-12'
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+# rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+# setting working directory to the directory of the RmD file.
+knitr::opts_knit$set(root.dir = dirname(rstudioapi::getActiveDocumentContext()$path))
+```
+
+```{r}
+#Loading function that will compare the final and the intial timepoints to generate growth rates
+source("code/compare_screens.R")
+library(dplyr)
+```
+
+07.12.25
+The following code takes two BaF3 ABL Region 1 D0 samples and two D6 samples, and creates a .csv file that has net growth rates between Day 0 and Day 6 for both samples.
+
+Output: This .csv file is  in screen_comparison_baf3_IL3_low_rep1vsrep2ft.csv
+
+Inputs: This code runs off of the output of consensus-called sequencing data. This output is currently present in the following directories:
+-- data/Consensus_Data/Novogene_lane18/sample2/sscs/variant_caller_outputs
+-- data/Consensus_Data/Novogene_lane18/sample3/sscs/variant_caller_outputs
+-- data/Consensus_Data/Novogene_lane18/sample10/sscs/variant_caller_outputs
+
+Sample 2 is our baseline day 6 library prep of genomic DNA extracted from BaF3s transduced with the BCRABL library after 6 days of il3 independent growth.
+Sample 3 is our baseline day 6 library prep of genomic DNA extracted from BaF3s transduced with the BCRABL library after 6 days of il3 independent growth.
+Sample 10 is our baseline day 0 library prep of genomic DNA extracted from BaF3s transduced with the BCRABL library.
+
+```{r}
+# setting working directory to the directory of the RmD file.
+knitr::opts_knit$set(root.dir = dirname(rstudioapi::getActiveDocumentContext()$path))
+
+cellcounts_matrix_dir="data/Consensus_Data/Novogene_lane18/TwistRegion1Screen_CellCounts_Matrix.csv"
+comparisons=read.csv("data/Consensus_Data/Novogene_lane18/TwistRegion1Screen_Comparisons_Todo.csv")
+  i=1
+  dirname=comparisons$dirname[i]
+
+# Below is the code parsing for the sample name of the library preps for the different timepoints.
+before_screen1_identifier=unlist(strsplit(comparisons$before_screen1_identifier[i],","))
+after_screen1_identifier=unlist(strsplit(comparisons$after_screen1_identifier[i],","))
+before_screen2_identifier=unlist(strsplit(comparisons$before_screen2_identifier[i],","))
+before_screen2_identifier="BTRID0_FT"
+after_screen2_identifier=unlist(strsplit(comparisons$after_screen2_identifier[i],","))
+
+# Below, the code is comparing the day 0 samples to the day 6 samples to look for change in growth rate of each mutant for replicates A and B.
+screen_compare_means=compare_screens(before_screen1_identifier,
+                                     after_screen1_identifier,
+                                     before_screen2_identifier,
+                                     after_screen2_identifier,
+                                     cellcounts_matrix_dir)
+
+# Below, the code is filtering for the mutagenized region of BCRABL. This was region 1, and spanned residues 240:322 of the ABL kinase.
+screen_compare_means=screen_compare_means%>%filter(protein_start%in%c(240:322))
+screen_compare_means_forexport=apply(screen_compare_means,2,as.character)
+# Below, we are saving the comparisons of the screens as a .csv file.
+write.csv(screen_compare_means_forexport,file="output/screen_comparison_baf3_IL3_low_rep1vsrep2ft.csv")
+
+```
