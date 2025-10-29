@@ -1,0 +1,116 @@
+---
+title: "Imatinib concentration response map"
+author: "Marta Tomaszkiewicz"
+date: "2025-07-07"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set root directory to the current Rmd location
+if (requireNamespace("rstudioapi", quietly = TRUE)) {
+  knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+library(ggplot2)
+library(dplyr)
+```
+
+```{r load data}
+data <- read.csv("all_mutants_with_IC50_estimates.csv", 
+                 header = TRUE, stringsAsFactors = FALSE)
+```
+
+```{r prepare IC50 bins}
+# Create a background grid
+background_grid <- expand.grid(
+  protein_start = seq(241, 513, by = 1),
+  alt_aa = c("P", "G", "Y", "W", "F", "V", "L", "I", "A", "T", 
+             "S", "Q", "N", "M", "C", "E", "D", "R", "K", "H")
+)
+
+# Add placeholder column
+background_grid$IC50 <- NA
+
+# Merge with dataset
+merged_data_IC50 <- merge(
+  background_grid, 
+  data[, c("protein_start", "alt_aa", "IC50")], 
+  by = c("protein_start", "alt_aa"), 
+  all.x = TRUE
+)
+
+merged_data_IC50 <- merge(
+  background_grid, 
+  data[, c("protein_start", "alt_aa", "IC50")], 
+  by = c("protein_start", "alt_aa"), 
+  all.x = TRUE
+) %>%
+  rename(IC50 = IC50.y) %>%  
+  select(protein_start, alt_aa, IC50)  
+
+# Fix netgrowth values
+merged_data_IC50 <- merged_data_IC50 %>%
+  mutate(IC50 = case_when(
+    !is.na(IC50) & IC50 >= 2454.9258 ~ 2454.9258,
+    !is.na(IC50) & IC50 <= 0 ~ 0,
+    TRUE ~ IC50
+  ))
+
+# Define IC50 bins and corresponding colors from "Paired"
+ic50_bins <- c(0, 300, 600, 1200, 2500)
+paired_colors <- c("#ffffbf", "#2c7bb6", "#fdae61", "#d7191c")
+
+
+# Convert IC50 into factors based on bins
+merged_data_IC50$IC50_bin <- cut(merged_data_IC50$IC50, breaks = ic50_bins, include.lowest = TRUE)
+```
+
+```{r plot IC50s}
+#Legend is in one row
+plot <- ggplot(merged_data_IC50, aes(x = protein_start, y = alt_aa, fill = IC50_bin)) +
+  geom_tile(width = 1, height = 1) + 
+  scale_x_continuous(name = "Residue position on BCR-ABL kinase", limits = c(241, 513), expand = c(0, 0)) +
+  
+  scale_fill_manual(values = paired_colors, name = "IC50 Bins", na.value = "grey80") +
+  
+  guides(
+    fill = guide_legend(
+      direction = "horizontal",
+      nrow = 1
+    )
+  ) +
+  
+  labs(
+    title = "Mutation IC50 Map",
+    x = "Residue position on BCR-ABL kinase",
+    y = "Mutant Amino Acid"
+  ) +
+  
+  theme_bw() + 
+  scale_y_discrete(
+    limits = c("P", "G", "Y", "W", "F", "V", "L", "I", "A", "T", 
+               "S", "Q", "N", "M", "C", "E", "D", "R", "K", "H")
+  ) +
+  
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_line(color = "grey80"),
+    aspect.ratio = 1/4,
+    axis.text.x = element_text(color = "black", face = "bold", size = 9),
+    axis.text.y = element_text(color = "black", face = "bold", size = 9),
+    strip.background = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5), 
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.key.size = unit(0.8, "lines"),
+    legend.text = element_text(size = 9),
+    plot.margin = grid::unit(c(1,1,1,1), "mm")
+  )
+
+print(plot)
+
+ggsave("Concentration response map.pdf", plot, width = 11, height = 8, dpi = 600)

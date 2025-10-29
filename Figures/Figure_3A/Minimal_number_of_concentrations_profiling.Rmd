@@ -1,0 +1,82 @@
+---
+title: "Minimal number of concentrations required for VUDR classification"
+author: "Marta Tomaszkiewicz"
+date: "2025-07-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set root directory to the current Rmd location
+if (requireNamespace("rstudioapi", quietly = TRUE)) {
+  knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+library(ggplot2)
+library(scales)
+library(dplyr)
+```
+
+
+```{r load data}
+data <- read.csv("IC50_3_versus_10_concentrations.csv", 
+                 header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+```{r IC50 grouping}
+
+data$group <- ifelse(
+  data$IC50.3conc > 1.2,
+  "high", "low"
+)
+
+# Subset for each group
+high_group <- data %>%
+  filter(group == "high")
+
+low_group <- data %>%
+  filter(group == "low")
+```
+
+```{r Pearson correlation}
+# Compute Pearson correlations
+cor_high <- cor.test(high_group$IC50.12conc, high_group$IC50.3conc, method = "pearson")
+cor_low <- cor.test(low_group$IC50.12conc, low_group$IC50.3conc, method = "pearson")
+```
+
+```{r plot}
+
+plot <- ggplot(data, aes(
+  x = IC50.12conc,
+  y = IC50.3conc
+)) +
+  geom_point(aes(color = group)) +
+  scale_color_manual(values = c("high" = "#d7191c", "low" = "black")) +
+  geom_hline(yintercept = 1.2, linetype = "dashed", color = "#d7191c") +
+  geom_abline(linetype = "dashed") +
+  scale_x_continuous(
+    "IC50 (µM) from 10 data points",
+    trans = pseudo_log_trans(sigma = 1),
+    breaks = c(0.3, 0.6, 0.9, 1.2, 3, 5, 10),
+    limits = c(0.1, 10)
+  ) +
+  scale_y_continuous(
+    "IC50 (µM) from 3 data points",
+    trans = pseudo_log_trans(sigma = 1),
+    breaks = c(0.3, 0.6, 0.9, 1.2, 3, 5, 10),
+    limits = c(0.1, 10)
+  ) +
+  # Add Pearson correlation annotations
+  annotate("text", x = 0.15, y = 8.5, hjust = 0, color = "#d7191c",
+           label = paste0("R (>1200 nM) = ", round(cor_high$estimate, 2), 
+                          ", p = ", signif(cor_high$p.value, 2))) +
+  annotate("text", x = 0.45, y = 0.2, hjust = 0, color = "black",
+           label = paste0("R (<1200 nM) = ", round(cor_low$estimate, 2), 
+                          ", p = ", signif(cor_low$p.value, 2))) +
+  theme(legend.position = "none")
+
+print(plot)
+
+ggsave("IC50_correlation_3_versus_10_concentration.pdf", plot, width = 6, height = 6, units = "in")

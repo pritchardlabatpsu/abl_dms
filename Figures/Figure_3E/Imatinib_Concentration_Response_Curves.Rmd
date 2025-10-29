@@ -1,0 +1,69 @@
+---
+title: "Imatinib Concentration Response Curves"
+author: "Marta Tomaszkiewicz"
+date: "2025-10-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Load required packages
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Set chunk options
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load data}
+# Load dataset
+screen.df <- read.csv("all_mutants_with_relative_viability.csv", header = TRUE, stringsAsFactors = FALSE)
+
+screen.df.slim <- screen.df %>%
+  select("species", "IC50", matches("^X\\d+\\.rel\\.viab$"))
+```
+
+```{r format data}
+# Pivot to long format
+long_df <- screen.df.slim %>%
+  pivot_longer(
+    cols = matches("^X\\d+\\.rel\\.viab$"),
+    names_to = "dose",
+    values_to = "rel.viab"
+  ) %>%
+  mutate(dose = as.numeric(gsub("^X(\\d+)\\..*", "\\1", dose)))
+
+# Assign color groups based on IC50 ranges
+
+long_df$color_group <- cut(
+  long_df$IC50,
+  breaks = c(-Inf, 300, 600, 1200, Inf),
+  labels = c("#ffffbf", "#2c7bb6", "#fdae61", "#d7191c"),
+  right = FALSE
+)
+```
+
+```{r plot data}
+# Create the plot
+
+plot <- ggplot(long_df, aes(x = dose, y = rel.viab, group = species, color = color_group)) +
+  geom_line(alpha = 0.3, linewidth = 0.5, na.rm = TRUE) +
+  theme_bw() +
+  scale_x_log10(limits = c(10, 10000)) +
+  scale_color_identity() +
+  labs(
+    x = "Imatinib dose [nM]",
+    y = "Relative viability",
+    title = "Imatinib Concentration Response Curves"
+  ) +
+  theme(legend.position = "none")
+
+# Display plot in HTML
+
+plot
+# Save plots to files
+
+ggsave("Conc_response_curves.png", plot, dpi = 600, width = 6, height = 5, units = "in")
+ggsave("Conc_response_curves.pdf", plot, width = 6, height = 5, dpi = 600)
+
+```
