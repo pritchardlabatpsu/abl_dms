@@ -135,21 +135,21 @@ data_dms_subset_filtered=data_dms_subset%>%filter(species%in%unique(ic50data_lon
 # ic50data_long=ic50data_long%>%filter(dose<=5,dose>0.04)
 # Order species by resistance (descending relative viability at 1.250 uM)
 ordered_species <- ic50data_long %>%
-  filter(!species%in%c("F359C","F359I")) %>%
+  # filter(!species%in%c("F359C","F359I")) %>%
   filter(dose == 1.25,replicate==1) %>%
   arrange(desc(rel.viab)) %>%
   pull(species) %>%
   as.character()
 
 # Apply ordered levels to both datasets
-ic50data_long=ic50data_long%>%filter(!species%in%c("F359C","F359I"))
+# ic50data_long=ic50data_long%>%filter(!species%in%c("F359C","F359I"))
 ic50data_long$species <- factor(ic50data_long$species, levels = ordered_species)
 
-data_dms_subset_filtered=data_dms_subset_filtered%>%filter(!species%in%c("F359C","F359I"))
+# data_dms_subset_filtered=data_dms_subset_filtered%>%filter(!species%in%c("F359C","F359I"))
 data_dms_subset_filtered$species <- factor(data_dms_subset_filtered$species, levels = ordered_species)
 
 label_positions <- ic50data_long %>%
-  filter(!species%in%c("F359C","F359I")) %>%
+  # filter(!species%in%c("F359C","F359I")) %>%
   group_by(species) %>%
   summarise(
     x = .010,             # consistent left edge on log10 scale
@@ -164,13 +164,13 @@ names(color_values) <- ordered_species  # ensures proper mapping
 
 # a=ic50data_long
 # a$dose=round(a$dose,2)
-ggplot(ic50data_long%>%filter(!species%in%c("F359C","F359I")),
+ggplot(ic50data_long,
        aes(x=dose,y=rel.viab))+
   geom_point(size=1,aes(color=species))+
   geom_line(aes(group = interaction(species, replicate)),
             linetype="dashed",
             color="gray")+
-  geom_point(data=data_dms_subset_filtered%>%filter(!species%in%c("F359C","F359I")),size=2.5,color="black",shape=24,aes(x=Dose,y=rel.viab,fill=species))+
+  geom_point(data=data_dms_subset_filtered,size=2.5,color="black",shape=24,aes(x=Dose,y=rel.viab,fill=species))+
   facet_wrap(~species,
              nrow=3)+
   # scale_x_continuous("Dose (uM)",

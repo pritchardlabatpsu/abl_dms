@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_knit$set(root.dir = normalizePath(".."))
 
 library(stringr)
 library(dplyr)
@@ -98,6 +98,35 @@ ggplot(data%>%filter(ct_screen1_before>=5,seqtech%in%"tileseq",n_nuc%in%1),aes(x
 
 ggplot(data%>%filter(seqtech%in%"duplex",n_nuc%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")
 # ggsave("output/errorrates_figures/plot6c_abl_duplex_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
+
+
+
+ggplot(data %>%filter(ct_screen1_before>=5,seqtech%in%"ngs",n_nuc%in%1),
+       aes(x = ct_screen1_before, fill = factor(is_intended, levels = c(1,0)))) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 50) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Count") +
+  theme(legend.position = "none")
+
+ggplot(data %>%filter(ct_screen1_before>=5,seqtech%in%"tileseq",n_nuc%in%1),
+       aes(x = ct_screen1_before, fill = factor(is_intended, levels = c(1,0)))) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 50) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Count") +
+  theme(legend.position = "none")
+
+ggplot(data %>%filter(seqtech%in%"duplex",n_nuc%in%1),
+       aes(x = ct_screen1_before, fill = factor(is_intended, levels = c(1,0)))) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 50) +
+  # scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Count") +
+  theme(legend.position = "none")
 ```
 
 

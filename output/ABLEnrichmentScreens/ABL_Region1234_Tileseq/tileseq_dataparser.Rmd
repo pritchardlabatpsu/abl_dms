@@ -207,7 +207,7 @@ dirname="output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_
 dose="il3"
 il3flag="T"
 data_il3_tileseq=tilseq_dataparser(dirname,dose,il3flag)
-
+# a=data_il3_tileseq%>%filter(is_intended%in%1)
 ##############################300nM Imatinib data###########################
 dirname="output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_low_imatinib_renamed.csv"
 dose="300nM"
@@ -346,8 +346,11 @@ seqtech="sscs"
 alldata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)[-1]
 dose_curr=dose
 seqtech_curr=seqtech
+# data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
 data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr,is_intended%in%T)
 data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut"))
+
+# ggplot(data%>%filter(protein_start%in%c(350:365)),aes(x=protein_start,fill=is_intended))+geom_boxplot()
 
 
 data=data%>%
@@ -360,7 +363,17 @@ data=data%>%
                                   T~netgr_obs_screen2),
          netgr_obs_corr_screen2=case_when(ct_screen2_after%in%0.5~-Inf,
                                   T~netgr_obs_corr_screen2))
+# a=data%>%filter(species%in%"F359C")
+# Applying a count filter to get rid of bad data. This used to get rid of the F359C, and I signal but this filter was later ommitted.
+# data=data%>% filter(!(ct_screen1_before < 300 & nchar(ref) == 1))
+
 source("code/plotting/heatmap_plotting_function.R")
+
+# data=data%>%mutate(resmuts=case_when(species%in%c("V299L","E255V", "Y253H", "T315I", "H396P", "H396R", "F486S", "G250E", "E255K", "Y253F", "Q252H", "L248V", "M351T", "F317L", "D276G", "E459K")~T,
+                                     # T~F))
+
+data=data%>%mutate(resmuts=case_when(species%in%c("F359I","F359C","V299L","E255V", "Y253H", "T315I", "H396P", "H396R", "F486S", "G250E", "E255K", "Y253F", "Q252H", "L248V", "M351T", "F317L", "D276G", "E459K")~T,
+                                     T~F))
 
 ################Plot 1a#################
 heatmap_plotting_function(data%>%mutate(netgr_obs_mean=case_when(netgr_obs_mean>=.06~.06,
@@ -397,7 +410,7 @@ T~netgr_obs_mean_corr)),242,512,fill_variable = "netgr_obs_mean",fill_name = "Ne
 
 ggsave(paste(dirname,"1a.baf3_imatinib_heatmap_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=7,height=2.5,units="in",useDingbats=F)
 ################Plot 2a#################
-a=data%>%filter(protein_start>=242,protein_start<=512,!species%in%c("V299L"),resmuts%in%T,dose%in%"600nM")
+
 ggplot(data%>%filter(protein_start>=242,protein_start<=512,!species%in%c("V299L")),aes(x=netgr_obs_mean,fill=resmuts))+
   geom_density(alpha=.7)+
   scale_x_continuous(bquote('Net Growth Rate '(Hours^-1)),limits=c(-.03,.09))+
@@ -440,8 +453,8 @@ ggplot(data%>%filter(protein_start>=242,protein_start<=512)%>%arrange(resmuts),a
   # geom_text_repel(aes(label=ifelse(resmuts%in%T,species,"")))+
   geom_abline(linetype="dashed")+
   geom_label_repel(size=2,aes(label=ifelse(resmuts%in%T,species,"")))+
-  scale_x_continuous(name="Net Growth Rate Rep A",limits=c(-.06,.09))+
-  scale_y_continuous(name="Net Growth Rate Rep B",limits=c(-.06,.09))+
+  scale_x_continuous(name="Net Growth Rate Rep A",limits=c(-0.065,.075))+
+  scale_y_continuous(name="Net Growth Rate Rep B",limits=c(-0.065,.075))+
   labs(fill="Sanger\n Mutant")+
   scale_fill_manual(values=c("gray90","gray90","red"))+
   stat_cor(method="pearson")+
@@ -462,8 +475,8 @@ if(dose%in%"300nM"){
   standards=standards%>%filter(conc%in%0.3)
 }
 
-standards=standards%>%filter(mutant%in%c("V299L","
-                                         E255V",
+standards=standards%>%filter(mutant%in%c("V299L",
+                                         "E255V",
                                         "Y253H",
                                         "T315I",
                                         "H396P",
@@ -479,7 +492,7 @@ standards=standards%>%filter(mutant%in%c("V299L","
                                         "M351T",
                                         "F317L",
                                         "D276G",
-                                        "M244V",
+                                        # "M244V",
                                         "E459K"))
 
 # data=data%>%filter(is_intended%in%1)
@@ -527,16 +540,16 @@ ggsave(paste(dirname,"4b.baf3_imatinib_mutantstandards_netgr_corrected_",dose,"_
 
 
 ################Plot 4c#################
-ggplot(standards,aes(x=.055-drug_effect,y=netgr_obs_mean_corr,label=species))+
+ggplot(standards%>%filter(!protein_start%in%c("354:361")),aes(x=.055-drug_effect,y=netgr_obs_mean_corr,label=species))+
+  geom_abline(size=0.25,color="gray50",linetype="dashed")+
   stat_cor(method="pearson",size=2,color="blue",vjust=3)+
-  geom_text(size=2,color="blue")+
-  geom_text(size=2,color="red",aes(y=netgr_obs_mean))+
+  geom_point(size=0.5,color="blue")+
+  geom_point(size=0.5,color="red",aes(y=netgr_obs_mean))+
+  # geom_label_repel(size=1, nudge_y=-0.01) +
+  geom_text_repel(size=2, nudge_y=-0.01, max.overlaps=Inf, box.padding=0.2,segment.size=0.2, segment.color="gray50")+
   stat_cor(method="pearson",size=2,aes(y=netgr_obs_mean),color="red")+
-  # scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.01,.06))+
-  # scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.01,.06))+
   scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.026,.075))+
   scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.026,.075))+
-  geom_abline(linetype="dashed")+
   cleanup+
   theme(legend.position = c(0.92,0.45),
         legend.title = element_text(size=8),
@@ -546,7 +559,7 @@ ggplot(standards,aes(x=.055-drug_effect,y=netgr_obs_mean_corr,label=species))+
         axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-ggsave(paste(dirname,"4c.baf3_imatinib_mutantstandards_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=2.5,height = 2.5,units="in",useDingbats=F)
+ ggsave(paste(dirname,"4c.baf3_imatinib_mutantstandards_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=2.5,height = 2.5,units="in",useDingbats=F)
 
 ################Plot 5a#################
 ggplot(data%>%filter(!species%in%c("V299L"),protein_start>=242,protein_start<=512),aes(x=resmut_cosmic,y=netgr_obs_mean,fill=resmut_cosmic))+
@@ -636,13 +649,16 @@ ggsave(paste(dirname,"5b.baf3_imatinib_sangermutants_netgr_corrected_",dose,"_",
 # ggsave(paste(dirname,"7b.baf3_imatinib_T315xdataset_netgr_corrected",dose,"_",seqtech,"_",date,".pdf",sep=""),width=4,height=4,units="in",useDingbats=F)
 
 ```
+
+
+
 ```{r}
 dirname="output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/output/"
 date="12182024"
 dose="600nM"
 seqtech="sscs"
 
-alldata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/data/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)[-1]
+alldata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)[-1]
 dose_curr=dose
 seqtech_curr=seqtech
 data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr,is_intended%in%T)
@@ -657,7 +673,7 @@ data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut
 #   T~netgr_obs_screen2))
 
 
-standards=read.csv("output/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+standards=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
 if(dose%in%"300nM"){
   standards=standards%>%filter(conc%in%0.3)
 } else if(dose%in%"600nM"){
@@ -744,3 +760,111 @@ cor(t315_merge$imat_lfc,t315_merge$netgr_obs_imat)
 ```
 
 
+```{r}
+data=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)
+dose_curr=dose
+seqtech_curr=seqtech
+data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
+# ggplot(data,aes(x=factor(protein_start),y=ct_screen1_before,fill=factor(is_intended)))+geom_boxplot()+facet_wrap(~seqtech,nrow = 2)+cleanup+scale_y_continuous(trans="log10")+theme(axis.text.x=element_text(angle=90, hjust=1))
+
+ggplot(data%>%filter(nchar(ref)%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")+geom_vline(linetype="dashed",xintercept = 20)+geom_vline(linetype="dashed",xintercept = 300)
+
+ggplot(data %>% filter(nchar(ref) %in% 1),
+       aes(x = ct_screen1_before, fill = factor(is_intended, levels = c(1,0)))) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 50) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Count") +
+  theme(legend.position = "none") +
+  geom_vline(linetype="dashed", xintercept = 20) +
+  geom_vline(linetype="dashed", xintercept = 300)
+a=data%>%filter(nchar(ref) %in% 2,is_intended%in%1,ct_screen1_before<10)
+
+ggplot(data %>% filter(nchar(ref) %in% 2),
+       aes(x = ct_screen1_before, fill = factor(is_intended, levels = c(1,0)))) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 50) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Count") +
+  theme(legend.position = "none") +
+  geom_vline(linetype="dashed", xintercept = 20) +
+  geom_vline(linetype="dashed", xintercept = 300)
+
+ggplot(data%>%filter(nchar(ref)%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_histogram(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")+geom_vline(linetype="dashed",xintercept = 20)+geom_vline(linetype="dashed",xintercept = 300)
+
+ggplot(data%>%filter(!nchar(ref)%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")+geom_vline(linetype="dashed",xintercept = 20)+geom_vline(linetype="dashed",xintercept = 300)
+
+data %>%
+  filter(nchar(ref) %in% c(1,2),is_intended%in%1) %>%   # keep SNVs and MNVs
+  mutate(variant_type = ifelse(nchar(ref) == 1, "SNV", "MNV")) %>% 
+  ggplot(aes(x = ct_screen1_before,
+             fill = variant_type)) +
+  geom_density(alpha = 0.6) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  cleanup +
+  scale_fill_manual(values = c("blue", "red")) +
+  ylab("Density") +
+  theme(legend.title = element_blank()) +
+  geom_vline(linetype = "dashed", xintercept = 20) +
+  geom_vline(linetype = "dashed", xintercept = 300)
+
+a=data%>%filter(is_intended%in%1,nchar(ref)%in%2)
+quantile(a$ct_screen1_before,probs = c(0.2))
+
+a=data%>%filter(is_intended%in%0,nchar(ref)%in%1)
+quantile(a$ct_screen1_before,probs = 0.77)
+
+data %>%
+  filter((nchar(ref) > 1 & is_intended == 1) |    # intended MNVs
+         (nchar(ref) == 1 & is_intended == 0)) %>%  # unintended SNVs
+  mutate(group = case_when(
+    nchar(ref) > 1 & is_intended == 1 ~ "Intended MNVs",
+    nchar(ref) == 1 & is_intended == 0 ~ "Unintended SNVs"
+  )) %>%
+  ggplot(aes(x = ct_screen1_before, color = group)) +
+  stat_ecdf(size = 1) +
+  scale_x_continuous("Number of times a variant was seen", trans = "log10") +
+  ylab("Cumulative fraction") +
+  cleanup +
+  scale_color_manual(values = c("blue", "red")) +
+  theme(legend.title = element_blank())+
+  geom_vline(linetype = "dashed", xintercept = 300)
+
+completeness_score=data%>%filter(is_intended%in%1,ct_screen1_before>20)
+completeness_score=completeness_score%>%group_by(protein_start)%>%summarize(n=n())
+
+ggplot(completeness_score,aes(x=protein_start,y=n))+geom_line()+
+  scale_y_continuous("Number of intended codons detected",breaks=c(1,5,10,15,19))
+```
+
+
+```{r}
+alldata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)[-1]
+dose_curr=dose
+seqtech_curr=seqtech
+# data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
+data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
+data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut"))
+# a=data%>%filter(protein_start%in%c(345))
+ggplot(data%>%filter(protein_start%in%c(345:375)),aes(x=factor(protein_start),y=ct_screen1_before,fill=factor(is_intended)))+geom_boxplot()+
+  # scale_y_continuous(trans="log10")+
+  theme(axis.text.x = element_text(angle=90))
+ggplot(data%>%filter(protein_start%in%c(345:375)),aes(x=factor(protein_start),y=maf_screen1_before,fill=factor(is_intended)))+geom_boxplot()+scale_y_continuous(trans="log10")+theme(axis.text.x = element_text(angle=90))
+
+
+alldata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)[-1]
+alldata=read.csv("../duplex_sequencing_screen/output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/data/archive2/TileSeq_full_kinase_high_imatinib_final_renamed2.csv",header = T,stringsAsFactors = F)[-1]
+dose_curr=dose
+seqtech_curr=seqtech
+# data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
+data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech)
+# data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut"))
+ggplot(data%>%filter(protein_start%in%c(345:375)),aes(x=factor(protein_start),y=depth_screen1_before,fill=factor(is_intended)))+geom_boxplot()+
+  # scale_y_continuous(trans="log10")+
+  theme(axis.text.x = element_text(angle=90))
+
+ggplot(data%>%filter(protein_start%in%c(275:315)),aes(x=factor(protein_start),y=maf_screen1_before,fill=factor(is_intended)))+geom_boxplot()+theme(axis.text.x = element_text(angle=90))
+
+```

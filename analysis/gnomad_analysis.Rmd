@@ -259,14 +259,18 @@ gnomad_enabled=merge(gnomad_enabled,gnomad%>%dplyr::select(species_enabler,Group
 
 
 ########## Then merge with Imatinib dataset by adding a "gnomad enabled" flag to the IL3 dataset###########
-# New Tileseq data as of 2.17.24
+# New Tileseq data as of 2.17.25
 imatdata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv",header = T,stringsAsFactors = F)
 imatdata=imatdata%>%filter(ct_screen1_before>=5)
 
 imatdata=imatdata%>%filter(is_intended%in%1,!(species=="R332M"& alt =="ATG"),!(species=="R460N"& alt =="AAC"))
 
 #######Adding clinical prevalence predictions###############
-resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_5.26.25.csv",header = T,stringsAsFactors = F)
+# resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_5.26.25.csv",header = T,stringsAsFactors = F)
+# resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_9.12.25.csv",header = T,stringsAsFactors = F)
+# resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_9.19.25.csv",header = T,stringsAsFactors = F)
+# resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_10.16.25.csv",header = T,stringsAsFactors = F)
+resistance_predictions=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/Tileseq_clinical_predictions_10.28.25.csv",header = T,stringsAsFactors = F)
 resistance_predictions=resistance_predictions%>%dplyr::select(species,ref_aa,protein_start,alt_aa,fill_value,alpha.444,alpha.760,alpha.916)
 resistance_predictions=resistance_predictions%>%filter(!ref_aa%in%NA)
 imatdata=merge(imatdata,resistance_predictions,by=c("species","ref_aa","protein_start","alt_aa"))
@@ -325,7 +329,7 @@ tables7=tables7%>%
                 species_enabler_allele.Frequency,
                 species_enabled,
                 Highest_resistant_dose)
-# write.csv(tables7,"data/gnomad_abl/table_s7.csv")
+write.csv(tables7,"data/gnomad_abl/table_s9.csv")
 ```
 ```{r}
 # a=imatdata_gnomad%>%filter(!fill_value%in%"Sensitive")
@@ -443,7 +447,7 @@ ggplot(imatdata_gnomad%>%filter(dose%in%"1200nM")%>%arrange(desc(rank)),aes(x=re
         axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5,size=7),
         axis.title.x = element_text(size=9),
         axis.title.y = element_text(size=9))
-ggsave("output/gnomad_figures/gnomad_enabled_mutants_penetrance.pdf",width=6,height = 3, units="in",useDingbats=F)
+# ggsave("output/gnomad_figures/gnomad_enabled_mutants_penetrance.pdf",width=6,height = 3, units="in",useDingbats=F)
 
 netgr_average=imatdata_gnomad%>%dplyr::select(dose,species_enabler,species,netgr_obs_mean_corr,rank,GroupMax.FAF.group)
 netgr_average=netgr_average%>%filter(dose%in%"1200nM",rank<50)
@@ -478,7 +482,7 @@ ggplot(imatdata_gnomad%>%filter(dose%in%"1200nM",rank<50)%>%arrange(desc(rank)),
         axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5,size=7),
         axis.title.x = element_text(size=9),
         axis.title.y = element_text(size=9))
-# ggsave("output/gnomad_figures/gnomad_enabled_mutants_penetrance_zoomed.pdf",width=3.5,height = 2.5, units="in",useDingbats=F)
+ggsave("output/gnomad_figures/gnomad_enabled_mutants_penetrance_zoomed.pdf",width=3.5,height = 2.5, units="in",useDingbats=F)
 
 # imatdata_gnomad=imatdata_gnomad%>%mutate(species_name=paste(species,species_enabler,sep="\u27a1"))
 ```
@@ -533,11 +537,15 @@ b=gnomad_enrichment_melt%>%filter(species_enabler%in%unique(a$species_enabler))
 c=b%>%filter(!GroupMax.FAF.group%in%"")
 
 
-data <- imatdata_gnomad%>%filter(dose%in%"1200nM") %>% 
-  arrange(desc(netgr_obs_mean_corr)) %>%
-  mutate(prop = netgr_obs_mean_corr / sum(data$netgr_obs_mean_corr) *100) %>%
-  mutate(ypos = cumsum(rank)- 0.5*rank )
-
+# data <- imatdata_gnomad%>%
+#   filter(dose%in%"1200nM") %>% 
+#   arrange(desc(netgr_obs_mean_corr)) %>%
+#   mutate(prop = netgr_obs_mean_corr / sum(data$netgr_obs_mean_corr) *100) %>%
+#   mutate(ypos = cumsum(rank)- 0.5*rank )
+a=df_summary <- imatdata_gnomad%>%
+  filter(dose%in%"1200nM",!fill_value%in%"Sensitive")
+source("code/res_residues_adder.R")
+a=res_residues_adder(a)
 df_summary <- imatdata_gnomad%>%
   filter(dose%in%"1200nM") %>%
   group_by(fill_value) %>%
@@ -565,7 +573,7 @@ ggplot(df_summary, aes(x = "", y = percent, fill = fill_value)) +
   ))+
   theme(legend.title = element_blank())
 
-ggsave("output/gnomad_figures/clin_char_piechart.pdf",width=3.5,height = 2.5, units="in",useDingbats=F)
+ggsave("output/gnomad_figures/clin_var_piechart.pdf",width=3.5,height = 2.5, units="in",useDingbats=F)
 
 
 ```
@@ -691,7 +699,7 @@ ggplot(imatdata%>%filter(dose%in%"1200nM",!protein_start%in%"359",!species%in%"V
           panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
           panel.grid.minor=element_blank(),plot.background=element_blank())+
   scale_fill_manual(values = c("gray90","red"))
-ggsave("output/gnomad_figures/resistance_distributions.pdf",width=1,height = 3, units="in",useDingbats=F)
+# ggsave("output/gnomad_figures/resistance_distributions.pdf",width=1,height = 3, units="in",useDingbats=F)
 
 
 gnomad=gnomad%>%mutate(Allele.Count.Sum=case_when(Allele.Count%in%1~"1",))
@@ -733,7 +741,7 @@ ggplot(data, aes(x="", y=nindividuals, fill=ancestry))+
   # geom_text(aes(y = ypos, label = round(sum_freq,2)), color = "black", size=4) +
   scale_fill_brewer(palette="Set3")
 
-ggsave("output/gnomad_figures/gnomad_col_individuals.pdf",width=1,height = 2, units="in",useDingbats=F)
+# ggsave("output/gnomad_figures/gnomad_col_individuals.pdf",width=1,height = 2, units="in",useDingbats=F)
 
 ggplot(data, aes(x="", y=nmuts, fill=ancestry))+
   geom_col()+
@@ -743,7 +751,7 @@ ggplot(data, aes(x="", y=nmuts, fill=ancestry))+
             position = position_stack(vjust = 0.5),size=3.2) +
   # geom_text(aes(y = ypos, label = round(sum_freq,2)), color = "black", size=4) +
   scale_fill_brewer(palette="Set3")
-ggsave("output/gnomad_figures/gnomad_col_mutants.pdf",width=1,height = 2, units="in",useDingbats=F)
+# ggsave("output/gnomad_figures/gnomad_col_mutants.pdf",width=1,height = 2, units="in",useDingbats=F)
 
 
 
