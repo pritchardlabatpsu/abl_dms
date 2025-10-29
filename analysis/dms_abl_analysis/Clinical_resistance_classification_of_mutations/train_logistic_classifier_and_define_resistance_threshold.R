@@ -1,9 +1,9 @@
-#title: "Validating the logistic classifier on an independent test set"
+#title: "Training a Logistic Classifier for Resistance and Identifying the Resistance Threshold"
 #author: "Marta Tomaszkiewicz"
 #date: "2024-10-24"
 
 
-###Validating the logistic classifier on an independent test set: 
+###Estimate resistance thresholds from viability using logistic modeling and ROC optimization: 
 #1 Fit concentration–response curves, compute predicted relative viability at each dose, 
 #2 Derive the optimal probability cutoff (Youden index)
 #3 Derive corresponding viability cutoff to classify variants as resistant vs. non-resistant
@@ -21,10 +21,14 @@ ngr.df = read.csv("merged_table_imatinib_full_kinase_ngr_with_resmuts.csv",
 # Known non-resistant mutations
 non_resistant_muts = c('A337V', 'P465S', 'V468F', 'I502L', 'V299L')
 
-#Test set of 15 Literature_curated mutations with
-resistant_muts <-c("L387M", "V379I", "L384M", "F311L", "E279K", "M388L", 
-                   "F317V", "L387F", "S348L", "D325N", "E255D", "E275K", 
-                   "F317C", "L248R", "T315V")
+# Known resistant mutations: 17 with F359C and F359I ran on 10.12.2025
+resistant_muts <- c("E255V", "Y253H", "T315I", "H396P", "H396R", "F486S", "G250E", "E255K", "Y253F", 
+                    "Q252H", "L248V", "F359C", "F359I", "M351T", "F317L", "D276G", "E459K")
+
+#Rerun this for Test set of 15 Literature_curated mutations with
+#resistant_muts <-c("L387M", "V379I", "L384M", "F311L", "E279K", "M388L", 
+#                   "F317V", "L387F", "S348L", "D325N", "E255D", "E275K", 
+#                   "F317C", "L248R", "T315V")
 
 ngr.df <- ngr.df %>%
   filter(species %in% c(non_resistant_muts, resistant_muts))
@@ -33,7 +37,7 @@ screen.df = ngr.df
 
 screen.df$resmuts = screen.df$species %in% resistant_muts & !(screen.df$species %in% non_resistant_muts)
 
-write.csv(screen.df, "test_dataset.csv", row.names = FALSE)
+write.csv(screen.df, "initial_training_dataset.csv", row.names = FALSE)
 
 ## For each variant, fit dose response curve
 
@@ -68,7 +72,7 @@ for (i in 1:nrow(screen.df)) {
   
   
   rel.viabs = exp(netgrs*t.assay)/exp(0.055*t.assay)
-  
+
   ## Fit dose response
   
   # Force max and min values to be (near) 1 and 0, respectively
@@ -146,7 +150,7 @@ for (dose in dose.rnge) {
   # Compute ROC using predicted probabilities
   ROC.rel.viab <- roc(sub.df$resmuts,
                       glm.probs,
-                      direction = "<",
+                      direction="auto",
                       levels = c(F, T))
   
   plot(ROC.rel.viab, main = paste("ROC Curve - dose", dose),
@@ -198,5 +202,6 @@ for (dose in dose.rnge) {
 # Inspect final model summary
 print(mdl.df)
 
-write.csv(predictions, "TEST_Predictions_per_dose.csv", row.names = FALSE)
-write.csv(mdl.df, "TEST_resistance_threshold_per_dose.csv", row.names = FALSE)
+write.csv(predictions, "Predictions_training_set.csv", row.names = FALSE)
+write.csv(mdl.df, "Resistance_threshold_training_set.csv", row.names = FALSE)
+
