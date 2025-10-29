@@ -1,0 +1,73 @@
+---
+title: "Distribution of COSMIC Mutation Frequencies"
+author: "Marta Tomaszkiewicz"
+date: "2025-07-07"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set root directory to the current Rmd location
+if (requireNamespace("rstudioapi", quietly = TRUE)) {
+  knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+```
+
+
+```{r load data}
+mutation_data <- read.csv("COSMIC_mutations.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+```{r classify VUDR}
+# Summarize VUDR as a single category
+vudr_total <- mutation_data %>%
+  filter(Mutation_type == "VUDR") %>%
+  summarise(Combined_count = sum(Combined_count)) %>%
+  mutate(Collapsed = "VUDR",
+         Mutation_type = "VUDR")
+
+# Calculate the percentage of VUDR
+vudr_percentage <- round(vudr_total$Combined_count / sum(mutation_data$Combined_count) * 100, 1)
+
+# Remove individual VUDR mutations and add the summarized VUDR category
+plot_data <- mutation_data %>%
+  filter(Mutation_type != "VUDR") %>%
+  bind_rows(vudr_total) %>%
+  arrange(Combined_count) %>%  # Sort by increasing size
+  mutate(
+    pie_label = ifelse(Collapsed == "VUDR", paste0("VUDR\n", vudr_percentage, "%"), Collapsed),  # Label for pie
+    legend_label = factor(Collapsed, levels = c("VUDR", unique(Collapsed[Collapsed != "VUDR"])))  # Fix factor levels
+  )
+
+# Generate colors using the "Spectral" palette
+getPalette <- colorRampPalette(rev(brewer.pal(9, "Spectral")))
+palette_colors <- getPalette(length(unique(plot_data$Collapsed)))
+
+# Assign colors: VUDR is "lightgrey", others use the generated palette
+mutation_colors <- setNames(palette_colors, unique(plot_data$Collapsed[plot_data$Collapsed != "VUDR"]))
+mutation_colors["VUDR"] <- "lightgrey"  # Explicitly set VUDR to light grey
+```
+
+```{r plot}
+plot <- ggplot(plot_data, aes(x = "", y = Combined_count, fill = legend_label)) +
+  geom_bar(stat = "identity", width = 0.5, color = "black", size = 0.03) +  # Add grey edges
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = mutation_colors) +  # Apply custom colors
+  theme_void() +
+  geom_text(aes(label = ifelse(Collapsed == "VUDR", paste0(vudr_percentage, "%"), "")), 
+            position = position_stack(vjust = 0.5), size = 5) +  # Display VUDR % inside the pie
+  theme(legend.title = element_blank(),
+        legend.position = "right") #+
+ggtitle("BCR-ABL1 Mutations: Clinical Resistance to Imatinib")
+
+
+print(plot)
+
+ggsave("Distribution of COSMIC Mutation Frequencies including VUDRs.pdf", plot, dpi = 600, width = 8, height = 6, units = "in", bg = "white")

@@ -1,0 +1,61 @@
+---
+title: "VUDR classification by highest clinical dose"
+author: "Marta Tomaszkiewicz"
+date: "2025-07-07"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set root directory to the current Rmd location
+if (requireNamespace("rstudioapi", quietly = TRUE)) {
+  knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r load data}
+data <- read.csv("VUDR_data_classified.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+```{r classify resistance}
+# Define custom colors
+dose_colors <- c(
+  "444nM" = "#1f78b4",
+  "760nM" = "#f46d43",
+  "916nM" = "#a50026",
+  "Sensitive" = "#f7f7f7", 
+  "NA" = "lightgrey"
+)
+
+# Calculate the count of each dose type
+dose_counts <- data %>%
+  group_by(Highest_Resistant_Dose) %>%
+  summarise(count = n())
+
+# First, create a named vector of labels with counts
+dose_counts$legend_label <- paste0(dose_counts$Highest_Resistant_Dose, " (", dose_counts$count, ")")
+names(dose_counts$legend_label) <- dose_counts$Highest_Resistant_Dose
+```
+
+```{r plot VUDR classification by highest resistance dose}
+plot <- ggplot(dose_counts, aes(x = "", y = count, fill = Highest_Resistant_Dose)) +
+  geom_bar(stat = "identity", width = 1, color = "black", linewidth = 0.3) +
+  coord_polar(theta = "y", start = 0) +
+  scale_fill_manual(values = dose_colors, labels = dose_counts$legend_label) +  # Add legend labels
+  theme_void() +
+  theme(legend.title = element_blank(),
+        legend.position = "right") +
+  ggtitle("Classification of VUDR by Highest Resistant Dose") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+print (plot)
+
+ggsave("VUDR classification by highest clinical dose.pdf", plot, dpi = 600, width = 8, height = 6, units = "in", bg = "white")
+

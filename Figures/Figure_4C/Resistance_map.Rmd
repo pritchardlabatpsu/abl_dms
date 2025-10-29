@@ -1,0 +1,173 @@
+---
+title: "Mutation Resistance Map by Highest Pharmacological Dose"
+author: "Marta Tomaszkiewicz"
+date: "7/7/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Set root directory to the current Rmd location
+if (requireNamespace("rstudioapi", quietly = TRUE)) {
+  knitr::opts_knit$set(root.dir = dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+library(ggplot2)
+library(dplyr)
+```
+
+```{r load data}
+data <- read.csv("all_mutants_with_relative_viability_at_three_clinical_doses.csv", 
+                 header = TRUE, stringsAsFactors = FALSE)
+```
+
+```{r classify resistance}
+# Define threshold
+threshold_444 <- 0.420968716
+threshold_760 <- 0.420968716
+threshold_916 <- 0.420968716
+
+# Resistance classification at 400 mg QD, 400 mg BID, and 500 mg BID
+data$Resistant_444nM <- data$rel.viab.444 > threshold_444
+data$Resistant_760nM <- data$rel.viab.760 > threshold_760
+data$Resistant_916nM <- data$rel.viab.916 > threshold_916
+
+# Assign highest resistant dose
+data <- data %>%
+  mutate(
+    Highest_Resistant_Dose = case_when(
+      is.na(rel.viab.444) & is.na(rel.viab.760) & is.na(rel.viab.916) ~ NA_character_,
+      Resistant_916nM ~ "916nM",
+      Resistant_760nM ~ "760nM",
+      Resistant_444nM ~ "444nM",
+      TRUE ~ "Sensitive"
+    )
+  )
+
+# Define dose colors
+dose_colors <- c(
+  "444nM" = "#1f78b4",
+  "760nM" = "#f46d43",
+  "916nM" = "#a50026",
+  "Sensitive" = "#f7f7f7"
+)
+```
+
+```{r add highlights}
+# Annotate highlight groups
+data$highlight <- ifelse(
+  data$species %in% c("T315I", "G250E", "E255K", "M351T", "Y253H", "M244V", "F317L",
+                      "F359V", "H396R", "E255V", "E355G", "Q252H", "E459K", "L248V",
+                      "Y253F", "D276G", "F359C", "L387M", "F359I", "F486S", "V379I",
+                      "L384M", "F311L", "E279K", "H396P", "E355A", "M388L", "F317V",
+                      "L387F", "S348L", "D325N", "E255D", "E275K", "F317C", "L248R", "T315V"),
+  "highlight",
+  ifelse(
+    data$species %in% c("F311I", "Y353H", "K247R", "L298V", "E459G", "S420F", "T277A", 
+                        "E282Q", "E352G", "E453K", "L273M", "L364I", "R332W", "S417Y", 
+                        "T315A", "A366V", "A397P", "A407V", "E409K", "E450G", "F382L", 
+                        "G321E", "M318I", "P441L", "P480L", "R473Q", "T277I", "V289F",
+                        "W430L", "Y257C", "Y326H"), 
+    "Sanger_VUDR", "normal"
+  )
+)
+```
+
+```{r plot resistance map}
+# Create background grid
+background_grid <- expand.grid(
+  protein_start = seq(241, 513, by = 1),
+  alt_aa = c("P", "G", "Y", "W", "F", "V", "L", "I", "A", "T", 
+             "S", "Q", "N", "M", "C", "E", "D", "R", "K", "H")
+)
+background_grid$fill_value <- NA
+
+# Merge background with data
+merged_data <- merge(background_grid, data, 
+                     by = c("protein_start", "alt_aa"), 
+                     all.x = TRUE)
+
+merged_data$fill_value <- ifelse(
+  is.na(merged_data$Highest_Resistant_Dose),
+  NA,
+  merged_data$Highest_Resistant_Dose
+)
+
+# Add dummy rows for legend
+create_dummy_row <- function(df, fill_value, highlight_value) {
+  dummy <- df[1, ]
+  dummy[,] <- NA
+  dummy$fill_value <- fill_value
+  dummy$highlight <- highlight_value
+  return(dummy)
+}
+
+dummy_highlight <- create_dummy_row(merged_data, "highlight", "highlight")
+dummy_sanger_vudr <- create_dummy_row(merged_data, "Sanger_VUDR", "Sanger_VUDR")
+legend_data <- rbind(merged_data, dummy_highlight, dummy_sanger_vudr)
+
+# Save data for reference
+write.csv(legend_data, "Highest_resistance_mutation_classification.csv", row.names = FALSE)
+
+# Define highlight border colors
+highlight_colors <- c(
+  highlight = "#33a02c",
+  Sanger_VUDR = "#c51b7d"
+)
+
+# Create plot
+plot <- ggplot(legend_data, aes(x = protein_start, y = alt_aa, fill = fill_value)) +
+  geom_tile(width = 1, height = 1, na.rm = TRUE) +
+  geom_tile(data = subset(merged_data, highlight == "highlight"),
+            color = "#33a02c", size = 0.3, na.rm = TRUE) +
+  geom_tile(data = subset(merged_data, highlight == "Sanger_VUDR"),
+            color = "#c51b7d", size = 0.3, na.rm = TRUE) +
+  scale_x_continuous(limits = c(242, 512), expand = c(0, 0)) +
+  scale_fill_manual(
+    values = c(dose_colors, highlight_colors),
+    breaks = c("444nM", "760nM", "916nM", "Sensitive", "highlight", "Sanger_VUDR", NA),
+    labels = c("400 mg QD", "400 mg BID", "500 mg BID", "Sensitive", "Clinical", "VUDR", "NA"),
+    na.value = "grey80", na.translate = TRUE
+  ) +
+  guides(
+    fill = guide_legend(
+      direction = "horizontal",
+      nrow = 1,
+      override.aes = list(
+        fill = c(dose_colors, "white", "white", "grey80"),
+        color = c(rep("grey50", 4), "#33a02c", "#c51b7d", "grey50"),
+        size = rep(4, 7)
+      )
+    )
+  ) +
+  labs(
+    title = "Mutation Resistance Map by Highest Pharmacological Dose",
+    x = "Residue position on BCR-ABL kinase",
+    y = "Mutant Amino Acid",
+    fill = "Highest Dose"
+  ) +
+  coord_fixed(ratio = 4) +
+  theme_bw() +
+  scale_y_discrete(
+    limits = c("P", "G", "Y", "W", "F", "V", "L", "I", "A", "T", 
+               "S", "Q", "N", "M", "C", "E", "D", "R", "K", "H")
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_line(color = "grey80"),
+    axis.text.x = element_text(color = "black", face = "bold", size = 9),
+    axis.text.y = element_text(color = "black", face = "bold", size = 9),
+    aspect.ratio = 1/4,
+    strip.background = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.key.size = unit(0.8, "lines"),
+    legend.text = element_text(size = 9)
+  )
+
+print(plot)
+
+ggsave("Map_by_highest_dose.pdf", plot, dpi = 600, width = 11, height = 8)
