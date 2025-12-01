@@ -1,0 +1,13 @@
+Identifier,CellLine,Netgr_wodrug,Replicate,Time_Days,Time_Hours,TotalCells,SequencingLane_Num,SequencingLane_Sample,skip_flag
+BTRHD0_FT_sscs,Baf3,0.055,1,0,0,89,18b_rerun,10,FALSE
+BTRHD0_FT_ngs,Baf3,0.055,1,0,0,89,18b_rerun,10,FALSE
+BTRHD0_FT_duplex,Baf3,0.055,1,0,0,89,18b_rerun,10,FALSE
+BTRHD0_FT_tileseq,Baf3,0.055,1,0,0,89,18b_rerun,10,FALSE
+BTRH1_D6_sscs,Baf3,0.055,1,6,144,5775,18b_rerun,8,FALSE
+BTRH1_D6_ngs,Baf3,0.055,1,6,144,5775,18b_rerun,8,FALSE
+BTRH1_D6_duplex,Baf3,0.055,1,6,144,5775,18b_rerun,8,FALSE
+BTRH1_D6_tileseq,Baf3,0.055,1,6,144,5775,18b_rerun,8,FALSE
+BTRH2_D6_sscs,Baf3,0.055,2,6,144,6240,18b_rerun,9,FALSE
+BTRH2_D6_ngs,Baf3,0.055,2,6,144,6240,18b_rerun,9,FALSE
+BTRH2_D6_duplex,Baf3,0.055,2,6,144,6240,18b_rerun,9,FALSE
+BTRH2_D6_tileseq,Baf3,0.055,2,6,144,6240,18b_rerun,9,FALSE

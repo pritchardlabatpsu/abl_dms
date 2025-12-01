@@ -1,13 +1,13 @@
 ---
 title: "dose_escalation_verification"
 author: "Haider Inam"
-date: '2023-09-04'
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_knit$set(root.dir = normalizePath("../.."))
 # rm(list=ls())
 
 library(stringr)
@@ -120,78 +120,9 @@ dr4pl_df <- function(data, n_boot = 10, ci_level = 0.95, rss_threshold = 0.5) {
 ```
 
 
-Plotting IC50 fitnesses
-```{r}
-# Reading Elvin's data
-
-data=read.csv("data/IC50s_verification/IC50HeatMap_verification_Elvin.csv",header = T,stringsAsFactors = F)
-
-data=melt(data,id.vars="species",measure.vars = c("X39","X78","X156","X312","X625","X1250","X2500","X5000","X10000"),variable.name = "dose",value.name = "response")
-data$dose=as.character(data$dose)
-data$response=as.numeric(data$response)
-data=data%>%
-  rowwise()%>%
-  mutate(dose=as.numeric(strsplit(dose,split="X")[[1]][2]),
-         dose=dose/1000)
-
-data_sum=data%>%
-  group_by(species,dose)%>%
-  summarize(response_u=mean(response),
-            response_sd=sd(response))
-data_sum$y=data_sum$response_u
-data_sum$conc=data_sum$dose
-
-# Fitting Elvin's data using a 4PL
-data_sum_model=data.frame()
-for(species_curr in unique(data_sum$species)){
-  data_sum_i=dr4pl_df(data_sum%>%filter(species%in%species_curr))
-  data_sum_model=rbind(data_sum_model,data_sum_i)
-}
-
-# write.csv(data_sum_model,"IC50heatmap_verification_outputs.csv")
-
-data_sum_1250=data_sum%>%filter(dose==1.250)
-data_sum$species=factor(data_sum$species,levels = as.character(data_sum_1250$species[order((data_sum_1250$response_u),decreasing = T)]))
-data_sum_model$species=factor(data_sum_model$species,levels = as.character(data_sum_1250$species[order((data_sum_1250$response_u),decreasing = T)]))
-
-getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
-
-
-ggplot(data_sum,aes(x=dose,y=response_u))+
-  geom_ribbon(aes(ymin=response_u-response_sd,
-                  ymax=response_u+response_sd,
-                  fill=species),
-              alpha=.7)+
-  geom_line(linetype="dashed",aes(color=species),color="black")+
-  geom_point(color="black",shape=21,aes(fill=species))+
-
-  facet_wrap(~species)+
-  scale_x_continuous(trans="log10")+
-  cleanup+
-  theme(legend.position = "none")+
-  scale_fill_manual(values=getPalette(length(unique(data_sum$species))))
-# ggsave("data/IC50s_verification/IC50sonoly.pdf",width=6,height=6,useDingbats=F)
-
-ggplot(data_sum_model,aes(x=dose,y=y_model))+
-  geom_ribbon(aes(ymin=y_model_lower,
-                  ymax=y_model_upper,
-                  fill=species),
-              alpha=.7)+
-  geom_line(linetype="dashed",aes(color=species),color="black")+
-  geom_point(color="black",shape=21,aes(fill=species))+
-
-  facet_wrap(~species)+
-  scale_x_continuous(trans="log10")+
-  cleanup+
-  theme(legend.position = "none")+
-  scale_fill_manual(values=getPalette(length(unique(data_sum$species))))
-
-
-```
-
 ### Downloading mutant verification data (single mutant IC50s)
 ```{r}
-data=read.csv("data/IC50s_verification/IC50HeatMap_verification_Elvin.csv",header = T,stringsAsFactors = F)
+data=read.csv("Figures/Figure_3F/inputs/IC50HeatMap_verification_Elvin.csv",header = T,stringsAsFactors = F)
 
 data=melt(data,id.vars=c("species","replicate"),measure.vars = c("X39","X78","X156","X312","X625","X1250","X2500","X5000","X10000"),variable.name = "dose",value.name = "response")
 data$dose=as.character(data$dose)
@@ -205,11 +136,11 @@ data=data%>%
 
 
 
-### Downloading mutant standards data
+### Downloading mutant standards data (DMS data)
 ```{r}
 #Downloading DMS IC50 imputations
 # data_dms=read.csv("data/IC50s_verification/1.19.25_screen_with_alpha_relvial_after_inc_444_760_916_ALL.csv",header = T,stringsAsFactors = F)
-data_dms=read.csv("data/IC50s_verification/all_corrected_without_poorly_fit_removed_w_drc_11.csv",header = T,stringsAsFactors = F)
+data_dms=read.csv("Figures/Figure_3F/inputs/all_corrected_without_poorly_fit_removed_w_drc_11.csv",header = T,stringsAsFactors = F)
 ####################################################################
 
 ####################################################################
@@ -241,59 +172,9 @@ data_dms_long=data_dms_long%>%mutate(Dose=Dose/1000)
 
 data_dms_long_1250=data_dms_long%>%filter(Dose==1.26)
 data_dms_long$species=factor(data_dms_long$species,levels = as.character(data_dms_long_1250$species[order((data_dms_long_1250$rel.viab),decreasing = T)]))
-
-# getPalette = colorRampPalette(brewer.pal(9, "Spectral"))
-# # data_dms_long=data_dms_long%>%mutate(rel.viab.1200=)
-# ggplot(data_dms_long,aes(x=Dose,y=rel.viab))+
-#   geom_line(aes(color=species))+
-#   facet_wrap(~species)+
-#   cleanup+
-#   scale_x_continuous(trans = "log10")+
-#   scale_color_manual(values=getPalette(length(unique(data_dms_long$species))))
-# 
-# ggplot(ic50data_long,aes(x=conc,y=y_model))+
-#   geom_line(aes(color=mutant))+
-#   facet_wrap(~mutant)+
-#   cleanup+
-#   scale_x_continuous(trans = "log10")+
-#   scale_color_manual(values=getPalette(length(unique(data_dms_long$species))))
-
-# library(scales)
-# a=data_dms_long%>%filter(species%in%"T315I")
-# 
-# ggplot(data_sum_model,aes(x=dose,y=y_model))+
-#   geom_ribbon(aes(ymin=y_model_lower,
-#                   ymax=y_model_upper,
-#                   fill=species),
-#               alpha=.7)+
-#   geom_line(data=data_dms_long,aes(x=Dose,y=rel.viab,color=species),color="red")+
-#   geom_line(linetype="dashed",aes(color=species),color="black")+
-#   geom_point(color="black",shape=21,size=1,aes(fill=species))+
-#   # annotate("text",aes(label =unique(species)))+
-#   facet_wrap(~species,
-#              nrow=3)+
-#   scale_x_continuous("Dose (uM)",
-#                      trans="log10",
-#                      label = trans_format("log10", math_format(10^.x)))+
-#   cleanup+
-#   # geom_text(aes(label))+
-#   theme(strip.text=element_blank(),
-#         # strip.placement = "inside",
-#         # strip.background = element_blank(),
-#         # strip.text = element_text(size = 9, vjust = -5),
-#         legend.position = "none",
-#         axis.text.x=element_text(angle=90,hjust=.5,vjust=.5,size = 9),
-#         axis.text.y=element_text(face = "plain",size=9),
-#         axis.title.x=element_blank(),
-#         axis.title.y=element_blank())+
-#   scale_fill_manual(values=getPalette(length(unique(data_sum$species))))+
-#   scale_color_manual(values=getPalette(length(unique(data_sum$species))))+
-#   geom_vline(xintercept = 0.930,linetype="dashed")
-# 
-# ggsave("data/IC50s_verification/IC50s_clonalvsdms.pdf",width=7,height=3,useDingbats=F)
 ```
 
-### Downloading mutant verification data (Pooled mutant DMS data)
+### Parsing pooled mutant DMS data
 ```{r}
 data_dms_subset=data_dms[,c(1:21)]
 # data_dms_subset=data_dms_subset%>%mutate(rel.viab=exp(netgr_corr_rep1.low*144)/exp(0.055*144),
@@ -330,6 +211,7 @@ data_dms_subset_filtered=data_dms_subset%>%filter(species%in%unique(data_sum_mod
 
 ### Plotting
 ```{r}
+library(scales)
 data=data%>%mutate(y=response)
 # Filtering out T315I and WT
 data_sum_model=data
@@ -388,11 +270,13 @@ ggplot(data_sum_model,aes(x=dose,y=y))+
   scale_color_manual(values=color_values)+
   geom_vline(xintercept = 0.930,linetype="dashed")
 
-ggsave("data/IC50s_verification/IC50s_clonalvsdms.pdf",width=7,height=4,useDingbats=F)
+ggsave("Figures/Figure_3F/IC50s_clonalvsdms.pdf",width=7,height=4,useDingbats=F)
 
 ```
 
 
+#### Archive. 
+Comparing AUCs of these DRCs in single mutant vs pooled setting
 ```{r}
 library("pracma")
 library(tidyr)
@@ -408,7 +292,7 @@ auc_df$method="singlemutant"
 
 ############### DMS AUCs################
 
-data_dms=read.csv("data/IC50s_verification/all_corrected_without_poorly_fit_removed_w_drc_11.csv",header = T,stringsAsFactors = F)
+data_dms=read.csv("Figures/Figure_3F/inputs/all_corrected_without_poorly_fit_removed_w_drc_11.csv",header = T,stringsAsFactors = F)
 
 # Assuming df is your dataframe
 data_dms_long <- data_dms %>%
@@ -452,7 +336,9 @@ ggplot(auc_df3%>%filter(!species%in%c("Y253N","L248R")),aes(x=AUC.x,y=AUC.y,labe
 ```
 
 
-```{r}
+
+
+```{r,include=F,eval=F}
 ########Four parameter logistic########
 #Reference: https://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0146021.s001
 #In short: For each dose in each species, get the response
@@ -494,10 +380,7 @@ ic50data_long$netgr_pred=net_gr_wodrug-ic50data_long$drug_effect
 
 
 
-#### Archive. 
-
-
-```{r, eval=F}
+```{r,include=F, eval=F}
 dr4pl_df <- function(data, n_boot = 100, ci_level = 0.95) {
   ic50data_species_specific <- data
   
@@ -559,7 +442,7 @@ dr4pl_df <- function(data, n_boot = 100, ci_level = 0.95) {
 ```
 
 
-```{r, eval=FALSE}
+```{r, include=F, eval=FALSE}
 
 dr4pl_df=function(data){
   # data=data_sum_i
@@ -622,7 +505,7 @@ candidates=c("F311L",
 ```
 
 Looking at mutant candidates for dose escalation
-```{r,eval=FALSE}
+```{r,include=F,eval=FALSE}
   
 # low
 # a=read.csv("output/ABLEnrichmentScreens/ABL_Region1_Lane18_Comparisons/cross-replicate/baf3_Imat_low_rep1vsrep2_ft/screen_comparison_baf3_Imat_low_rep1vsrep2_ft.csv",header = T,stringsAsFactors = F)
@@ -690,253 +573,4 @@ ggplotly(plotly)
 # Basciallly there are two ways of plotting y (proportion alive) from our screens. One is to assume the same fitness without drug for all mutants, another is to assume fitness without drug that are different for all mutants.
 # newdf=cosmic_data_adder(df)
 
-```
-
-
-
-
-
-
-
-
-### Downloading mutant standards data
-```{r}
-#Downloading DMS IC50 imputations
-# data_dms=read.csv("data/IC50s_verification/1.19.25_screen_with_alpha_relvial_after_inc_444_760_916_ALL.csv",header = T,stringsAsFactors = F)
-data_dms=read.csv("data/IC50s_verification/all_corrected_without_poorly_fit_removed_w_drc_11.csv",header = T,stringsAsFactors = F)
-####################################################################
-
-####################################################################
-# data_dms=data_dms%>%filter(species%in%unique(data$species))
-
-# data_dms=data_dms%>%filter(species%in%"E255K")
-
-# data_dms=data_dms%>%dplyr::select()
-
-library(tidyr)
-library(dplyr)
-
-# Assuming df is your dataframe
-data_dms_long <- data_dms %>%
-  pivot_longer(
-    cols = starts_with("X"), 
-    names_to = c("Dose", ".value"),
-    names_pattern = "X(\\d+)\\.(.+)"
-  ) %>%
-  mutate(Dose = as.numeric(Dose))  # Convert Dose to numeric for easier analysis
-# data_dms_long2=data_dms_long
-data_dms_long=data_dms_long%>%filter(Dose%in%c(seq(10,90,10),
-                                               seq(110,1010,100),
-                                               seq(1020,9820,500)))
-# data_dms_long=data_dms_long%>%mutate(Dose=Dose/1000)
-# Data_dms_simple
-# Instead of having different relative viabilities at all doses, having a single relative viability
-# data_dms_simple=data_dms_long%>%
-
-
-# data_dms_long_1250=data_dms_long%>%filter(Dose==1470)
-species_resistance <- data_dms_long %>%
-  filter(Dose == 7020) %>%
-  group_by(species) %>%
-  summarise(mean_viab = mean(rel.viab, na.rm = TRUE)) %>%
-  arrange(desc(mean_viab)) %>%
-  mutate(species = factor(species, levels = species))  # most resistant = highest viability
-data_dms_long <- data_dms_long %>%
-  mutate(species = factor(species, 
-                          levels = species_resistance$species))
-# data_dms_long$species=factor(data_dms_long$species,levels = as.character(data_dms_long_1250$species[order((data_dms_long_1250$rel.viab),decreasing = T)]))
-data_dms_long=resmuts_adder(data_dms_long)
-data_dms_long <- data_dms_long %>%
-  arrange(resmuts, Dose)
-
-ggplot(data_dms_long,aes(x=Dose,y=rel.viab,fill=species,color=resmuts))+
-  geom_line()+
-  scale_x_continuous(trans="log10")+
-  cleanup+
-  theme(legend.position="none")+
-  scale_color_manual(values = c("gray90","red"))
-
-
-ggplot(data_dms_long, aes(x = Dose, y = rel.viab, group = species, color = resmuts)) +
-  geom_line(alpha = 0.4, linewidth = 0.6) +
-  scale_x_log10(name = "Dose (log10 scale)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  scale_color_manual(values = c("FALSE" = "gray80", "TRUE" = "red")) +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "none",
-    legend.title = element_blank(),
-    panel.grid.minor = element_blank()
-  )
-
-ggplot() +
-  # 1. Plot non-resistant mutants (gray, in the background)
-  geom_line(
-    data = subset(data_dms_long, resmuts == FALSE),
-    aes(x = Dose, y = rel.viab, group = species),
-    color = "gray85", alpha = 0.5, linewidth = 0.5
-  ) +
-  # 2. Plot resistant mutants (red, on top)
-  geom_line(
-    data = subset(data_dms_long, resmuts == TRUE),
-    aes(x = Dose, y = rel.viab, group = species),
-    color = "red", alpha = 0.9, linewidth = 0.8
-  ) +
-  scale_x_log10(name = "Dose (log10 scale)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "none",
-    panel.grid.minor = element_blank()
-  )
-
-ggsave("5000ic50sv2.pdf",width = 5,height = 4,units = "in",useDingbats=F)
-
-
-data_dms_long <- data_dms_long %>%
-  mutate(
-    resmuts2 = case_when(
-      species %in% c("A337V","P465S","V468F","I502L","V299L") ~ "sensitive",
-      resmuts == TRUE ~ "resistant",
-      TRUE ~ "nonresistant"
-    )
-  )
-
-ggplot(data_dms_long, aes(x = Dose, y = rel.viab, group = species)) +
-  geom_line(aes(color = resmuts2), alpha = 0.6, linewidth = 0.6) +
-  scale_color_manual(
-    values = c(
-      "nonresistant" = "gray85",
-      "resistant" = "red",
-      "sensitive" = "blue"
-    )
-  ) +
-  scale_x_log10(name = "Dose (log10 scale)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.title = element_blank(),
-    legend.position = "top",
-    panel.grid.minor = element_blank()
-  )
-
-
-ggplot() +
-  # 1. Nonresistant (gray, background)
-  geom_line(
-    data = filter(data_dms_long, resmuts2 == "nonresistant"),
-    aes(x = Dose, y = rel.viab, group = species),
-    color = "gray85", alpha = 0.5, linewidth = 0.5
-  ) +
-  # 2. Resistant (red, middle)
-  geom_line(
-    data = filter(data_dms_long, resmuts2 == "resistant"),
-    aes(x = Dose, y = rel.viab, group = species),
-    color = "red", alpha = 0.9, linewidth = 0.8
-  ) +
-  # 3. Sensitive (blue, on top)
-  geom_line(
-    data = filter(data_dms_long, resmuts2 == "sensitive"),
-    aes(x = Dose, y = rel.viab, group = species),
-    color = "blue", alpha = 0.9, linewidth = 0.8
-  ) +
-  scale_x_log10(name = "Dose (log10 scale)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "none",
-    panel.grid.minor = element_blank()
-  )
-
-ggplot(data_dms_long, aes(x = Dose, y = rel.viab)) +
-  stat_density_2d(aes(fill = ..level..), geom = "polygon", contour = TRUE, alpha = 0.6) +
-  scale_fill_viridis_c(option = "C") +  # or use "plasma", "inferno", etc.
-  # geom_line(aes(group = species), color = "gray30", alpha = 0.3, linewidth = 0.4) +
-  scale_x_log10(name = "Dose (log10 scale)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  theme_minimal(base_size = 14) +
-  theme(legend.title = element_blank())
-
-
-
-library(dplyr)
-library(pracma)
-
-auc_data <- data_dms_long %>%
-  arrange(species, Dose) %>%
-  group_by(species) %>%
-  summarise(
-    auc = trapz(Dose, rel.viab),
-    .groups = "drop"
-  )
-
-auc_data <- auc_data %>%
-  mutate(
-    auc_quintile = ntile(auc, 5)  # creates values 1–5
-  )
-
-data_with_quintile <- data_dms_long %>%
-  left_join(auc_data, by = "species")
-
-
-ggplot(data_with_quintile, aes(x = Dose, y = rel.viab, group = species, color = factor(auc_quintile))) +
-  geom_line(alpha = 0.6, linewidth = 0.6) +
-  scale_x_log10(name = "Dose (nM)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  scale_color_brewer(palette = "RdYlBu", direction = -1, name = "Resistance\n Quintile") +
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    legend.position = c(0.85,0.75)
-  )
-
-ggsave("5000ic50s.pdf",width = 5,height = 4,units = "in",useDingbats=F)
-
-
-
-data_dms_long <- data_dms_long %>%
-  # left_join(select(your_ic50_table, species, IC50), by = "species") %>%
-  mutate(
-    ic50_bin = case_when(
-      IC50 < 300 ~ "<300",
-      IC50 < 600 ~ "300–600",
-      IC50 < 1200 ~ "600–1200",
-      IC50 >= 1200 ~ ">1200",
-      TRUE ~ NA_character_
-    )
-  )
-data_dms_long$ic50_bin=factor(data_dms_long$ic50_bin,
-                              levels=c(">1200",
-                                       "600–1200",
-                                       "300–600",
-                                       "<300",
-                                       "NA"))
-
-ggplot(data_dms_long%>%filter(!ic50_bin%in%NA), aes(x = Dose, y = rel.viab, group = species, color = ic50_bin)) +
-  geom_line(alpha = 0.6, linewidth = 0.6) +
-  scale_x_log10(name = "Dose (nM)") +
-  scale_y_continuous(name = "Relative Viability", limits = c(0, 1)) +
-  scale_color_manual(
-    values = c(
-      "<300" = "#FFFFC6",
-      "300–600" = "#4379B2",
-      "600–1200" = "#F1B16E",
-      ">1200" = "#C4322A"
-    ),
-    name = "IC50 Range"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    legend.position = "top"
-  )+
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.background = element_rect(fill = "gray95", color = NA),
-    plot.background = element_rect(fill = "gray95", color = NA),
-    panel.grid.minor = element_blank(),
-    legend.position = "top"
-  )
-
-ggsave("5000ic50sv3.pdf",width = 5,height = 4,units = "in",useDingbats=F)
 ```

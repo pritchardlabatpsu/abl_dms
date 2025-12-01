@@ -1,13 +1,14 @@
 ---
-title: "ErrorRates_region1_mutant_standards"
+title: "4.Fig1GHI_mutant_standards"
 author: "Haider Inam"
-date: '2025-06-29'
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = normalizePath(".."))
+# rm(list=ls())
+knitr::opts_knit$set(root.dir = normalizePath("../.."))
 
 library(stringr)
 library(dplyr)
@@ -55,20 +56,20 @@ source("code/plotting/heatmap_plotting_function.R")
 The following data was taken from lane 18b sample 8 vs 10 duplex and tileseq data. This is region 1 (residues 242-322) of the ABL kinase sequenced with four different sequencing technologies. This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
 
 ```{r}
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="duplex"
 data_duplex=data
 
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="ngs"
 data_ngs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="sscs"
 data_sscs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="tileseq"
 data_tileseq=data
 
@@ -97,7 +98,7 @@ median(a$ct_screen1_before)
 ```{r}
 library(binom)
 
-standards=read.csv("data/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+standards=read.csv("Figures/Figure_1/inputs/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
 standards=standards%>%filter(conc%in%1.2)
 
 # data=data%>%filter(is_intended%in%1)
@@ -237,7 +238,7 @@ scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0
         # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-# ggsave("output/errorrates_figures/plot5_duplex.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+ggsave("Figures/Figure_1/Fig1H_duplex.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 
 ggplot()+
 geom_point(size=2,shape=21,fill="#8ED3C7",aes(x=.055-standards_tileseq$drug_effect,y=standards_tileseq$netgr_obs_screen1))+
@@ -255,7 +256,7 @@ geom_point(size=2,shape=21,fill="#8ED3C7",aes(x=.055-standards_tileseq$drug_effe
         # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-# ggsave("output/errorrates_figures/plot5_tileseq.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+ggsave("Figures/Figure_1/Fig1I_tileseq.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 
 
 ggplot()+
@@ -274,5 +275,5 @@ scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0
         # axis.title.y=element_blank(),
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
-# ggsave("output/errorrates_figures/plot5_ngs.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
+ggsave("Figures/Figure_1/Fig1G_ngs.pdf",width=2.5,height=2.5,units = "in",useDingbats=F)
 ```

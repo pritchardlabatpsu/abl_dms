@@ -1,14 +1,14 @@
 ---
-title: "ErrorRates_Tileseq_NGS_Duplex_SSCS"
+title: "2.Fig1AEF_TileseqvsNGSvsDuplex"
 author: "Haider Inam"
-date: '2024-12-23'
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = normalizePath(".."))
-
+knitr::opts_knit$set(root.dir = normalizePath("../.."))
+# rm(list=ls())
 library(stringr)
 library(dplyr)
 library(ggplot2)
@@ -58,20 +58,20 @@ source("code/plotting/heatmap_plotting_function.R")
 
 ```{r}
 # This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="duplex"
 data_duplex=data
 
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="ngs"
 data_ngs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="sscs"
 data_sscs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="tileseq"
 data_tileseq=data
 
@@ -91,13 +91,13 @@ data=data%>%rowwise%>%mutate(n_nuc=nchar(alt))
 #### Plotting unintended vs intended mutant distributions across sequencing technologies. 
 ```{r}
 ggplot(data%>%filter(ct_screen1_before>=5,seqtech%in%"ngs",n_nuc%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")
-# ggsave("output/errorrates_figures/plot6a_abl_ngs_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
+ggsave("Figures/Figure_1/fig1A_abl_ngs_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
 
 ggplot(data%>%filter(ct_screen1_before>=5,seqtech%in%"tileseq",n_nuc%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")
-# ggsave("output/errorrates_figures/plot6b_abl_tileseq_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
+ggsave("Figures/Figure_1/fig1E_abl_tileseq_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
 
 ggplot(data%>%filter(seqtech%in%"duplex",n_nuc%in%1),aes(x=ct_screen1_before,fill=factor(is_intended,levels=c(1,0))))+geom_density(alpha=0.7)+scale_x_continuous("Number of times a variant was seen",trans="log10")+cleanup+scale_fill_manual(values = c("blue","red"))+scale_y_continuous("Density")+theme(legend.position = "none")
-# ggsave("output/errorrates_figures/plot6c_abl_duplex_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
+ggsave("Figures/Figure_1/fig1F_abl_duplex_untreated.pdf",width=3.5,height=2.5,units="in",useDingbats=F)
 
 
 
@@ -252,176 +252,5 @@ ggplot(data_snr_cast%>%filter(seqtech%in%c("duplex","tileseq","ngs")),aes(x=prot
         axis.text.y=element_text(color="black",size=8),
         plot.margin=grid::unit(c(1,1,1,1), "mm"))
 
-
-ggplot(data_snr_cast%>%filter(n_nuc_min%in%1,seqtech%in%c("duplex","tileseq","ngs")),aes(x=protein_start,y=nmuts_unintended,fill=seqtech))+
-  geom_point(color="black",size=2,shape=21,aes(fill=seqtech))+
-  geom_line(aes(color=seqtech))+
-  scale_fill_manual(values = c("#FB8072","#3287BD","#8ED3C7"))+
-  scale_color_manual(values = c("#FB8072","#3287BD","#8ED3C7"))+
-  # geom_hline(yintercept = 40,linetype="dashed")+
-  cleanup+
-  theme(legend.position = "none",
-        legend.title = element_text(size=8),
-        legend.text = element_text(size=8),
-        axis.text.x=element_text(color="black",size=8),
-        # axis.title.x=element_blank(),
-        # axis.title.y=element_blank(),
-        axis.text.y=element_text(color="black",size=8),
-        plot.margin=grid::unit(c(1,1,1,1), "mm"))
-
 ```
 
-
-## Archive   
-
-### Prior SSCS vs Tileseq analyses. 
-```{r, eval=F}
-
-ggplot(data_snr_cast,aes(x=protein_start,y=snr))+geom_point()+facet_wrap(~seqtech)+scale_y_continuous(limits=c(0,60))
-
-ggplot(data_snr_cast,aes(x=snr,fill=seqtech))+geom_density(alpha=0.6)+scale_x_continuous("Signal to noise",trans="log10")
-
-ggplot(data_snr_cast,aes(x=protein_start,y=nmuts_intended))+geom_point()+facet_wrap(~seqtech)
-
-ggplot(data_snr_cast,aes(x=protein_start,y=nmuts_unintended))+geom_point()+facet_wrap(~seqtech)
-
-ggplot(data_snr_cast,aes(x=protein_start,y=coverage_mean_unintended))+geom_point()+facet_wrap(~seqtech)+scale_y_continuous(limits=c(0,200))
-
-ggplot(data_snr_cast,aes(x=protein_start,y=coverage_sum_unintended))+geom_point()+facet_wrap(~seqtech)+scale_y_continuous(trans = "log10")
-
-
-
-ggplot(data%>%filter(resmuts%in%T,is_intended%in%1),aes(x=species,y=ct_screen1_before,fill=seqtech))+geom_point(color="black",shape=21)+geom_line()+scale_y_continuous("Day 0 Coverage of Resistant Mutant",trans="log10")+cleanup+theme(axis.text.x=element_text(angle=90,hjust=.5,vjust=.5))
-
-ggplot(data%>%filter(resmuts%in%T,is_intended%in%1),aes(x=species,y=ct_screen1_after,fill=seqtech))+geom_point(color="black",shape=21)+geom_line()+scale_y_continuous("Day 6 Coverage of Resistant Mutant",trans="log10")+cleanup+theme(axis.text.x=element_text(angle=90,hjust=.5,vjust=.5))
-
-ggplot(data%>%filter(is_intended%in%1),aes(x=ct_screen1_before,color=seqtech))+stat_ecdf()+scale_x_continuous("Intended mutant coverage",trans="log10")+scale_y_continuous("CDF")
-
-
-ggplot(data,aes(x=ct_screen1_before,fill=seqtech))+geom_histogram()+facet_wrap(seqtech~is_intended)+scale_x_continuous(trans="log10")
-
-
-ggplot(data%>%filter(is_intended%in%1),aes(x=ct_screen1_after,fill=seqtech))+geom_histogram()+facet_wrap(~seqtech)+scale_x_continuous(trans="log10")
-
-```
-This is the analysis to allow benchmarking of ABL data to tileseq data
-
-This google doc has notes on how to interpret the google doc
-```{r,eval=F}
-# rm(list=ls())
-
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/data/TileSeqandSSCS_full_kinase_alldoses_with_lfc_corrected_netgrowths_12192024.csv",header = T,stringsAsFactors = F)
-# a=data%>%filter(is_intended%in%0,seqtech%in%"sscs",dose%in%"300nM",protein_start%in%c(242:512))
-ggplot(data,aes(x=factor(protein_start),y=ct_screen1_before,fill=factor(is_intended)))+geom_boxplot()+facet_wrap(~seqtech,nrow = 2)+cleanup+scale_y_continuous(trans="log10")+theme(axis.text.x=element_text(angle=90, hjust=1))
-
-
-
-data_snr=data%>%filter(protein_start%in%c(242:512),!protein_start%in%c(354:361))%>%group_by(seqtech,dose,is_intended,protein_start)%>%summarize(nmuts=n(),coverage_mean=mean(ct_screen1_before),depth_mean=mean(depth_screen1_before))
-
-data_snr_cast <- data_snr %>%
-  pivot_wider(
-    names_from = is_intended,
-    values_from = c(nmuts,coverage_mean,depth_mean),
-    names_glue = "{.value}_{ifelse(is_intended == 1, 'intended', 'unintended')}"
-  )
-data_snr_cast=data_snr_cast%>%mutate(snr=coverage_mean_intended/coverage_mean_unintended)
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=protein_start,y=snr))+geom_point()+facet_wrap(~seqtech)+scale_y_continuous(limits=c(0,60))
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=snr,fill=seqtech))+geom_density(alpha=0.6)+scale_x_continuous("Signal to noise",trans="log10")
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=protein_start,y=nmuts_intended))+geom_point()+facet_wrap(~seqtech)
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=protein_start,y=nmuts_unintended))+geom_point()+facet_wrap(~seqtech)
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=protein_start,y=coverage_mean_unintended))+geom_point()+facet_wrap(~seqtech)+scale_y_continuous(limits=c(0,200))
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=coverage_mean_unintended/depth_mean_unintended,fill=seqtech))+geom_density(alpha=.6)+scale_x_continuous("Allele fraction of unintended mutants",trans="log10")
-
-ggplot(data_snr_cast%>%filter(dose%in%"300nM"),aes(x=coverage_mean_intended/depth_mean_intended,fill=seqtech))+geom_density(alpha=.6)+scale_x_continuous("Allele fraction of intended mutants",trans="log10")
-# data_snr_cast=resmuts_adder(data_snr_cast)
-# a=data%>%filter(seqtech%in%"sscs",dose%in%"300nM",is_intended%in%1,protein_start%in%c(245))
-
-
-ggplot(data%>%filter(resmuts%in%T,dose%in%"300nM",is_intended%in%1),aes(x=species,y=ct_screen1_before,fill=seqtech))+geom_point(color="black",shape=21)+geom_line()+scale_y_continuous("Day 0 Coverage of Resistant Mutant",trans="log10")+cleanup+theme(axis.text.x=element_text(angle=90,hjust=.5,vjust=.5))
-
-ggplot(data%>%filter(resmuts%in%T,dose%in%"300nM",is_intended%in%1),aes(x=species,y=ct_screen1_after,fill=seqtech))+geom_point(color="black",shape=21)+geom_line()+scale_y_continuous("Day 6 Coverage of Resistant Mutant",trans="log10")+cleanup+theme(axis.text.x=element_text(angle=90,hjust=.5,vjust=.5))
-
-ggplot(data%>%filter(dose%in%"300nM"),aes(x=ct_screen1_before,))
-
-ggplot(data%>%filter(is_intended%in%1,dose%in%"300nM"),aes(x=ct_screen1_before,color=seqtech))+stat_ecdf()+scale_x_continuous("Intended mutant coverage",trans="log10")+scale_y_continuous("CDF")
-
-ggplot(data%>%filter(is_intended%in%1,dose%in%"300nM"),aes(x=ct_screen1_after,color=seqtech))+stat_ecdf()+scale_x_continuous("Intended mutant coverage",trans="log10")+scale_y_continuous("CDF")
-
-
-ggplot(data%>%filter(dose%in%"300nM"),aes(x=ct_screen1_before,fill=seqtech))+geom_histogram()+facet_wrap(seqtech~is_intended)+scale_x_continuous(trans="log10")
-
-ggplot(data%>%filter(is_intended%in%1,dose%in%"300nM",seqtech=="sscs"),aes(x=ct_screen1_before))+geom_histogram()+scale_x_continuous(trans="log10")
-
-ggplot(data%>%filter(is_intended%in%1,dose%in%"300nM",seqtech=="sscs"),aes(x=ct_screen1_after))+geom_histogram()+scale_x_continuous(trans="log10")
-
-ggplot(data%>%filter(dose%in%"300nM",is_intended%in%1),aes(x=ct_screen1_after,fill=seqtech))+geom_histogram()+facet_wrap(~seqtech)+scale_x_continuous(trans="log10")
-
-
-# Next steps: try to fit the poisson model and the negative binomial model to the count distributions. See if the confidence intervals of the negative binomial distributions are bigger for the SSCS data.
-ggplot(data%>%filter(is_intended%in%1,dose%in%"300nM",seqtech=="sscs"),aes(x=ct_screen1_before))+geom_histogram()+scale_x_continuous(limits=c(0,500))
-
-# a=data_snr_cast%>%filter(dose%in%"300nM")
-
-```
-
-Tileseq data
-Fitting negative binomial and poissons to data
-```{r,eval=F}
-sscsdata=data%>%filter(is_intended%in%1,dose%in%"300nM",seqtech=="tileseq")
-sscsdata=sscsdata%>%filter(ct_screen1_before<=10000)
-sum(sscsdata$ct_screen1_before)
-nb_fit=glm.nb(sscsdata$ct_screen1_before~1)
-summary(nb_fit)
-
-# Extract parameter estimates fir begatuve binomial
-nb_mu <- mean(sscsdata$ct_screen1_before)
-nb_size <- nb_fit$theta  # Dispersion parameter
-
-# Fit a Poisson model (mean only)
-poisson_mu <- mean(sscsdata$ct_screen1_before)
-
-
-# Generate a range of counts for plotting
-count_range <- 1:10000
-
-# Calculate negative binomial probabilities for the range
-nb_probs <- dnbinom(count_range, size = nb_size, mu = nb_mu)
-
-# Calculate probabilities for Poisson
-poisson_probs <- dpois(count_range, lambda = poisson_mu)
-
-# plot(count_range, nb_probs, type = "b", col = "red", lwd = 2)
-
-# Create data frames for the fits
-fit_df <- data.frame(
-  count = rep(count_range, 2),
-  density = c(nb_probs, poisson_probs),
-  distribution = rep(c("Negative Binomial", "Poisson"), each = length(count_range))
-)
-
-
-ggplot(sscsdata)+
-  geom_histogram(color="black",fill="gray90",aes(x=ct_screen1_before,y=..density..))+
-  # geom_line(color="red",data=fit_df,aes(x=count,y=density))+
-  # Negative binomial fit
-  geom_line(
-    data = fit_df[fit_df$distribution == "Negative Binomial", ],
-    aes(x = count, y = density, color = distribution), size = 1
-  ) +
-  # Poisson fit
-  geom_line(
-    data = fit_df[fit_df$distribution == "Poisson", ], 
-    aes(x = count, y = density, color = distribution), size = 1, linetype = "dashed"
-  ) +
-  # scale_y_continuous(trans="log10")+
-  scale_x_continuous("Tileseq Mutant coverage",limits=c(1,10000))+
-  scale_y_continuous(limits=c(0,.001))
-  
-
-```

@@ -1,14 +1,15 @@
 ---
-title: "ErrorRates_NNMD&ROC_region1"
+title: "3.SuppFig3_NNMDAnalyses_region1"
 author: "Haider Inam"
-date: '2025-06-29'
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# knitr::opts_knit$set(root.dir = normalizePath(".."))
+# rm(list=ls())
+knitr::opts_knit$set(root.dir = normalizePath("../.."))
 
 library(stringr)
 library(dplyr)
@@ -59,20 +60,20 @@ source("code/plotting/heatmap_plotting_function.R")
 This sequencing data was generated using the scripts labeled ErrorRates_dataparser_region1.
 
 ```{r}
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_duplex/screen_comparison_baf3_Imat_high_rep1vsrep2_duplex.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="duplex"
 data_duplex=data
 
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_ngs/screen_comparison_baf3_Imat_high_rep1vsrep2_ngs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="ngs"
 data_ngs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_sscs/screen_comparison_baf3_Imat_high_rep1vsrep2_sscs.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="sscs"
 data_sscs=data
 
-data=read.csv("output/ABLEnrichmentScreens/ABL_Region1_lane18b/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
+data=read.csv("Figures/Figure_1/outputs/baf3_Imat_high_rep1vsrep2_tileseq/screen_comparison_baf3_Imat_high_rep1vsrep2_tileseq.csv",header = T,stringsAsFactors = F)[-1]
 data$seqtech="tileseq"
 data_tileseq=data
 
@@ -127,7 +128,7 @@ ggplot(df,aes(x=seqtech,y=nnmd,fill=seqtech))+
         axis.title.y = element_blank(),
         legend.position = "none")
 
-ggsave("output/errorrates_figures/plot7.pdf",width=2,height=2,useDingbats=F)
+ggsave("Figures/Figure_1/Supp3B.pdf",width=2,height=2,useDingbats=F)
 ```
 
 
@@ -175,8 +176,8 @@ roc_2=roc(as.numeric(ctdata_tileseq$is_intended),ctdata_tileseq$glm_fits)
 
 roc_3=roc(as.numeric(ctdata_duplex$is_intended),ctdata_duplex$glm_fits)
 
-pdf("output/errorrates_figures/plot8_roc_curve.pdf", width = 3, height = 3)
-par(pty="s")
+# pdf("Figures/Figure_1/plot8_roc_curve.pdf", width = 3, height = 3)
+# par(pty="s")
 plot(roc_1,legacy.axes=T,percent=T,xlab="",ylab="",print.auc=T,col="#3287BD",lwd=3,print.auc.y=45)
 
 plot(roc_2,plot=T,legacy.axes=T,percent=T,xlab="",ylab="",print.auc=T,col="#8ED3C7",add=T,lwd=3,print.auc.y=55)
