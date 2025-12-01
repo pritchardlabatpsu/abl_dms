@@ -1,0 +1,85 @@
+"","Protein.Consequence","VEP.Annotation","ClinVar.Clinical.Significance","Allele.Frequency","Allele.Count","Allele.Number"
+"1","p.Glu499Glu","synonymous_variant","Benign",0.0947319960539296,14404,152050
+"2","p.Arg473Gln","missense_variant","Benign",0.002812052404042,428,152202
+"3","p.Lys247Arg","missense_variant","Benign",0.00248380271509863,378,152186
+"4","p.Glu281Glu","synonymous_variant","Benign",0.000400651551375351,61,152252
+"5","p.Ala269Ala","synonymous_variant","Likely benign",0.000197204948529508,30,152126
+"6","p.Asn331Ser","missense_variant","",0.000190568815056251,29,152176
+"7","p.Pro310Pro","synonymous_variant","Likely benign",0.00017740515394825,27,152194
+"8","p.Arg332Gln","missense_variant","Benign",9.85726677706806e-05,15,152172
+"9","p.Tyr257Tyr","synonymous_variant","Benign",6.57591898467811e-05,10,152070
+"10","p.Gly463Gly","synonymous_variant","",6.56926634433466e-05,10,152224
+"11","p.Gly259Gly","synonymous_variant","Uncertain significance",5.26094276094276e-05,8,152064
+"12","p.Val379Val","synonymous_variant","",5.25845296313824e-05,8,152136
+"13","p.Ser420Ser","synonymous_variant","Likely benign",5.25644900587408e-05,8,152194
+"14","p.Tyr253Tyr","synonymous_variant","",4.60211434281807e-05,7,152104
+"15","p.Pro408Pro","synonymous_variant","",3.2851942863901e-05,5,152198
+"16","p.Glu507Glu","synonymous_variant","Likely benign",3.28791625019727e-05,5,152072
+"17","p.Asn331Asp","missense_variant","Uncertain significance",2.62784464182478e-05,4,152216
+"18","p.Ser348Ser","synonymous_variant","",2.62860447388481e-05,4,152172
+"19","p.Arg473Gly","missense_variant","not provided",2.62805182518199e-05,4,152204
+"20","p.Gly250Gly","synonymous_variant","",1.97129790253903e-05,3,152184
+"21","p.Tyr320Cys","missense_variant","",1.97150517848694e-05,3,152168
+"22","p.Ala337Ala","synonymous_variant","Likely benign",1.97147926660971e-05,3,152170
+"23","p.Ala395Ala","synonymous_variant","",1.97179025409804e-05,3,152146
+"24","p.Val422Ile","missense_variant","",1.97101296926534e-05,3,152206
+"25","p.Glu488Asp","missense_variant","",1.9714274448986e-05,3,152174
+"26","p.Ile502Ile","synonymous_variant","",1.97160883280757e-05,3,152160
+"27","p.Thr243Ser","missense_variant","",1.3143713361899e-05,2,152164
+"28","p.Val260Met","missense_variant","",1.31426769004311e-05,2,152176
+"29","p.Leu266Leu","synonymous_variant","",1.31397411470994e-05,2,152210
+"30","p.Thr319Thr","synonymous_variant","",1.31409498278536e-05,2,152196
+"31","p.Asn331Ile","missense_variant","",1.31426769004311e-05,2,152176
+"32","p.Asn331Thr","missense_variant","",1.31426769004311e-05,2,152176
+"33","p.Thr434Asn","missense_variant","",1.31412952060555e-05,2,152192
+"34","p.Arg460Cys","missense_variant","",1.31399138021655e-05,2,152208
+"35","p.Arg460His","missense_variant","",1.31430223694241e-05,2,152172
+"36","p.Tyr469Tyr","synonymous_variant","Likely benign",1.31385326886693e-05,2,152224
+"37","p.Pro480Pro","synonymous_variant","",1.31425041727451e-05,2,152178
+"38","p.Ala492Ala","synonymous_variant","Likely benign",1.3143713361899e-05,2,152164
+"39","p.Ser500Ser","synonymous_variant","",1.31438861213706e-05,2,152162
+"40","p.Gln513Arg","missense_variant","",1.31506272849215e-05,2,152084
+"41","p.Gly514Gly","synonymous_variant","",1.31487252310888e-05,2,152106
+"42","p.Leu248Leu","synonymous_variant","",6.57021589729439e-06,1,152202
+"43","p.Gln252Gln","synonymous_variant","",6.56935265598928e-06,1,152222
+"44","p.Ser265ThrfsTer3","frameshift_variant","",6.5788608044631e-06,1,152002
+"45","p.Thr267Ala","missense_variant","",6.57522717409887e-06,1,152086
+"46","p.Thr267Thr","synonymous_variant","",6.5720294426919e-06,1,152160
+"47","p.Val270Leu","missense_variant","not provided",6.56961160456194e-06,1,152216
+"48","p.Thr277Thr","synonymous_variant","",6.57073395098232e-06,1,152190
+"49","p.Glu286Glu","synonymous_variant","",6.56823078135673e-06,1,152248
+"50","p.Pro310Pro","synonymous_variant","",6.5705612573426e-06,1,152194
+"51","p.Thr315Thr","synonymous_variant","",6.5696979252894e-06,1,152214
+"52","p.Tyr320Tyr","synonymous_variant","",6.57047491392678e-06,1,152196
+"53","p.Asn322Lys","missense_variant","",6.56943896991197e-06,1,152220
+"54","p.Leu323Leu","synonymous_variant","",6.57064760302775e-06,1,152192
+"55","p.Leu324Leu","synonymous_variant","",6.57142481632868e-06,1,152174
+"56","p.Arg332Arg","synonymous_variant","",6.57116572479958e-06,1,152180
+"57","p.Asn336Asn","synonymous_variant","",6.57297979466011e-06,1,152138
+"58","p.Tyr353Ser","missense_variant","",6.57323902926406e-06,1,152132
+"59","p.Lys356Glu","missense_variant","",6.57609196006997e-06,1,152066
+"60","p.Lys356Arg","missense_variant","",6.57194306068532e-06,1,152162
+"61","p.Val371Val","synonymous_variant","",6.57030223390276e-06,1,152200
+"62","p.Glu373Asp","missense_variant","",6.5696979252894e-06,1,152214
+"63","p.Leu384Leu","synonymous_variant","",6.57177030348435e-06,1,152166
+"64","p.Leu387Leu","synonymous_variant","",6.57159755536571e-06,1,152170
+"65","p.Thr394Ala","missense_variant","",6.57142481632868e-06,1,152174
+"66","p.Ala397Ala","synonymous_variant","",6.56935265598928e-06,1,152222
+"67","p.Gly398Gly","synonymous_variant","",6.57246138678935e-06,1,152150
+"68","p.Thr406Thr","synonymous_variant","",6.56900742297839e-06,1,152230
+"69","p.Glu409Lys","missense_variant","",6.56909372782931e-06,1,152228
+"70","p.Asn414Ile","missense_variant","",6.56823078135673e-06,1,152248
+"71","p.Ser438Ser","synonymous_variant","",6.57038857278019e-06,1,152198
+"72","p.Pro441Pro","synonymous_variant","",6.57012956295498e-06,1,152204
+"73","p.Gln447Gln","synonymous_variant","",6.56961160456194e-06,1,152216
+"74","p.Glu453Gly","missense_variant","",6.56943896991197e-06,1,152220
+"75","p.Glu453Glu","synonymous_variant","",6.56848964149184e-06,1,152242
+"76","p.Glu459Glu","synonymous_variant","",6.56848964149184e-06,1,152242
+"77","p.Ala474Ala","splice_region_variant","",6.5683170658014e-06,1,152246
+"78","p.Arg483Trp","missense_variant","Uncertain significance",6.57177030348435e-06,1,152166
+"79","p.Pro484Pro","synonymous_variant","",6.57125208637254e-06,1,152178
+"80","p.Ser485Ser","synonymous_variant","",6.57090665370008e-06,1,152186
+"81","p.Ala492Thr","missense_variant","",6.5720294426919e-06,1,152160
+"82","p.Val515Ile","missense_variant","",6.57488132339211e-06,1,152094
+"83","p.Arg516Cys","missense_variant","",6.57367113238059e-06,1,152122
+"84","p.Arg516His","missense_variant","",6.57427617219344e-06,1,152108

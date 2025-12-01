@@ -196,7 +196,7 @@ ggplot(ic50data_long,
   # scale_fill_manual(values=getPalette(length(unique(data_sum$species))))+
   scale_fill_manual(values=color_values)+
   scale_color_manual(values=color_values)+
-  geom_vline(xintercept = .930,linetype="dashed")
+  geom_vline(xintercept = .916,linetype="dashed")
 
 ggsave("data/IC50s_verification/clonalvsdms_mutantstandards.pdf",width=7,height=4,useDingbats=F)
 

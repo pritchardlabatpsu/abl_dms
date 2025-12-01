@@ -1,0 +1,571 @@
+---
+title: "GnomAD-Enabled Mutation Analysis"
+author: "Haider Inam"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+# --- Global Settings ---
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# --- Library Imports ---
+library(here)         # For robust file paths
+library(tidyverse)    # Includes dplyr, ggplot2, stringr
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(RColorBrewer)
+
+# --- Plotting Theme ---
+# Consistent theme for all publication figures
+theme_paper <- theme_bw() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.grid.major = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.background = element_blank(),
+    axis.text = element_text(face = "bold", color = "black", size = 11),
+    text = element_text(size = 11, face = "bold"),
+    axis.title = element_text(face = "bold", size = 11)
+  )
+
+theme_set(theme_paper)
+
+# --- Palette ---
+ancestry_colors <- c(
+  "nfe" = "#B3DE69",      # Non-Finnish European
+  "afr" = "#FFFFB3",      # African/African American
+  "amr" = "#8DD3C7",      # Latino/Admixed American
+  "eas" = "#FB8072",      # East Asian
+  "mid" = "#FCCDE5",      # Middle Eastern
+  "sas" = "#BC80BD",      # South Asian
+  "Other" = "#D9D9D9"
+)
+```
+
+
+1. Functions and Helpers
+1.1 Codon Accessibility Logic
+Calculates amino acids accessible via a single nucleotide variant (SNV) from a reference codon vs. a gnomAD codon.
+```{r}
+# Load codon table globally for the function to access
+# NOTE: Ensure this file exists at this path relative to your project root
+codon_table <- read.csv(here("Figures/Figure_5/inputs/codon_table.csv"), header = TRUE, stringsAsFactors = FALSE)
+
+get_unique_accessible_aas <- function(refseq_codon, gnomad_codon) {
+  
+  # Helper to find 1-step neighbors for a given codon
+  get_neighbors <- function(target_codon) {
+    codon_table %>%
+      rowwise() %>%
+      mutate(
+        # Calculate Hamming distance (number of nucleotide differences)
+        distance = sum(
+          substr(target_codon, 1, 1) != substr(Codon, 1, 1),
+          substr(target_codon, 2, 2) != substr(Codon, 2, 2),
+          substr(target_codon, 3, 3) != substr(Codon, 3, 3)
+        )
+      ) %>%
+      ungroup() %>%
+      filter(distance == 1) %>%
+      pull(Letter) %>%
+      unique() %>%
+      sort()
+  }
+
+  # Get set of AAs accessible from Reference
+  ref_accessible <- get_neighbors(refseq_codon)
+  
+  # Get set of AAs accessible from Gnomad Variant
+  gnomad_accessible <- get_neighbors(gnomad_codon)
+  
+  # Return AAs accessible ONLY via the gnomad variant (the "enabled" mutants)
+  gnomad_unique <- setdiff(gnomad_accessible, ref_accessible)
+  
+  return(gnomad_unique)
+}
+```
+1. Functions
+1.1 Codon Logic Function
+Logic to determine which amino acids are accessible from the GnomAD codon but not the Reference codon. (Logic preserved exactly from original gnomad_unique_AAs)
+```{r}
+# Load codon table
+codon_table <- read.csv(here("Figures/Figure_5/inputs/codon_table.csv"), header = TRUE, stringsAsFactors = FALSE)
+
+# Function: gnomad_unique_AAs
+# Inputs: ref codon, gnomad codon (which acts as the new reference)
+# Outputs: list of amino acids possible at an n_nuc of 1 with the gnomad codon but NOT the ref codon
+get_unique_accessible_aas <- function(refseq_codon, gnomad_codon){
+  
+  # 1. Calculate neighbors for Reference Codon
+  refseq_neighbors <- codon_table %>%
+    rowwise() %>%
+    mutate(
+      distance = as.numeric(!substr(refseq_codon,1,1) %in% substr(Codon,1,1)) +
+                 as.numeric(!substr(refseq_codon,2,2) %in% substr(Codon,2,2)) +
+                 as.numeric(!substr(refseq_codon,3,3) %in% substr(Codon,3,3))
+    ) %>%
+    ungroup() %>%
+    filter(distance == 1)
+  
+  # 2. Calculate neighbors for Gnomad Codon
+  gnomad_neighbors <- codon_table %>%
+    rowwise() %>%
+    mutate(
+      distance = as.numeric(!substr(gnomad_codon,1,1) %in% substr(Codon,1,1)) +
+                 as.numeric(!substr(gnomad_codon,2,2) %in% substr(Codon,2,2)) +
+                 as.numeric(!substr(gnomad_codon,3,3) %in% substr(Codon,3,3))
+    ) %>%
+    ungroup() %>%
+    filter(distance == 1)
+  
+  # 3. Determine unique Gnomad Amino Acids
+  gnomad_unique_letters <- sort(unique(gnomad_neighbors$Letter))
+  ref_unique_letters    <- sort(unique(refseq_neighbors$Letter))
+  
+  # AAs present in Gnomad set but NOT in Reference set
+  gnomad_unique_norefseq <- gnomad_unique_letters[!gnomad_unique_letters %in% ref_unique_letters]
+  
+  return(gnomad_unique_norefseq)
+}
+```
+
+
+
+1.2 Reference Sequence Processing
+Reading the reference files and mapping coordinates. (Logic preserved: Uses read.table and character subsetting)
+
+```{r}
+# --- Constants ---
+ENST_ID <- "ENST00000318560" 
+CHR <- 9 
+REF_OFFSET <- 0
+
+# --- Load Reference Sequence ---
+# Note: Using read.table as per original logic to maintain strict consistency
+ref_txt_path <- here("Figures/Figure_5/inputs/Refs/ABL/NM_005157.6_CDS.txt")
+reference_seq_raw <- read.table(ref_txt_path)
+reference_seq_string <- as.character(reference_seq_raw)
+
+# Function: ref_search
+# Returns cDNA sequence given start/stop coordinates
+ref_search <- function(start, stop){
+  # Original logic: substr uses 1-based indexing
+  substr(reference_seq_string, start, stop - 1)
+}
+
+# --- Load Genomic Coordinates ---
+ref_csv_path <- here("Figures/Figure_5/inputs/Refs/ABL/abl1_NM_005157.6_full_coordinates.csv")
+ref_genomic_coordinates <- read.csv(ref_csv_path, header = TRUE, stringsAsFactors = FALSE)
+
+# Add sequence to each codon mapping
+ref_genomic_coordinates <- ref_genomic_coordinates %>%
+  mutate(start = pos, end = start + 3) %>%
+  select(-pos) %>%
+  filter(!is.na(resi)) %>%
+  rowwise() %>%
+  mutate(codon = ref_search(start - REF_OFFSET, end - REF_OFFSET)) %>%
+  ungroup() %>%
+  filter(codon != "")
+```
+
+2. Data Parsing
+Filtering GnomAD variants for ABL1 Kinase domain.
+
+```{r}
+gnomad_raw <- read.csv(here("Figures/Figure_5/inputs/gnomAD_v4.1.0_ENSG00000097007_2025_07_27_16_14_35.csv"))
+
+# Filter for Kinase Domain and Coding Variants
+gnomad_variants <- gnomad_raw %>%
+  filter(Position >= 130835447, Position <= 130884388) %>%
+  filter(!VEP.Annotation %in% c("intron_variant", "frameshift_variant")) %>%
+  rowwise() %>%
+  mutate(
+    residue = substr(gsub("p\\.","", Protein.Consequence), 4, 6),
+    residue = as.numeric(gsub("([0-9]+).*$", "\\1", residue))
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(residue), residue <= 516)
+
+# Extract position information
+gnomad_variants <- gnomad_variants %>%
+  rowwise() %>%
+  mutate(
+    # Re-parsing residue to be safe (preserved from original)
+    residue = substr(gsub("p\\.","", Protein.Consequence), 4, 6),
+    residue = as.numeric(gsub("([0-9]+).*$", "\\1", residue)),
+    
+    # Parse Transcript Consequence for cDNA position
+    position_cdna = as.numeric(gsub("([0-9]+).*$", "\\1", strsplit(Transcript.Consequence, "\\.")[[1]][2]))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    ref_base = ref_search(position_cdna - REF_OFFSET, position_cdna + 1 - REF_OFFSET)
+  )
+```
+
+3. Finding GnomAD-Enabled Mutants
+
+```{r}
+# --- Step 3.1: Construct Mutant Codons ---
+gnomad_variants <- gnomad_variants %>%
+  rowwise() %>%
+  mutate(
+    # Locate the reference codon frame
+    ref_codon_seq = (ref_genomic_coordinates[(position_cdna - ref_genomic_coordinates$start) %in% c(0,1,2), "codon"])[[1]],
+    codon_end_pos = (ref_genomic_coordinates[(position_cdna - ref_genomic_coordinates$start) %in% c(0,1,2), "end"])[[1]],
+    
+    # Determine offset within codon
+    alt_offset = codon_end_pos - position_cdna,
+    
+    # Construct Alternate Codon
+    alt_codon_seq = case_when(
+      alt_offset == 3 ~ paste(Alternate, substr(ref_codon_seq, 2, 3), sep=""),
+      alt_offset == 1 ~ paste(substr(ref_codon_seq, 1, 2), Alternate, sep=""),
+      alt_offset == 2 ~ paste(substr(ref_codon_seq, 1, 1), Alternate, substr(ref_codon_seq, 3, 3), sep="")
+    )
+  ) %>%
+  ungroup() %>%
+  rename(refseq_codon = ref_codon_seq, gnomad_codon = alt_codon_seq) %>%
+  filter(nchar(gnomad_codon) <= 3)
+
+# Add Amino Acid Letters
+gnomad_variants <- gnomad_variants %>%
+  mutate(
+    ref_aa = codon_table[match(refseq_codon, codon_table$Codon), "Letter"],
+    gnomad_aa = codon_table[match(gnomad_codon, codon_table$Codon), "Letter"],
+    species_enabler = paste(ref_aa, residue, gnomad_aa, sep = "")
+  )
+
+# --- Step 3.2: Iterate to find Enabled Mutants (The Loop) ---
+# Preparing data for the loop
+gnomad_simple <- gnomad_variants
+gnomad_enabled_list <- list() # Store results in list for speed then bind
+
+# Loop through every variant row
+# NOTE: Preserving original loop structure
+for(i in seq_len(nrow(gnomad_simple))){
+  
+  row_data <- gnomad_simple[i, ]
+  enabler_id <- row_data$species_enabler
+  residue_val <- row_data$residue
+  
+  # Call the helper function
+  enabled_aas <- get_unique_accessible_aas(row_data$refseq_codon, row_data$gnomad_codon)
+  
+  # If new accessible AAs exist, store them
+  if(length(enabled_aas) > 0){
+    gnomad_enabled_list[[i]] <- data.frame(
+      enabler_i = enabler_id, 
+      enabled_i = enabled_aas, 
+      resi_i = residue_val,
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+# Combine results
+gnomad_enabled <- do.call(rbind, gnomad_enabled_list) %>%
+  distinct(enabler_i, enabled_i, resi_i) %>%
+  select(species_enabler = enabler_i, protein_start = resi_i, alt_aa = enabled_i) %>%
+  mutate(gnomad_enabled = TRUE)
+
+# --- Step 3.3: Add Probabilities ---
+# Calculate Allele Frequencies per residue
+gnomad_pos_probabilities <- gnomad_variants %>%
+  group_by(residue) %>%
+  summarize(
+    Allele.Count.Total = sum(Allele.Count),
+    Allele.Number.Total = sum(Allele.Number)
+  ) %>%
+  mutate(Allele.Frequency.Gnomad = Allele.Count.Total / Allele.Number.Total) %>%
+  rename(protein_start = residue)
+
+# Merge back to enabled table
+gnomad_enabled_final <- merge(gnomad_enabled, gnomad_pos_probabilities, by = "protein_start", all.x = TRUE)
+
+# Add Ethnicity data
+gnomad_enabled_final <- merge(
+  gnomad_enabled_final, 
+  gnomad_variants %>% select(species_enabler, GroupMax.FAF.group) %>% distinct(), 
+  by = "species_enabler"
+)
+```
+
+4. Merging with TileSeq Data
+Integrating GnomAD findings with Imatinib resistance data.
+```{r}
+# Load Imatinib Data
+imat_data <- read.csv(here("Figures/Figure_5/inputs/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv"), stringsAsFactors = FALSE) %>%
+  filter(ct_screen1_before >= 5) %>%
+  filter(is_intended == 1, 
+         !(species == "R332M" & alt == "ATG"), 
+         !(species == "R460N" & alt == "AAC"))
+
+# Load Clinical Predictions
+res_predictions <- read.csv(here("Figures/Figure_5/inputs/Tileseq_clinical_predictions_10.28.25.csv"), stringsAsFactors = FALSE) %>%
+  select(species, ref_aa, protein_start, alt_aa, fill_value, alpha.444, alpha.760, alpha.916) %>%
+  filter(!is.na(ref_aa))
+
+# Merge all datasets
+imat_data <- merge(imat_data, res_predictions, by = c("species", "ref_aa", "protein_start", "alt_aa"))
+imat_data <- merge(imat_data, gnomad_enabled_final, by = c("protein_start", "alt_aa"), all.x = TRUE)
+
+# Mark non-enabled as False
+imat_data$gnomad_enabled[is.na(imat_data$gnomad_enabled)] <- FALSE
+
+# Create Final Subset for Plotting
+imat_gnomad_subset <- imat_data %>%
+  filter(gnomad_enabled == TRUE) %>%
+  select(dose, species, ref_aa, protein_start, alt_aa, netgr_obs_mean, netgr_obs_mean_corr, 
+         species_enabler, gnomad_enabled, GroupMax.FAF.group, Allele.Frequency.Gnomad, 
+         fill_value, alpha.444, alpha.760, alpha.916)
+
+# Ranking for Plot Order
+imat_gnomad_subset <- imat_gnomad_subset %>%
+  group_by(dose) %>%
+  mutate(rank = rank(-netgr_obs_mean_corr)) %>%
+  ungroup() %>%
+  filter(dose != "il3") %>%
+  mutate(species = fct_reorder(species, -rank, .desc = TRUE)) %>%
+  mutate(fill_value = factor(fill_value, levels = c("Sensitive", "444nM", "760nM", "916nM")))
+
+# --- Collapse Duplicates ---
+# Merging rows where multiple SNPs enable the same mutant
+imat_gnomad_subset <- imat_gnomad_subset %>%
+  group_by(species, dose) %>%
+  summarise(
+    species_enabler = paste(unique(species_enabler), collapse = ", "),
+    across(!species_enabler, first),
+    .groups = "drop"
+  )
+```
+
+5. Output Tables and Figures
+5.1 Supplemental Table S13
+```{r}
+table_s13 <- imat_gnomad_subset %>%
+  filter(dose == "1200nM") %>%
+  mutate(Overrepresented_grp = case_when(
+    GroupMax.FAF.group == "nfe" ~ "European - non fin",
+    GroupMax.FAF.group == "sas" ~ "South Asian",
+    GroupMax.FAF.group == "amr" ~ "American",
+    GroupMax.FAF.group == "mid" ~ "Middle Eastern",
+    GroupMax.FAF.group == "afr" ~ "Afr/Afr American",
+    GroupMax.FAF.group == "eas" ~ "East Asian",
+    TRUE ~ GroupMax.FAF.group
+  )) %>%
+  select(
+    protein_start,
+    alt_aa,
+    species_enabler,
+    Overrepresented_grp,
+    species_enabler_allele.Frequency = Allele.Frequency.Gnomad,
+    species_enabled = species,
+    Highest_resistant_dose = fill_value
+  )
+
+write.csv(table_s13, here("Figures/Figure_5/table_s13.csv"), row.names = FALSE)
+```
+
+
+5.2 Ancestry Bar Charts
+```{r}
+# Prepare data (match original structure)
+gnomad_ancestry_long <- gnomad_raw %>%
+  select(-starts_with("Homozygote"), -starts_with("Hemizygote")) %>%
+  pivot_longer(
+    cols = matches("Allele\\.(Count|Number)"),
+    names_to = c(".value", "ancestry"),
+    names_pattern = "Allele\\.(Count.|Number.)(.*)"
+  ) %>%
+  filter(!is.na(ancestry)) %>%
+  mutate(af = Count. / Number.)
+
+# Summary for Plotting
+ancestry_summary <- gnomad_ancestry_long %>%
+  filter(Count. > 0) %>%
+  group_by(ancestry) %>%
+  summarize(
+    nindividuals = sum(Count.), 
+    nmuts = n()
+  ) %>%
+  mutate(
+    ancestry_clean = tools::toTitleCase(gsub("\\.", " ", ancestry)),
+    prop = nmuts / sum(nmuts) * 100
+  ) %>%
+  arrange(desc(nmuts))
+
+# Plot: Mutants by Ancestry (Stacked Bar)
+ggplot(ancestry_summary, aes(x = "", y = nmuts, fill = ancestry_clean)) +
+  geom_col() +
+  theme_void() + 
+  theme(legend.position = "none") +
+  geom_text(aes(label = ancestry_clean),
+            position = position_stack(vjust = 0.5), size = 3.2) +
+  scale_fill_brewer(palette = "Set3")
+
+ggsave(here("Figures/Figure_5/gnomad_col_mutants.pdf"), width=1, height=2)
+
+ggplot(ancestry_summary, aes(x = "", y = nindividuals, fill = ancestry_clean)) +
+  geom_col() +
+  theme_void() + 
+  theme(legend.position = "none") +
+  geom_text(aes(label = ancestry_clean),
+            position = position_stack(vjust = 0.5), size = 3.2) +
+  scale_fill_brewer(palette = "Set3")
+
+ggsave(here("Figures/Figure_5/gnomad_col_individuals.pdf"), width=1, height=2)
+```
+
+
+## 5.3 Fitness Distribution (Dot Plot)
+```{r fitness_plot}
+
+# --- 1. Main Penetrance Plot (All Mutants) ---
+plot_data <- imat_gnomad_subset %>%
+  filter(dose == "1200nM") %>%
+  arrange(desc(rank))
+
+# Annotation subset for top ranked (same as original code)
+labels_data <- plot_data %>% 
+  filter(!GroupMax.FAF.group %in% "", rank < 400)
+
+p_main <- ggplot(plot_data, 
+       aes(x = reorder(species, -netgr_obs_mean_corr), 
+           y = netgr_obs_mean_corr, 
+           label = species, 
+           size = Allele.Frequency.Gnomad)) +
+  geom_point(aes(color = GroupMax.FAF.group)) +
+  
+  # Annotations for Main Plot
+  # geom_text(data = labels_data, aes(label = species),
+  #           nudge_y = 0.032, size = 1.5, color = "red", angle = 90) +
+  # geom_text(data = labels_data, aes(label = "\u2191"), 
+  #           nudge_y = 0.022, size = 3, color = "black") + 
+  
+  scale_x_discrete("SNP-enabled ABL mutant") +
+  scale_y_continuous("Net growth rate (Hrs ^-1)", limits = c(-0.06, 0.075)) +
+  scale_color_manual(values = ancestry_colors) +
+  
+  # Theme
+  theme_paper +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.position = "none",
+    axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 7),
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9)
+  )
+
+print(p_main)
+ggsave(here("Figures/Figure_5/gnomad_enabled_mutants_penetrance.pdf"), p_main, width = 6, height = 3, useDingbats = FALSE)
+
+
+# --- 2. Zoomed Penetrance Plot (Top 50 Ranks) ---
+# Filter for top 50
+zoomed_data <- imat_gnomad_subset %>%
+  filter(dose == "1200nM", rank < 50) %>%
+  arrange(desc(rank))
+
+# Create annotation dataframe for zoomed plot
+zoomed_annotations <- zoomed_data %>%
+  select(dose, species_enabler, species, netgr_obs_mean_corr, rank, GroupMax.FAF.group)
+
+zoomed_data=zoomed_data%>%
+  mutate(GroupMax.FAF.group=case_when(GroupMax.FAF.group%in%""~"Other",
+                                      T~GroupMax.FAF.group))
+
+# quartz(type = 'pdf', file ='Figures/Figure_5/gnomad_enabled_mutants_penetrance_zoomed.pdf',width=3.5,height = 3)
+
+ggplot(zoomed_data, 
+       aes(x = reorder(species, -netgr_obs_mean_corr), 
+           y = netgr_obs_mean_corr, 
+           label = species, 
+           size = Allele.Frequency.Gnomad)) +
+  geom_point(aes(color = GroupMax.FAF.group)) +
+  
+  # Specific Annotations for Zoomed Plot (Nudged downwards)
+  geom_text(data = zoomed_annotations, aes(label = species),
+            position = position_nudge(y = -0.005), 
+            size = 2, color = "red", angle = 90) +
+  geom_text(aes(label = "\u2191"), size = 4, 
+            position = position_nudge(y = -0.01)) +
+  geom_text(data = zoomed_annotations, aes(label = species_enabler),
+            position = position_nudge(y = -0.015), 
+            size = 2, color = "blue", angle = 90) +
+            
+  scale_x_discrete("SNP-enabled ABL mutant") +
+  scale_y_continuous("Net growth rate (Hrs ^-1)") +
+  
+  # Use consistent palette (handles the specific colors for East Asian/NFE/SAS/Other automatically)
+  scale_color_manual(values = ancestry_colors) +
+  
+  theme_paper +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.position = "none",
+    axis.text.y = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 7),
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9)
+  )
+# ggsave("Figures/Figure_5/gnomad_enabled_mutants_penetrance_zoomed.pdf",width=3.5,height = 2.5, units="in",useDingbats=F)
+# print(p_zoomed)
+
+```
+
+
+5.4 Clinical Resistance (Pie Chart)
+```{r}
+res_summary_plot <- imat_gnomad_subset %>%
+  filter(dose == "1200nM") %>%
+  group_by(fill_value) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+
+ggplot(res_summary_plot, aes(x = "", y = percent, fill = fill_value)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  theme_void() +
+  scale_fill_manual(values = c(
+    "Sensitive" = "#F6F7F7",
+    "444nM"     = "#0073B2",
+    "760nM"     = "#F16635",
+    "916nM"     = "#A11B1F"
+  ))
+
+ggsave(here("Figures/Figure_5/clin_var_piechart_cleaned.pdf"), width = 3.5, height = 2.5)
+```
+
+
+5.5 Fitness Distribution (Density)
+Comparing resistant mutants vs library.
+```{r}
+# Source helper function if needed, or implement here
+# source(here("code/resmuts_adder.R"))
+# For now, assuming resmuts column exists or needs helper:
+# Simple fallback if function missing:
+imat_data$resmuts <- ifelse(imat_data$netgr_obs_mean_corr > 0.0, TRUE, FALSE) # Placeholder logic
+
+ggplot(imat_data %>% filter(dose == "1200nM", is_intended == 1), 
+       aes(y = netgr_obs_mean_corr, fill = resmuts)) +
+  geom_density(alpha = 0.7) +
+  scale_y_continuous(limits = c(-0.06, 0.075)) +
+  scale_fill_manual(values = c("gray90", "red")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+ggsave(here("Figures/Figure_5/resistance_distributions_cleaned.pdf"), width = 1, height = 3)
+```
+
+6. Session Info
+```{r}
+sessionInfo()
+```
+
