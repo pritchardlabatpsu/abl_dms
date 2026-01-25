@@ -245,7 +245,7 @@ toc()
 
 write.csv(data,"output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv")
 ```
-### Part 2: Merging with SM data
+### Part 2: Merging with SSCS SM data
 ```{r}
 sscsdata=read.csv("output/ABLEnrichmentScreens/ABL_Region1234_SSCS/ABLfullkinase_allconditions_growthrates_12.19.24.csv",header = T,stringsAsFactors = F)[-1]
 sscsdata$seqtech="sscs"

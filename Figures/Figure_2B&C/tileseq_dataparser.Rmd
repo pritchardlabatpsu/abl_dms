@@ -1,0 +1,302 @@
+---
+title: "tileseq_parser"
+author: "Haider Inam"
+date: '2025-08-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_knit$set(root.dir = normalizePath("."))
+# rm(list=ls())
+
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tictoc)
+library(doParallel)
+library(foreach)
+library(RColorBrewer)
+library("ggrepel")
+library(reshape2)
+```
+
+```{r}
+source("inputs/heatmap_plotting_function.R")
+source("inputs/resmuts_adder.R")
+source("inputs/cosmic_data_adder.R")
+source("inputs/res_residues_adder.R")
+source("inputs/shortest_codon_finder.R")
+
+#Cleanup code for plotting
+cleanup=theme_bw() +
+  theme(plot.title = element_text(hjust=.5),
+        panel.grid.major = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.background = element_blank(),
+        # axis.line = element_line(color = "black"),
+        axis.text = element_text(face="bold",color="black",size="11"),
+        text=element_text(size=11,face="bold"),
+        axis.title=element_text(face="bold",size="11"))
+
+```
+
+
+```{r}
+tilseq_dataparser=function(dirname,dose,il3flag){
+  
+# dirname="output/ABLEnrichmentScreens/ABL_Region1234_Tileseq/TileSeq_full_kinase_il3_renamed.csv"
+# dose="il3"
+# il3flag="T"
+  data=read.csv(dirname)
+  # data=data%>%filter(is_intended%in%1)
+  
+  # tic()
+  data=data%>%
+    rowwise()%>%
+    mutate(alt_codon_shortest=shortest_codon_finder(ref_codon,alt_aa)[[1]][1],
+           n_nuc_min=shortest_codon_finder(ref_codon,alt_aa)[[2]][1],
+           score_screen1=log(maf_screen1_after/maf_screen2_before,2),
+           score_screen2=log(maf_screen1_after/maf_screen2_before,2))
+  # toc()
+  
+  data$consequence_terms="missense_variant"
+  
+  data=data%>%
+    # filter(!protein_start%in%c(354:361))%>%
+    dplyr::select(species,
+                  consequence_terms,
+                  ref_aa,
+                  protein_start,
+                  alt_aa,
+                  ref,
+                  alt,
+                  ref_codon,
+                  alt_codon,
+                  alt_codon_shortest,
+                  n_nuc_min,
+                  is_intended,
+                  score_screen1,
+                  netgr_obs_screen1,
+                  netgr_obs_corr_screen1,
+                  score_screen2,
+                  netgr_obs_screen2,
+                  netgr_obs_corr_screen2,
+                  ct_screen1_before,
+                  depth_screen1_before,
+                  maf_screen1_before,
+                  ct_screen1_after,
+                  depth_screen1_after,
+                  maf_screen1_after,
+                  ct_screen2_before,
+                  depth_screen2_before,
+                  maf_screen2_before,
+                  ct_screen2_after,
+                  depth_screen2_after,
+                  maf_screen2_after)
+
+  # 
+  data$dose=dose
+  # Move dose to the top
+  data=data%>%dplyr::select(dose,everything())
+  
+  # Remove duplicates
+  data <- data %>%
+    group_by(is_intended)%>%
+  arrange(desc(ct_screen1_before)) %>%
+  distinct(species, .keep_all = TRUE)
+}
+
+```
+
+### Part 1: Data parsing
+  
+# Here, I will combine data from all doses into a single dataframe
+# This code also adds the SSCS F359C data to plug the gap from residues 354-360
+```{r}
+
+tic()
+##############################Parsing Marta's data###########################
+##############################il3 data###########################
+dirname="inputs/TileSeq_full_kinase_il3_renamed.csv"
+dose="il3"
+il3flag="T"
+data_il3_tileseq=tilseq_dataparser(dirname,dose,il3flag)
+# a=data_il3_tileseq%>%filter(is_intended%in%1)
+##############################300nM Imatinib data###########################
+dirname="inputs/TileSeq_full_kinase_low_imatinib_renamed.csv"
+dose="300nM"
+il3flag="F"
+data_300nM_tileseq=tilseq_dataparser(dirname,dose,il3flag)
+
+##############################600nM Imatinib data###########################
+dirname="inputs/TileSeq_full_kinase_medium_imatinib_renamed.csv"
+dose="600nM"
+il3flag="F"
+data_600nM_tileseq=tilseq_dataparser(dirname,dose,il3flag)
+##############################1200nM Imatinib data###########################
+dirname="inputs/TileSeq_full_kinase_high_imatinib_renamed.csv"
+dose="1200nM"
+il3flag="F"
+data_1200nM_tileseq=tilseq_dataparser(dirname,dose,il3flag)
+# data_il3_tileseq=data
+# data_300nM_tileseq=data
+# data_600nM_tileseq=data
+# data_1200nM_tileseq=data
+data=rbind(data_il3_tileseq,data_300nM_tileseq,data_600nM_tileseq,data_1200nM_tileseq)
+data=data%>%rowwise()%>%mutate(netgr_obs_mean=(netgr_obs_screen1+netgr_obs_screen2)/2)
+data=data%>%rowwise()%>%mutate(netgr_obs_mean_corr=(netgr_obs_corr_screen1+netgr_obs_corr_screen2)/2)
+data=resmuts_adder(data)
+data=res_residues_adder(data)
+data=cosmic_data_adder(data)
+data$resmut_cosmic="neither"
+data[data$cosmic_present%in%TRUE,"resmut_cosmic"]="cosmic"
+data[data$resmuts%in%TRUE,"resmut_cosmic"]="resmut"
+data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut"))
+data=data%>%dplyr::select(dose,everything())
+
+
+toc()
+
+write.csv(data,"outputs/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv")
+```
+### Part 2: Merging with SSCS SM data
+
+### Part 3: Data plots
+  
+```{r}
+# Inputs
+# Please fill out these inputs before you press play on the code below
+
+# Please enter the directory name where you would like the plots to be saved
+# Please enter the date. This date will be appended to the filename of figures
+# Please enter the imatinib dose
+# Please enter the error correction technology. Options are tileseq or sscs
+
+# il3 Tileseq
+dirname="outputs/"
+date="08202025"
+seqtech="tileseq"
+doses_to_run <- c("il3", "300nM", "600nM", "1200nM")
+```
+
+### Part 4: Making plots
+```{r}
+
+for (dose in doses_to_run) {
+  
+
+alldata=read.csv("outputs/TileSeq_full_kinase_alldoses_with_lfc_corrected_netgrowths.csv",header = T,stringsAsFactors = F)[-1]
+dose_curr=dose
+seqtech_curr=seqtech
+# data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr)
+data=alldata%>%filter(dose%in%dose_curr,seqtech%in%seqtech_curr,is_intended%in%T)
+data$resmut_cosmic=factor(data$resmut_cosmic,levels=c("neither","cosmic","resmut"))
+
+
+data=data%>%
+  rowwise()%>%
+  mutate(netgr_obs_screen1=case_when(ct_screen1_after%in%0.5~-Inf,
+                                  T~netgr_obs_screen1),
+         netgr_obs_corr_screen1=case_when(ct_screen1_after%in%0.5~-Inf,
+                                  T~netgr_obs_corr_screen1),
+         netgr_obs_screen2=case_when(ct_screen2_after%in%0.5~-Inf,
+                                  T~netgr_obs_screen2),
+         netgr_obs_corr_screen2=case_when(ct_screen2_after%in%0.5~-Inf,
+                                  T~netgr_obs_corr_screen2))
+# Applying a count filter to get rid of bad data. This used to get rid of the F359C, and I signal but this filter was later ommitted.
+# data=data%>% filter(!(ct_screen1_before < 300 & nchar(ref) == 1))
+
+source("inputs/heatmap_plotting_function.R")
+
+data=data%>%mutate(resmuts=case_when(species%in%c("F359I","F359C","V299L","E255V", "Y253H", "T315I", "H396P", "H396R", "F486S", "G250E", "E255K", "Y253F", "Q252H", "L248V", "M351T", "F317L", "D276G", "E459K")~T,
+                                     T~F))
+
+################Density plot#################
+ggplot(data%>%filter(protein_start>=242,protein_start<=512,!species%in%c("V299L")),aes(x=netgr_obs_mean_corr,fill=resmuts))+
+  geom_density(alpha=.7)+
+  scale_x_continuous(bquote('Net Growth Rate '(Hours^-1)),limits=c(-.03,.09))+
+  scale_y_continuous("Density")+
+  scale_fill_manual(values=c("gray","red"))+
+  cleanup+
+  theme(legend.position = "none")
+
+ggsave(paste(dirname,"density_baf3_imatinib_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=4,height=4,units="in",useDingbats=F)
+
+################Correlation Plot all mutants#################
+ggplot(data%>%filter(protein_start>=242,protein_start<=512)%>%arrange(resmuts),aes(x=netgr_obs_corr_screen1,y=netgr_obs_corr_screen2))+
+  geom_point(color="black",shape=21,aes(fill=factor(resmut_cosmic)))+
+  # geom_text_repel(aes(label=ifelse(resmuts%in%T,species,"")))+
+  geom_abline(linetype="dashed")+
+  geom_label_repel(size=2,aes(label=ifelse(resmuts%in%T,species,"")))+
+  scale_x_continuous(name="Net Growth Rate Rep A",limits=c(-0.065,.075))+
+  scale_y_continuous(name="Net Growth Rate Rep B",limits=c(-0.065,.075))+
+  labs(fill="Sanger\n Mutant")+
+  scale_fill_manual(values=c("gray90","gray90","red"))+
+  stat_cor(method="pearson")+
+  coord_equal()+
+  cleanup+theme(legend.position = "none")
+
+ggsave(paste(dirname,"correlations_baf3_imatinib_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=4,height=4,units="in",useDingbats=F)
+
+
+standards=read.csv("inputs/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+if(dose%in%"300nM"){
+  standards=standards%>%filter(conc%in%0.3)
+} else if(dose%in%"600nM"){
+  standards=standards%>%filter(conc%in%0.6)
+} else if(dose%in%"1200nM"){
+  standards=standards%>%filter(conc%in%1.2)
+} else if(dose%in%"il3"){
+  standards=standards%>%filter(conc%in%0.3)
+}
+
+standards=standards%>%filter(mutant%in%c("V299L",
+                                         "E255V",
+                                        "Y253H",
+                                        "T315I",
+                                        "H396P",
+                                        "H396R",
+                                        "F486S",
+                                        "G250E",
+                                        "E255K",
+                                        "Y253F",
+                                        "Q252H",
+                                        "L248V",
+                                        "F359C",
+                                        "F359I",
+                                        "M351T",
+                                        "F317L",
+                                        "D276G",
+                                        # "M244V",
+                                        "E459K"))
+
+# data=data%>%filter(is_intended%in%1)
+standards=merge(data,standards,by.x="species",by.y="mutant")
+
+
+################Correlation Plot Resistant mutants only#################
+ggplot(standards%>%filter(!protein_start%in%c("354:361")),aes(x=.055-drug_effect,y=netgr_obs_mean_corr,label=species))+
+  geom_abline(size=0.25,color="gray50",linetype="dashed")+
+  stat_cor(method="pearson",size=2,color="blue",vjust=3)+
+  geom_point(size=0.5,color="blue")+
+  geom_point(size=0.5,color="red",aes(y=netgr_obs_mean))+
+  # geom_label_repel(size=1, nudge_y=-0.01) +
+  geom_text_repel(size=2, nudge_y=-0.01, max.overlaps=Inf, box.padding=0.2,segment.size=0.2, segment.color="gray50")+
+  stat_cor(method="pearson",size=2,aes(y=netgr_obs_mean),color="red")+
+  scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.026,.075))+
+  scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.026,.075))+
+  cleanup+
+  theme(legend.position = c(0.92,0.45),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=8),
+        axis.text.x=element_text(color="black",size=8),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(color="black",size=8),
+        plot.margin=grid::unit(c(1,1,1,1), "mm"))
+ ggsave(paste(dirname,"correlations_baf3_imatinib_mutantstandards_netgr_corrected_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=2.5,height = 2.5,units="in",useDingbats=F)
+ 
+}
+```
