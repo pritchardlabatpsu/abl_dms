@@ -300,3 +300,86 @@ ggplot(standards%>%filter(!protein_start%in%c("354:361")),aes(x=.055-drug_effect
  
 }
 ```
+
+
+Plotting figures 2B and 2C for the manuscript
+
+```{r}
+dose="1200nM"
+################Correlation Plot all mutants#################
+ggplot(data%>%filter(protein_start>=242,protein_start<=512)%>%arrange(resmuts),aes(x=netgr_obs_corr_screen1,y=netgr_obs_corr_screen2))+
+  geom_point(color="black",shape=21,aes(fill=factor(resmut_cosmic)))+
+  # geom_text_repel(aes(label=ifelse(resmuts%in%T,species,"")))+
+  geom_abline(linetype="dashed")+
+  geom_label_repel(size=2,aes(label=ifelse(resmuts%in%T,species,"")))+
+  scale_x_continuous(name="Net Growth Rate Rep A",limits=c(-0.065,.075))+
+  scale_y_continuous(name="Net Growth Rate Rep B",limits=c(-0.065,.075))+
+  labs(fill="Sanger\n Mutant")+
+  scale_fill_manual(values=c("gray90","gray90","red"))+
+  stat_cor(method="pearson")+
+  coord_equal()+
+  cleanup+theme(legend.position = "none")
+
+ggsave(paste(dirname,"Fig_2b_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=4,height=4,units="in",useDingbats=F)
+
+
+standards=read.csv("inputs/ic50data/ic50data_all_conc.csv",header = T,stringsAsFactors = F)
+if(dose%in%"300nM"){
+  standards=standards%>%filter(conc%in%0.3)
+} else if(dose%in%"600nM"){
+  standards=standards%>%filter(conc%in%0.6)
+} else if(dose%in%"1200nM"){
+  standards=standards%>%filter(conc%in%1.2)
+} else if(dose%in%"il3"){
+  standards=standards%>%filter(conc%in%0.3)
+}
+
+standards=standards%>%filter(mutant%in%c("V299L",
+                                         "E255V",
+                                        "Y253H",
+                                        "T315I",
+                                        "H396P",
+                                        "H396R",
+                                        "F486S",
+                                        "G250E",
+                                        "E255K",
+                                        "Y253F",
+                                        "Q252H",
+                                        "L248V",
+                                        "F359C",
+                                        "F359I",
+                                        "M351T",
+                                        "F317L",
+                                        "D276G",
+                                        # "M244V",
+                                        "E459K"))
+
+# data=data%>%filter(is_intended%in%1)
+standards=merge(data,standards,by.x="species",by.y="mutant")
+
+
+
+
+################Correlation Plot Resistant mutants only#################
+ggplot(standards%>%filter(!protein_start%in%c("354:361")),aes(x=.055-drug_effect,y=netgr_obs_mean_corr,label=species))+
+  geom_abline(size=0.25,color="gray50",linetype="dashed")+
+  stat_cor(method="pearson",size=2,color="blue",vjust=3)+
+  geom_point(size=0.5,color="blue")+
+  geom_point(size=0.5,color="red",aes(y=netgr_obs_mean))+
+  # geom_label_repel(size=1, nudge_y=-0.01) +
+  geom_text_repel(size=2, nudge_y=-0.01, max.overlaps=Inf, box.padding=0.2,segment.size=0.2, segment.color="gray50")+
+  stat_cor(method="pearson",size=2,aes(y=netgr_obs_mean),color="red")+
+  scale_x_continuous("Predicted Net Growth Rate (Hrs-1) \nClonal IC50",limits=c(-0.026,.075))+
+  scale_y_continuous("Observed Net Growth Rate (Hrs-1) \nDMS Screen",limits=c(-0.026,.075))+
+  cleanup+
+  theme(legend.position = c(0.92,0.45),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=8),
+        axis.text.x=element_text(color="black",size=8),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(color="black",size=8),
+        plot.margin=grid::unit(c(1,1,1,1), "mm"))
+ ggsave(paste(dirname,"Fig_2c_",dose,"_",seqtech,"_",date,".pdf",sep=""),width=2.5,height = 2.5,units="in",useDingbats=F)
+```
+

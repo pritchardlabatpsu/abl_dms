@@ -1,0 +1,532 @@
+---
+title: "abl_Sanger_enrichment_analysis"
+author: "Haider Inam"
+date: '2026-03-28'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# rm(list=ls())
+```
+
+
+
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+# -----------------------------------------------------------------------------
+# 1. Load the Datasets
+# -----------------------------------------------------------------------------
+dms_data <- read.csv("Tileseq_clinical_predictions_10.28.25.csv")
+sanger_data <- read.csv("ABL_Sanger_Gene_mutations_2026.csv")
+known_res <- read.csv("known_clinicallyresistant_mutations.csv")
+hamming_data <- read.csv("hammingdistance_ablmutants.csv")
+probs_df <- read.csv("abl_substitution_probabilities.csv")
+
+# -----------------------------------------------------------------------------
+# 2. Parse Mutation Probabilities
+# -----------------------------------------------------------------------------
+# Clean the probabilities (e.g., "40.70%" -> 0.407)
+probs_df$Probability_Clean <- as.numeric(str_replace(probs_df$Probability, "%", "")) / 100
+
+# Create a named vector for quick lookup (e.g., mut_probs["G>A"] returns 0.407)
+# Note: Ensure the column name matches your CSV. It is typically 'Mutation.Type' in R.
+mut_probs <- setNames(probs_df$Probability_Clean, probs_df$Mutation.Type)
+
+# -----------------------------------------------------------------------------
+# 3. Define Standard Genetic Code
+# -----------------------------------------------------------------------------
+genetic_code <- list(
+  A = c("GCA", "GCC", "GCG", "GCT"), C = c("TGC", "TGT"), D = c("GAC", "GAT"),
+  E = c("GAA", "GAG"), F = c("TTC", "TTT"), G = c("GGA", "GGC", "GGG", "GGT"),
+  H = c("CAC", "CAT"), I = c("ATA", "ATC", "ATT"), K = c("AAA", "AAG"),
+  L = c("CTA", "CTC", "CTG", "CTT", "TTA", "TTG"), M = c("ATG"), N = c("AAC", "AAT"),
+  P = c("CCA", "CCC", "CCG", "CCT"), Q = c("CAA", "CAG"),
+  R = c("AGA", "AGG", "CGA", "CGC", "CGG", "CGT"),
+  S = c("AGC", "AGT", "TCA", "TCC", "TCG", "TCT"),
+  T = c("ACA", "ACC", "ACG", "ACT"), V = c("GTA", "GTC", "GTG", "GTT"),
+  W = c("TGG"), Y = c("TAC", "TAT"), "*" = c("TAA", "TAG", "TGA")
+)
+
+# -----------------------------------------------------------------------------
+# 4. Engine to Calculate Maximum Substitution Likelihood
+# -----------------------------------------------------------------------------
+# Function to calculate multiplicative probability from one codon to another
+calc_path_prob <- function(ref_codon, target_codon) {
+  prob <- 1.0
+  for (i in 1:3) {
+    base_ref <- substr(ref_codon, i, i)
+    base_tgt <- substr(target_codon, i, i)
+    if (base_ref != base_tgt) {
+      mut_name <- paste0(base_ref, ">", base_tgt)
+      # Multiply probability if the mutation is known, else probability goes to 0
+      if (mut_name %in% names(mut_probs)) {
+        prob <- prob * mut_probs[[mut_name]]
+      } else {
+        prob <- 0.0
+      }
+    }
+  }
+  return(prob)
+}
+
+# Consolidate unique species and their reference codons
+hamming_unique <- hamming_data %>%
+  group_by(species) %>%
+  summarise(
+    ref_codon = toupper(first(ref_codon)),
+    alt_aa = toupper(first(alt_aa)),
+    .groups = "drop"
+  )
+
+# Calculate Max Likelihood across all viable target codons
+calculate_max_likelihood <- function(ref_codon, alt_aa) {
+  # Skip if invalid codon or AA
+  if (is.na(alt_aa) || !alt_aa %in% names(genetic_code) || nchar(ref_codon) != 3) {
+    return(NA)
+  }
+  
+  target_codons <- genetic_code[[alt_aa]]
+  max_prob <- -1.0
+  
+  for (tc in target_codons) {
+    p <- calc_path_prob(ref_codon, tc)
+    if (p > max_prob) max_prob <- p
+  }
+  return(max_prob)
+}
+
+# Apply logic and merge back to DMS
+hamming_unique$Max_Likelihood <- mapply(calculate_max_likelihood, 
+                                        hamming_unique$ref_codon, 
+                                        hamming_unique$alt_aa)
+
+dms_data <- dms_data %>%
+  left_join(hamming_unique %>% dplyr::select(species, Max_Likelihood), by = "species") %>%
+  # Filter out Synonymous mutations (where max_likelihood = 1)
+  filter(Max_Likelihood < 1.0)
+
+dms_data <- dms_data %>%
+  left_join(hamming_data%>%filter(dose%in%"il3",is_intended%in%1) %>% dplyr::select(species, n_nuc_min), by = "species")
+
+# a=dms_data%>%filter(!fill_value%in%"Sensitive")
+
+# -----------------------------------------------------------------------------
+# 5. Clean Sanger and Define Classifications
+# -----------------------------------------------------------------------------
+sanger_grouped <- sanger_data %>%
+  mutate(Mutation = str_replace(AA.Mutation, "p\\.", "")) %>%
+  group_by(Mutation) %>%
+  summarise(Total_Patients = sum(Count, na.rm = TRUE), .groups = "drop")
+
+valid_sanger_muts <- sanger_grouped %>%
+  filter(Total_Patients >= 2) %>%
+  pull(Mutation)
+
+known_muts <- unique(known_res$Collapsed)
+dose_levels <- c("Sensitive", "444nM", "760nM", "916nM")
+
+# Prepare combined dataset
+dms_all <- dms_data %>%
+  filter(Highest_Resistant_Dose %in% dose_levels) %>%
+  mutate(
+    Dose_Tier = factor(Highest_Resistant_Dose, levels = dose_levels, ordered = TRUE),
+    Observed_in_Sanger = ifelse(species %in% valid_sanger_muts, 1, 0),
+    Likelihood_Tier = case_when(
+      is.na(Max_Likelihood) ~ NA_character_,
+      Max_Likelihood >= 0.01 ~ "High Likelihood (> 1%)",
+      Max_Likelihood >= 0.0001 ~ "Medium Likelihood (0.01% - 1%)",
+      Max_Likelihood < 0.0001 ~ "Low Likelihood (< 0.01%)"
+    ),
+    Likelihood_Tier = factor(Likelihood_Tier, 
+                             levels = c("High Likelihood (> 1%)", 
+                                        "Medium Likelihood (0.01% - 1%)", 
+                                        "Low Likelihood (< 0.01%)"))
+  ) %>% filter(!is.na(Likelihood_Tier))
+# a=dms_all%>%filter(Likelihood_Tier%in%"High Likelihood (> 1%)")
+dms_vudrs <- dms_all %>% filter(!species %in% known_muts)
+# dms_vudrs2=dms_all%>%filter(!Highest_Resistant_Dose%in%"Sensitive")
+sum(as.numeric(dms_vudrs2$species%in%sanger_grouped$Mutation))
+
+# -----------------------------------------------------------------------------
+# 6. Function to Generate Faceted Plot A
+# -----------------------------------------------------------------------------
+create_plot_A <- function(df, plot_title) {
+  summary_df <- df %>%
+    group_by(Likelihood_Tier, Dose_Tier) %>%
+    summarise(
+      Total_N = n(),
+      Observed_Count = sum(Observed_in_Sanger),
+      .groups = "drop"
+    ) %>%
+    mutate(Percentage = ifelse(Total_N > 0, (Observed_Count / Total_N) * 100, 0))
+  
+  p <- ggplot(summary_df, aes(x = Dose_Tier, y = Percentage, fill = Dose_Tier)) +
+    geom_bar(stat = "identity", color = "black", width = 0.7) +
+    geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage), "\n(n=", Total_N, ")")), 
+              vjust = -0.3, size = 3.5, fontface = "bold") +
+    facet_wrap(~ Likelihood_Tier, ncol = 3) +
+    theme_bw() +
+    labs(
+      title = plot_title,
+      x = "Predicted Highest Resistance Dose",
+      y = "% Observed in Clinic\n(Sanger Count >= 2)"
+    ) +
+    scale_fill_manual(values = c("Sensitive" = "#4DBBD5", 
+                                 "444nM" = "#F39B7F", 
+                                 "760nM" = "#DC0000", 
+                                 "916nM" = "#840505")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+    theme(
+      legend.position = "none", 
+      text = element_text(size = 14),
+      axis.text.x = element_text(face = "bold", angle = 45, hjust = 1),
+      strip.text = element_text(size = 11, face = "bold")
+    )
+  
+  return(p)
+}
+
+# Generate Plot A1 and A2
+plot_A1 <- create_plot_A(dms_vudrs, "Plot A1: VUDRs Only (Faceted by Genetic Likelihood)")
+plot_A2 <- create_plot_A(dms_all, "Plot A2: All Mutations (Faceted by Genetic Likelihood)")
+
+print(plot_A1)
+print(plot_A2)
+
+
+
+
+
+
+create_plot_A <- function(df, plot_title) {
+  summary_df <- df %>%
+    group_by(n_nuc_min, Dose_Tier) %>%
+    summarise(
+      Total_N = n(),
+      Observed_Count = sum(Observed_in_Sanger),
+      .groups = "drop"
+    ) %>%
+    mutate(Percentage = ifelse(Total_N > 0, (Observed_Count / Total_N) * 100, 0))
+  
+  p <- ggplot(summary_df, aes(x = Dose_Tier, y = Percentage, fill = Dose_Tier)) +
+    geom_bar(stat = "identity", color = "black", width = 0.7) +
+    geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage), "\n(n=", Total_N, ")")), 
+              vjust = -0.3, size = 3.5, fontface = "bold") +
+    facet_wrap(~ n_nuc_min, ncol = 3) +
+    theme_bw() +
+    labs(
+      title = plot_title,
+      x = "Predicted Highest Resistance Dose",
+      y = "% Observed in Clinic\n(Sanger Count >= 2)"
+    ) +
+    scale_fill_manual(values = c("Sensitive" = "#4DBBD5", 
+                                 "444nM" = "#F39B7F", 
+                                 "760nM" = "#DC0000", 
+                                 "916nM" = "#840505")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+    theme(
+      legend.position = "none", 
+      text = element_text(size = 14),
+      axis.text.x = element_text(face = "bold", angle = 45, hjust = 1),
+      strip.text = element_text(size = 11, face = "bold")
+    )
+  
+  return(p)
+}
+
+
+# Generate Plot A1 and A2
+plot_A1 <- create_plot_A(dms_vudrs, "Plot A1: VUDRs Only (Faceted by Genetic Likelihood)")
+plot_A2 <- create_plot_A(dms_all, "Plot A2: All Mutations (Faceted by Genetic Likelihood)")
+
+print(plot_A1)
+print(plot_A2)
+
+
+
+
+
+
+
+
+df = dms_all
+# plot_title = "Plot A2: All Mutations (Faceted by Genetic Likelihood)"
+
+summary_df <- df %>%
+    group_by(n_nuc_min, Dose_Tier) %>%
+    summarise(
+      Total_N = n(),
+      Observed_Count = sum(Observed_in_Sanger),
+      .groups = "drop"
+    ) %>%
+    mutate(Percentage = ifelse(Total_N > 0, (Observed_Count / Total_N) * 100, 0))
+  
+p <- ggplot(summary_df %>% filter(n_nuc_min %in% 1), aes(x = Dose_Tier, y = Percentage, fill = Dose_Tier)) +
+    geom_bar(stat = "identity", color = "black", width = 0.7) +
+    
+    # --- MODIFIED LINE BELOW ---
+    # Added 'Observed_Count' and a '/' so it formats as (n=Detected/Total)
+    geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage), "\n(n=", Observed_Count, "/", Total_N, ")")), 
+              vjust = -0.3, size = 3.5, fontface = "bold") +
+    # ---------------------------
+    
+    # facet_wrap(~ n_nuc_min, ncol = 3) +
+    theme_bw() +
+    labs(
+      # title = plot_title,
+      x = "Predicted Highest Resistance Dose",
+      y = "% Observed in Clinic\n(Sanger Count >= 2)"
+    ) +
+    scale_fill_manual(values = c("Sensitive" = "#4DBBD5", 
+                                 "444nM" = "#F39B7F", 
+                                 "760nM" = "#DC0000", 
+                                 "916nM" = "#840505")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+    theme(
+      legend.position = "none", 
+      text = element_text(size = 14),
+      axis.text.x = element_text(face = "bold", angle = 45, hjust = 1),
+      strip.text = element_text(size = 11, face = "bold")
+    )
+
+print(p)
+
+a=dms_all%>%filter(!Highest_Resistant_Dose%in%"Sensitive",
+                   n_nuc_min%in%1)
+a=dms_all%>%filter(!Highest_Resistant_Dose%in%"Sensitive",
+                   n_nuc_min%in%1)
+
+a=dms_vudrs%>%filter(!Highest_Resistant_Dose%in%c("Sensitive"),
+                   n_nuc_min%in%1)
+
+
+
+
+
+
+
+
+
+df = dms_vudrs
+# plot_title = "Plot A2: All Mutations (Faceted by Genetic Likelihood)"
+
+summary_df <- df %>%
+    group_by(n_nuc_min, Dose_Tier) %>%
+    summarise(
+      Total_N = n(),
+      Observed_Count = sum(Observed_in_Sanger),
+      .groups = "drop"
+    ) %>%
+    mutate(Percentage = ifelse(Total_N > 0, (Observed_Count / Total_N) * 100, 0))
+  
+
+
+###Predicted resistance mutants including known resistant mutants
+p <- ggplot(summary_df %>% filter(n_nuc_min %in% 1), aes(x = Dose_Tier, y = Percentage, fill = Dose_Tier)) +
+    geom_bar(stat = "identity", color = "black", width = 0.7) +
+    
+    # --- MODIFIED LINE BELOW ---
+    # Added 'Observed_Count' and a '/' so it formats as (n=Detected/Total)
+    geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage), "\n(n=", Observed_Count, "/", Total_N, ")")), 
+              vjust = -0.3, size = 3.5, fontface = "bold") +
+    # ---------------------------
+    
+    # facet_wrap(~ n_nuc_min, ncol = 3) +
+    theme_bw() +
+    labs(
+      # title = plot_title,
+      x = "Predicted Highest Resistance Dose",
+      y = "% Observed in Clinic\n(Sanger Count >= 2)"
+    ) +
+    scale_fill_manual(values = c("Sensitive" = "#4DBBD5", 
+                                 "444nM" = "#F39B7F", 
+                                 "760nM" = "#DC0000", 
+                                 "916nM" = "#840505")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+    theme(
+      legend.position = "none", 
+      text = element_text(size = 14),
+      axis.text.x = element_text(face = "bold", angle = 45, hjust = 1),
+      strip.text = element_text(size = 11, face = "bold")
+    )
+
+print(p)
+
+```
+Calculating chi-sq statistic
+```{r}
+dms_all <- dms_data %>%
+  # Filter for SNVs only
+  filter(species %in% valid_snvs) %>%
+  # Filter out missing data / unknowns
+  filter(Highest_Resistant_Dose %in% dose_levels) %>%
+  mutate(
+    # Binarize Predictions: "Sensitive" vs "Resistant"
+    Prediction = ifelse(Highest_Resistant_Dose == "Sensitive", "Predicted Sensitive", "Predicted Resistant"),
+    # Binarize Clinical Observation
+    Observed = ifelse(species %in% valid_sanger_muts, "Observed", "Not Observed")
+  )
+# -----------------------------------------------------------------------------
+# 5. Calculate the Chi-Squared Statistic
+# -----------------------------------------------------------------------------
+# Create the contingency table
+contingency_table <- table(dms_all$Prediction, dms_all$Observed)
+
+cat("--- Contingency Table ---\n")
+print(contingency_table)
+
+# Run the Chi-Squared Test (without Yates continuity correction for exact matching)
+chi2_test <- chisq.test(contingency_table, correct = FALSE)
+
+cat("\n--- Chi-Squared Test Results ---\n")
+print(chi2_test)
+
+# Optional: Print the exact percentages
+cat("\n--- Summary Statistics ---\n")
+res_total <- sum(contingency_table["Predicted Resistant", ])
+sens_total <- sum(contingency_table["Predicted Sensitive", ])
+res_obs <- contingency_table["Predicted Resistant", "Observed"]
+sens_obs <- contingency_table["Predicted Sensitive", "Observed"]
+
+cat(sprintf("Predicted Resistant Observed: %d / %d (%.1f%%)\n", res_obs, res_total, (res_obs/res_total)*100))
+cat(sprintf("Predicted Sensitive Observed: %d / %d (%.1f%%)\n", sens_obs, sens_total, (sens_obs/sens_total)*100))
+```
+
+Spearman correlation between highest resistant dose and number of patients observed having the mutation in Sanger.
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(stringr)
+
+# 1. Load the Data
+dms_data <- read.csv("Tileseq_clinical_predictions_10.28.25.csv")
+sanger_data <- read.csv("ABL_Sanger_Gene_mutations_2026.csv")
+hamming_data <- read.csv("hammingdistance_ablmutants.csv")
+known_res <- read.csv("known_clinicallyresistant_mutations.csv")
+
+# 2. Filter for SNVs and Clean Sanger Data (Count >= 2)
+valid_snvs <- hamming_data %>%
+  group_by(species) %>%
+  summarise(min_nuc_dist = min(n_nuc_min, na.rm = TRUE), .groups = "drop") %>%
+  filter(min_nuc_dist <= 1) %>%
+  pull(species)
+
+sanger_grouped <- sanger_data %>%
+  mutate(Mutation = str_replace(AA.Mutation, "p\\.", "")) %>%
+  group_by(Mutation) %>%
+  summarise(Total_Patients = sum(Count, na.rm = TRUE), .groups = "drop") %>%
+  filter(Total_Patients >= 2)
+
+# 3. Merge Datasets (Isolate Observed Variants)
+observed_variants <- sanger_grouped %>%
+  inner_join(dms_data, by = c("Mutation" = "species")) %>%
+  filter(Mutation %in% valid_snvs) %>%
+  # Exclude known resistant mutants to look strictly at VUDRs
+  filter(!Mutation %in% unique(known_res$Collapsed))
+
+# 4. Map the Dose Categories to Numeric Ranks
+observed_variants <- observed_variants %>%
+  filter(Highest_Resistant_Dose %in% c("Sensitive", "444nM", "760nM", "916nM")) %>%
+  mutate(
+    Dose_Rank = case_when(
+      Highest_Resistant_Dose == "Sensitive" ~ 1,
+      Highest_Resistant_Dose == "444nM" ~ 2,
+      Highest_Resistant_Dose == "760nM" ~ 3,
+      Highest_Resistant_Dose == "916nM" ~ 4
+    )
+  )
+
+# 5. Run Spearman Rank Correlation
+spearman_test <- cor.test(observed_variants$Dose_Rank, 
+                          observed_variants$Total_Patients, 
+                          method = "spearman", 
+                          exact = FALSE)
+
+cat("\n--- Spearman Correlation for Observed VUDRs ---\n")
+print(spearman_test)
+```
+
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+# -----------------------------------------------------------------------------
+# 1. Load the Datasets
+# -----------------------------------------------------------------------------
+dms_data <- read.csv("Tileseq_clinical_predictions_10.28.25.csv")
+sanger_data <- read.csv("ABL_Sanger_Gene_mutations_2026.csv")
+
+# -----------------------------------------------------------------------------
+# 2. Process Sanger Data and Aggregate Patient Counts
+# -----------------------------------------------------------------------------
+sanger_grouped <- sanger_data %>%
+  mutate(Mutation = str_replace(AA.Mutation, "p\\.", "")) %>%
+  group_by(Mutation) %>%
+  summarise(Total_Patients = sum(Count, na.rm = TRUE), .groups = "drop")
+
+# -----------------------------------------------------------------------------
+# 3. Merge with DMS Predictions and Prepare Plot Data
+# -----------------------------------------------------------------------------
+dose_levels <- c("Sensitive", "444nM", "760nM", "916nM")
+
+plot_data <- sanger_grouped %>%
+  inner_join(dms_data %>% dplyr::select(species, Highest_Resistant_Dose), 
+             by = c("Mutation" = "species")) %>%
+  filter(Highest_Resistant_Dose %in% dose_levels) %>%
+  mutate(Dose_Tier = factor(Highest_Resistant_Dose, levels = dose_levels, ordered = TRUE)) %>%
+  arrange(desc(Total_Patients)) %>%
+  mutate(
+    Mutation = factor(Mutation, levels = unique(Mutation)),
+    
+    # THE FIX: Manually calculate log10 and shift up by 0.5 
+    # This ensures that mutations with 1 patient (log10(1) = 0) have a visible bar height of 0.5
+    Plot_Y = log10(Total_Patients) + 0.5 
+  )
+
+# -----------------------------------------------------------------------------
+# 4. Generate Waterfall Plot
+# -----------------------------------------------------------------------------
+p_waterfall <- ggplot(plot_data, aes(x = Mutation, y = Plot_Y, fill = Dose_Tier)) +
+  # Use color = NA so the bar outlines don't bleed together in the long tail
+  geom_bar(stat = "identity", width = 1, color = NA) + 
+  theme_classic() +
+  
+  # Custom continuous scale that maps our shifted Y-values back to actual patient counts
+  scale_y_continuous(
+    breaks = c(0.5, 1.5, 2.5, 3.5, 4.5),
+    labels = c("1", "10", "100", "1,000", "10,000"),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(
+    title = "Waterfall Plot of Observed Clinical Mutations",
+    subtitle = "Ranked by Sanger Patient Frequency (n = 290 unique mutations)",
+    x = "Mutations (Ranked by Frequency)",
+    y = "Total Patients",
+    fill = "Highest Resistance Dose"
+  ) +
+  scale_fill_manual(values = c("Sensitive" = "#4DBBD5", 
+                               "444nM" = "#F39B7F", 
+                               "760nM" = "#DC0000", 
+                               "916nM" = "#840505")) +
+  theme(
+    text = element_text(size = 14),
+    legend.position = c(0.85, 0.8), 
+    legend.background = element_rect(fill = "white", color = "black"),
+    
+    # Hide the x-axis text/ticks because 290 overlapping labels is unreadable
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+# Display the plot
+print(p_waterfall)
+```
