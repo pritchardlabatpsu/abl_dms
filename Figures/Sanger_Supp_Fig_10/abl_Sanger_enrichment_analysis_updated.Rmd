@@ -1,0 +1,198 @@
+---
+title: "abl_Sanger_enrichment_analysis"
+author: "Haider Inam"
+date: '2026-08-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This analysis addresses Reviewer #1's question of whether DMS-predicted
+resistance is supported by real-world clinical evidence. We restrict to the
+variants reachable by a single nucleotide substitution (SNV-accessible),
+cross-reference them against the Sanger/COSMIC CML mutation catalog, and test
+whether variants predicted to be resistant are clinically observed more often
+than variants predicted to be sensitive.
+
+**Exclusion criterion.** All 36 previously annotated clinically resistant
+variants are removed — both the 21 mutant standards used to fit the
+DMS-to-single-mutant regression correction and to set the Youden-index
+resistance threshold, and the 15 literature-curated resistant variants. The
+analysis therefore contains no variant whose resistance was known before this
+study. Of the 36, 32 are present in the SNV-accessible pool with a valid dose
+call, leaving n = 1,504 variants.
+
+Supplementary Figure 10 is a single panel: the percentage of variants in each
+predicted dose class that have been observed in the clinical catalog.
+
+```{r load-and-prep}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+# -----------------------------------------------------------------------------
+# Load data
+# -----------------------------------------------------------------------------
+dms_data     <- read.csv("Tileseq_clinical_predictions_10.28.25.csv")
+sanger_data  <- read.csv("ABL_Sanger_Gene_mutations_2026.csv")
+hamming_data <- read.csv("hammingdistance_ablmutants.csv")
+known_res    <- read.csv("known_clinicallyresistant_mutations_betterannotations.csv")
+
+# All previously annotated clinically resistant variants are excluded:
+# the mutant standards (used to build the classifier) and the
+# literature-curated resistant variants (used to test it).
+excluded_muts <- unique(known_res$Collapsed)
+
+cat("n annotated resistant variants excluded:", length(excluded_muts),
+    "(", sum(grepl("standard", known_res$Mutation_type, ignore.case = TRUE)),
+    "mutant standards +",
+    sum(!grepl("standard", known_res$Mutation_type, ignore.case = TRUE)),
+    "literature-curated )\n")
+
+dose_levels <- c("Sensitive", "444nM", "760nM", "916nM")
+
+# -----------------------------------------------------------------------------
+# Variants reachable by a single nucleotide substitution (SNV-accessible)
+# -----------------------------------------------------------------------------
+valid_snvs <- hamming_data %>%
+  group_by(species) %>%
+  summarise(min_nuc_dist = min(n_nuc_min, na.rm = TRUE), .groups = "drop") %>%
+  filter(min_nuc_dist <= 1) %>%
+  pull(species)
+
+# -----------------------------------------------------------------------------
+# Clinical (Sanger) mutation counts; require >=2 patients to exclude likely
+# sequencing artifacts
+# -----------------------------------------------------------------------------
+sanger_grouped <- sanger_data %>%
+  mutate(Mutation = str_replace(AA.Mutation, "^p\\.", "")) %>%
+  group_by(Mutation) %>%
+  summarise(Total_Patients = sum(Count, na.rm = TRUE), .groups = "drop")
+
+valid_sanger_muts <- sanger_grouped %>%
+  filter(Total_Patients >= 2) %>%
+  pull(Mutation)
+
+# -----------------------------------------------------------------------------
+# Analysis table: every SNV-accessible variant with a valid dose call that
+# carries no previously established clinical resistance annotation
+# -----------------------------------------------------------------------------
+analysis_df <- dms_data %>%
+  distinct(species, .keep_all = TRUE) %>%
+  filter(species %in% valid_snvs,
+         Highest_Resistant_Dose %in% dose_levels,
+         !species %in% excluded_muts) %>%
+  left_join(sanger_grouped, by = c("species" = "Mutation")) %>%
+  mutate(
+    Total_Patients     = ifelse(is.na(Total_Patients), 0, Total_Patients),
+    Dose_Tier          = factor(Highest_Resistant_Dose, levels = dose_levels),
+    Observed_in_Sanger = species %in% valid_sanger_muts,
+    Prediction         = ifelse(Highest_Resistant_Dose == "Sensitive",
+                                 "Predicted Sensitive", "Predicted Resistant")
+  )
+
+nrow(analysis_df)
+table(analysis_df$Dose_Tier)
+```
+
+## Statistical tests
+
+```{r stats}
+# -----------------------------------------------------------------------------
+# Chi-squared: are predicted-resistant variants over-represented among
+# clinically observed mutations, relative to predicted-sensitive variants?
+# -----------------------------------------------------------------------------
+ct   <- table(analysis_df$Prediction, analysis_df$Observed_in_Sanger)
+test <- chisq.test(ct, correct = FALSE)
+print(ct)
+print(test)
+
+res_total  <- sum(analysis_df$Prediction == "Predicted Resistant")
+res_obs    <- sum(analysis_df$Prediction == "Predicted Resistant" &
+                    analysis_df$Observed_in_Sanger)
+sens_total <- sum(analysis_df$Prediction == "Predicted Sensitive")
+sens_obs   <- sum(analysis_df$Prediction == "Predicted Sensitive" &
+                    analysis_df$Observed_in_Sanger)
+fold       <- (res_obs / res_total) / (sens_obs / sens_total)
+
+cat(sprintf("Predicted Resistant observed: %d / %d (%.1f%%)\n",
+            res_obs, res_total, 100 * res_obs / res_total))
+cat(sprintf("Predicted Sensitive observed: %d / %d (%.1f%%)\n",
+            sens_obs, sens_total, 100 * sens_obs / sens_total))
+cat(sprintf("Fold enrichment: %.2fx\n", fold))
+
+# -----------------------------------------------------------------------------
+# Cochran-Armitage trend across the four ordered dose classes: does the
+# probability of clinical observation increase monotonically with predicted
+# dose class? (This is the claim the figure makes.)
+# -----------------------------------------------------------------------------
+x    <- as.integer(analysis_df$Dose_Tier)
+y    <- as.integer(analysis_df$Observed_in_Sanger)
+pbar <- mean(y)
+trend_z <- sum((x - mean(x)) * (y - pbar)) /
+           sqrt(pbar * (1 - pbar) * sum((x - mean(x))^2))
+trend_p <- 2 * pnorm(-abs(trend_z))
+cat(sprintf("Cochran-Armitage trend: z = %.2f, p = %.3g\n", trend_z, trend_p))
+
+# -----------------------------------------------------------------------------
+# Per-class summary (the figure's underlying table)
+# -----------------------------------------------------------------------------
+tier_tab <- analysis_df %>%
+  group_by(Dose_Tier) %>%
+  summarise(Total_N = n(), Observed_N = sum(Observed_in_Sanger), .groups = "drop") %>%
+  mutate(Percentage = 100 * Observed_N / Total_N)
+
+stats_tab <- data.frame(
+  N        = nrow(analysis_df),
+  Res_Obs  = res_obs,  Res_N  = res_total,
+  Sens_Obs = sens_obs, Sens_N = sens_total,
+  Fold     = fold,
+  ChiSq    = unname(test$statistic),
+  ChiSq_p  = test$p.value,
+  Trend_z  = trend_z,
+  Trend_p  = trend_p
+)
+
+print(stats_tab, digits = 4)
+print(as.data.frame(tier_tab), digits = 3)
+
+write.csv(stats_tab, "sanger_enrichment_stats.csv", row.names = FALSE)
+write.csv(tier_tab,  "sanger_enrichment_tiers.csv", row.names = FALSE)
+```
+
+## Supplementary Figure 10 (single panel)
+
+```{r cosmic-figure, fig.width=5.5, fig.height=4.5}
+# Manuscript-wide color scheme for dose classes
+dose_cols <- c("Sensitive" = "#7fb0d3",
+               "444nM"     = "#2166ac",
+               "760nM"     = "#f4a582",
+               "916nM"     = "#b2182b")
+
+figure_cosmic <- ggplot(tier_tab, aes(Dose_Tier, Percentage, fill = Dose_Tier)) +
+  geom_col(color = "black", width = 0.7) +
+  geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage),
+                                "\n(", Observed_N, "/", Total_N, ")")),
+            vjust = -0.3, size = 3.5, fontface = "bold") +
+  annotate("text", x = 2.5, y = Inf,
+           label = sprintf("%.1f-fold enrichment\nchi2 = %.2f, p = %s",
+                           fold, test$statistic,
+                           format(test$p.value, digits = 3, scientific = TRUE)),
+           vjust = 1.3, size = 3.2, colour = "grey25") +
+  scale_fill_manual(values = dose_cols, guide = "none") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.35))) +
+  labs(x = "Predicted highest resistant dose",
+       y = "% observed in Sanger\n(>= 2 patients)") +
+  theme_bw(base_size = 11) +
+  theme(axis.text.x = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+ggsave("figure_cosmic_enrichment.pdf", figure_cosmic, width = 5.5, height = 4.5)
+ggsave("figure_cosmic_enrichment.png", figure_cosmic, width = 5.5, height = 4.5, dpi = 300)
+
+print(figure_cosmic)
+```

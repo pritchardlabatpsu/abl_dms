@@ -1,0 +1,180 @@
+---
+title: "abl_Sanger_enrichment_analysis"
+author: "Haider Inam"
+date: '2026-03-28'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This analysis addresses Reviewer #1's question of whether DMS-predicted
+resistance is supported by real-world clinical evidence. We restrict to the
+1,536 variants reachable by a single nucleotide substitution (SNV-accessible),
+cross-reference them against the Sanger/COSMIC CML mutation catalog, and test
+whether variants predicted to be resistant are clinically observed more often
+-- and in more patients -- than variants predicted to be sensitive.
+
+The main analysis below includes all SNV-accessible variants (known
+clinically-resistant mutations + novel VUDRs). A secondary version excluding
+the known resistant mutations is also reported, matching the sensitivity
+check in the response-to-reviewers footnotes.
+
+```{r load-and-prep}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(patchwork)
+
+# -----------------------------------------------------------------------------
+# Load data
+# -----------------------------------------------------------------------------
+dms_data     <- read.csv("Tileseq_clinical_predictions_10.28.25.csv")
+sanger_data  <- read.csv("ABL_Sanger_Gene_mutations_2026.csv")
+known_res    <- read.csv("known_clinicallyresistant_mutations.csv")
+hamming_data <- read.csv("hammingdistance_ablmutants.csv")
+
+dose_levels <- c("Sensitive", "444nM", "760nM", "916nM")
+
+# -----------------------------------------------------------------------------
+# Variants reachable by a single nucleotide substitution (SNV-accessible)
+# -----------------------------------------------------------------------------
+valid_snvs <- hamming_data %>%
+  group_by(species) %>%
+  summarise(min_nuc_dist = min(n_nuc_min, na.rm = TRUE), .groups = "drop") %>%
+  filter(min_nuc_dist <= 1) %>%
+  pull(species)
+
+# -----------------------------------------------------------------------------
+# Clinical (Sanger) mutation counts; require >=2 patients to exclude likely
+# sequencing artifacts
+# -----------------------------------------------------------------------------
+sanger_grouped <- sanger_data %>%
+  mutate(Mutation = str_replace(AA.Mutation, "^p\\.", "")) %>%
+  group_by(Mutation) %>%
+  summarise(Total_Patients = sum(Count, na.rm = TRUE), .groups = "drop")
+
+valid_sanger_muts <- sanger_grouped %>%
+  filter(Total_Patients >= 2) %>%
+  pull(Mutation)
+
+known_muts <- unique(known_res$Collapsed)
+
+# -----------------------------------------------------------------------------
+# One tidy analysis table: every SNV-accessible variant with a valid dose
+# call, its predicted dose class, whether/how often it's been seen
+# clinically, and known-mutant status
+# -----------------------------------------------------------------------------
+analysis_df <- dms_data %>%
+  distinct(species, .keep_all = TRUE) %>%
+  filter(species %in% valid_snvs, Highest_Resistant_Dose %in% dose_levels) %>%
+  left_join(sanger_grouped, by = c("species" = "Mutation")) %>%
+  mutate(
+    Total_Patients     = ifelse(is.na(Total_Patients), 0, Total_Patients),
+    Dose_Tier          = factor(Highest_Resistant_Dose, levels = dose_levels),
+    Observed_in_Sanger = species %in% valid_sanger_muts,
+    Prediction         = ifelse(Highest_Resistant_Dose == "Sensitive",
+                                 "Predicted Sensitive", "Predicted Resistant"),
+    Known_Resistant    = species %in% known_muts
+  )
+
+nrow(analysis_df)
+table(analysis_df$Dose_Tier)
+```
+
+## Statistical tests
+
+```{r stats}
+# -----------------------------------------------------------------------------
+# Chi-squared: are predicted-resistant variants over-represented among
+# clinically observed mutations, relative to predicted-sensitive variants?
+# -----------------------------------------------------------------------------
+run_chisq <- function(df, label) {
+  ct   <- table(df$Prediction, df$Observed_in_Sanger)
+  test <- chisq.test(ct, correct = FALSE)
+
+  cat(sprintf("\n--- Chi-squared (%s) ---\n", label))
+  print(ct)
+  print(test)
+
+  res_total  <- sum(df$Prediction == "Predicted Resistant")
+  res_obs    <- sum(df$Prediction == "Predicted Resistant" & df$Observed_in_Sanger)
+  sens_total <- sum(df$Prediction == "Predicted Sensitive")
+  sens_obs   <- sum(df$Prediction == "Predicted Sensitive" & df$Observed_in_Sanger)
+
+  cat(sprintf("Predicted Resistant observed: %d / %d (%.1f%%)\n",
+              res_obs, res_total, 100 * res_obs / res_total))
+  cat(sprintf("Predicted Sensitive observed: %d / %d (%.1f%%)\n",
+              sens_obs, sens_total, 100 * sens_obs / sens_total))
+}
+
+run_chisq(analysis_df, "main analysis")
+run_chisq(analysis_df %>% filter(!Known_Resistant), "excluding known resistant mutants")
+
+# -----------------------------------------------------------------------------
+# Spearman: among clinically observed variants, does predicted dose tier
+# track how many patients carry the mutation?
+# -----------------------------------------------------------------------------
+run_spearman <- function(df, label) {
+  obs  <- df %>% filter(Observed_in_Sanger) %>% mutate(Dose_Rank = as.integer(Dose_Tier))
+  test <- cor.test(obs$Dose_Rank, obs$Total_Patients, method = "spearman", exact = FALSE)
+  cat(sprintf("\n--- Spearman (%s, n = %d) ---\n", label, nrow(obs)))
+  print(test)
+}
+
+run_spearman(analysis_df, "main analysis")
+run_spearman(analysis_df %>% filter(!Known_Resistant), "excluding known resistant mutants")
+```
+
+## Two-panel figure (Plot A / Plot B in response to reviewers)
+
+```{r cosmic-figure, fig.width=10, fig.height=4.5}
+# Manuscript-wide color scheme for dose classes
+dose_cols <- c("Sensitive" = "#7fb0d3",
+               "444nM"     = "#2166ac",
+               "760nM"     = "#f4a582",
+               "916nM"     = "#b2182b")
+
+# ---- Plot A: % of variants in each predicted dose class observed clinically
+plotA_df <- analysis_df %>%
+  group_by(Dose_Tier) %>%
+  summarise(Total_N = n(), Observed_N = sum(Observed_in_Sanger), .groups = "drop") %>%
+  mutate(Percentage = 100 * Observed_N / Total_N)
+
+pA <- ggplot(plotA_df, aes(Dose_Tier, Percentage, fill = Dose_Tier)) +
+  geom_col(color = "black", width = 0.7) +
+  geom_text(aes(label = paste0(sprintf("%.1f%%", Percentage),
+                                "\n(", Observed_N, "/", Total_N, ")")),
+            vjust = -0.3, size = 3.5, fontface = "bold") +
+  scale_fill_manual(values = dose_cols, guide = "none") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+  labs(x = "Predicted highest resistant dose",
+       y = "% observed in Sanger\n(\u2265 2 patients)",
+       title = "A  Predicted resistance is enriched for observed variants") +
+  theme_bw(base_size = 11) +
+  theme(axis.text.x = element_text(face = "bold"))
+
+# ---- Plot B: among observed variants, patient frequency by predicted dose class
+pB <- ggplot(analysis_df %>% filter(Observed_in_Sanger),
+             aes(Dose_Tier, Total_Patients, fill = Dose_Tier, colour = Dose_Tier)) +
+  geom_boxplot(width = 0.35, alpha = 0.35, outlier.shape = NA) +
+  geom_jitter(width = 0.12, size = 1.4, alpha = 0.7) +
+  scale_fill_manual(values = dose_cols, guide = "none") +
+  scale_colour_manual(values = dose_cols, guide = "none") +
+  scale_y_log10() +
+  labs(x = "Predicted highest resistant dose",
+       y = "Patients carrying mutation\n(Sanger, log scale)",
+       title = "B  More resistant variants occur in more patients") +
+  theme_bw(base_size = 11) +
+  theme(axis.text.x = element_text(face = "bold"))
+
+figure_cosmic <- pA + pB
+
+ggsave("figure_cosmic_enrichment.pdf", figure_cosmic, width = 10, height = 4.5)
+ggsave("figure_cosmic_enrichment.png", figure_cosmic, width = 10, height = 4.5, dpi = 200)
+
+print(figure_cosmic)
+```
