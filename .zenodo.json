@@ -1,0 +1,31 @@
+{
+  "title": "Code and processed data for: Characterizing Variants of Uncertain Drug Response (VUDRs) Using Quantitative Measurements at Clinical Exposures",
+  "upload_type": "software",
+  "description": "<p>Analysis code and processed data for the manuscript <em>Characterizing Variants of Uncertain Drug Response (VUDRs) Using Quantitative Measurements at Clinical Exposures</em> (Inam, Tomaszkiewicz et al.). The repository contains R code for processing BCR-ABL kinase-domain deep mutational scanning (DMS) data (variant calling, net growth rate estimation, regression correction against mutant standards, concentration-response fitting and logistic-regression resistance classification at clinical imatinib exposures), together with the scripts, inputs and outputs used to generate every figure panel and supplementary table. See README.md for a figure-to-code map. Raw sequencing reads are available at NCBI SRA under BioProject PRJNA1279649.</p>",
+  "creators": [
+    {"name": "Inam, Haider", "affiliation": "The Pennsylvania State University"},
+    {"name": "Tomaszkiewicz, Marta", "affiliation": "The Pennsylvania State University"},
+    {"name": "Reynolds, Joshua A.", "affiliation": "The Pennsylvania State University"},
+    {"name": "Yang, Zeyu", "affiliation": "The Pennsylvania State University"},
+    {"name": "Leighow, Scott M.", "affiliation": "The Pennsylvania State University"},
+    {"name": "Pritchard, Justin R.", "affiliation": "The Pennsylvania State University"}
+  ],
+  "license": "MIT",
+  "keywords": [
+    "deep mutational scanning",
+    "BCR-ABL",
+    "ABL1",
+    "imatinib",
+    "drug resistance",
+    "variants of uncertain drug response",
+    "TileSeq",
+    "pharmacokinetics",
+    "chronic myeloid leukemia"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1279649",
+      "relation": "references"
+    }
+  ]
+}

@@ -9,3 +9,10 @@ analysis/*png
 analysis/*html
 analysis/*_cache
 analysis/site_libs
+
+# Large inputs are stored zipped (unzipped they exceed GitHub's 100 MB file limit).
+# Ignore unzipped copies so they are not committed by accident.
+Figures/Figure_3C/inputs/all_corrected_without_poorly_fit_removed_w_drc_11.csv
+Figures/Figure_3F/inputs/all_corrected_without_poorly_fit_removed_w_drc_11.csv
+Figures/Figure_3E/all_mutants_with_relative_viability.csv
+__MACOSX/
